@@ -1,0 +1,22 @@
+# Python/cache
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Large/raw data
+data/*.csv
+data/*.xlsx
+!data/selected_indices/
+!data/selected_indices/*.csv
+
+# Generated outputs
+results/
+logs/
+models/
+
+# Local/editor files
+.env
+.venv/
+venv/
+.idea/
+.vscode/
