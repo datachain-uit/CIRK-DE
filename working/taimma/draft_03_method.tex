@@ -1,0 +1,128 @@
+% Nháp Mục 3 (Method) của bài TAIMMA 2027, mẫu LNCS. Không chứa số liệu thực nghiệm.
+% Mọi giá trị mặc định khớp mpqda/config.py và docs/taimma/PREREG.md Mục 3; sửa ở đây thì sửa cả hai nơi.
+% Cần trong preamble: \usepackage{amsmath,amssymb} \usepackage{algorithm} \usepackage[noend]{algpseudocode}
+
+\section{Method}\label{sec:method}
+
+\subsection{Problem}\label{sec:problem}
+
+Let $X\in\mathbb{R}^{n\times p_0}$ and $y\in\{0,1\}^n$ be the training part of one outer fold after a label-free variance
+prefilter that keeps the $p_0=5{,}000$ genes with the largest variance on these samples. Given a budget $k$, the task is to
+find a panel $S\subset\{1,\dots,p_0\}$ with $|S|=k$ that maximises a fitness $f(S)$ computed on $(X,y)$ only. The outer test
+part is never read during the search. A wrapper is given a fixed number of fitness evaluations; we count $N_{\mathrm{eval}}$ as
+the number of distinct panels evaluated, since fitness values are cached by panel.
+
+\paragraph{Fitness.} The training part is split once into three stratified inner folds, which stay fixed during the run and
+are shared by all wrappers on the same outer fold. For each inner fold, the genes of $S$ are standardised on the inner-training
+samples and an $L_2$-regularised logistic regression ($C=1$, balanced class weights) is fitted. The fitness is
+\begin{equation}\label{eq:fitness}
+  f(S) = -\frac{1}{3}\sum_{q=1}^{3}\mathrm{LL}_q(S),
+\end{equation}
+where $\mathrm{LL}_q$ is the log-loss on the validation part of inner fold $q$, with probabilities clipped to
+$[10^{-6},1-10^{-6}]$. Log-loss is a strictly proper scoring rule~\cite{gneiting2007}: unlike the area under the ROC curve
+(AUROC), it keeps rewarding better-calibrated separation after the two classes are ranked perfectly. With the AUROC fitness,
+most wrapper runs reach the ceiling of~1 (Section~\ref{sec:intro}), so the returned panel is one of many tied optima. The AUROC
+fitness is kept as a secondary setting to measure this saturation (Section~\ref{sec:results-saturation}).
+
+\subsection{Representation}\label{sec:representation}
+
+An individual is a key vector $x\in(0,1)^{p_0}$~\cite{bean1994}. Its panel is
+\begin{equation}\label{eq:decode}
+  S(x)=\mathrm{top}_k(x),
+\end{equation}
+the indices of the $k$ largest keys, ties going to the smaller index. Every individual therefore decodes to a feasible panel
+with exactly $k$ genes, and no size penalty is needed.
+
+\paragraph{Band re-encoding.} The fitness depends only on which keys are among the $k$ largest; the other $p_0-k$ keys are not
+under selection pressure and do not converge. A difference vector $x_{r_1}-x_{r_2}$ then has magnitude of order $F$ in every
+coordinate, far larger than the gaps between the top keys (order $1/p_0$), so a mutant would retain almost nothing of the panel
+of its base vector. We therefore re-encode every vector that enters the population (initial individuals and accepted trials):
+\begin{equation}\label{eq:band}
+  \mathrm{band}(x)_j=
+  \begin{cases}
+    \tfrac12+\tfrac12\,\frac{r_j+1/2}{k}, & j\in S(x),\\[2pt]
+    \tfrac12\,\frac{r_j+1/2}{p_0-k}, & j\notin S(x),
+  \end{cases}
+\end{equation}
+where $r_j$ is the stable rank of $x_j$ within its group. The panel and the order of keys within each group are unchanged; the
+genes of the panel are separated from the others by a margin that a small scale factor does not cross.
+
+\paragraph{Bound handling.} A mutant coordinate outside $[0,1]$ is moved half-way towards the bound from the target $x_i$:
+$v_j>1$ becomes $(1+x_{ij})/2$ and $v_j<0$ becomes $x_{ij}/2$, as in JADE and SHADE~\cite{zhang2009,tanabe2013}. Clipping to
+$[0,1]$ would create many keys equal to~1, and the tie rule of~\eqref{eq:decode} would then favour genes with small indices.
+
+\subsection{MPQDA-DE}\label{sec:mpqda}
+
+MPQDA-DE is a random-key differential evolution (DE) with three components: chaotic initialisation, an archive from which the
+leader of each mutation is drawn, and a per-individual Q-learning controller of the scale factor. Its output is a consensus
+panel computed from the archive. Algorithm~\ref{alg:mpqda} gives the full procedure; terminology follows~\cite{eiben2015}.
+
+\paragraph{Initialisation.} For each individual $i$, $z_i(0)\sim U(0.001,0.999)$ and the keys are successive iterates of the
+logistic map, $x_{ij}=z_i(j)$ with $z_i(t+1)=\mu\,z_i(t)\,(1-z_i(t))$ and $\mu=3.99$.
+
+\paragraph{Variation and selection.} For each target $x_i$, a leader $x_{L_i}$ is drawn from the archive and two distinct
+individuals $r_1\neq r_2\neq i$ are drawn from the population:
+\begin{equation}\label{eq:mutation}
+  v_i=\mathrm{repair}\big(x_{L_i}+F_i'\,(x_{r_1}-x_{r_2}),\,x_i\big).
+\end{equation}
+Binomial crossover with $CR=0.9$ and one forced coordinate $j_{\mathrm{rand}}$ gives the trial $u_i$. The trial replaces the
+target if $f(S(u_i))\ge f(S(x_i))$; accepting ties lets the population move across flat regions of the fitness.
+
+\paragraph{Archive and leader.} The archive $A$ holds at most $A_{\max}=15$ panels with their fitness and re-encoded keys. Panels
+are compared by the Jaccard distance $d(S_a,S_b)=1-|S_a\cap S_b|/|S_a\cup S_b|$. A candidate identical to a member is ignored.
+If a member lies closer than $\delta=0.2$, the nearest such member is replaced only if the candidate has strictly higher fitness;
+otherwise the candidate is rejected. Otherwise the candidate is added, and if $|A|>A_{\max}$ the member with the smallest
+$0.5\,\widetilde{\mathrm{nov}}+0.5\,\tilde f$ is removed, never the best member. Here $\mathrm{nov}(a)$ is the mean distance of
+$a$ to its three nearest members, and the tilde denotes min--max normalisation over the archive. The leader of each individual
+is drawn by roulette with weights $0.7\,\widetilde{\mathrm{nov}}+0.3\,\tilde f$, so that leaders come from good panels that lie
+in less crowded parts of the archive.
+
+\paragraph{Control of the scale factor.} Each individual keeps its own $F_i$, initialised from $U(0.3,0.8)$ and bounded to
+$[0.1,1.0]$, and a state $s_i\in\{0,1\}$: $s_i=0$ if its last trial improved on its target and $s_i=1$ otherwise (initially~1).
+A Q-table $Q\in\mathbb{R}^{2\times3}$, shared by all individuals, scores the actions $a\in\{-0.05,0,+0.05\}$. Each generation,
+individual $i$ draws $a_i$ from $\mathrm{softmax}(Q[s_i,\cdot]/\tau)$ with $\tau=1$ and uses $F_i'=\mathrm{clip}(F_i+a_i)$. After
+the generation is evaluated, with reward $r_i=\mathbb{1}[f(u_i)>f(x_i)]$ and next state $s_i'=1-r_i$,
+\begin{equation}\label{eq:q}
+  Q[s_i,a_i]\leftarrow Q[s_i,a_i]+\eta\,\big(r_i+\gamma\max_{a}Q[s_i',a]-Q[s_i,a_i]\big),
+\end{equation}
+with $\eta=0.1$ and $\gamma=0.9$. The new $F_i'$ is kept only if the trial was accepted.
+
+\paragraph{Consensus output.} At termination, members are ranked by fitness and weighted $w_a=|A|-\mathrm{rank}(a)+1$. Each gene
+receives the weighted frequency
+\begin{equation}\label{eq:consensus}
+  \pi_j=\frac{\sum_{a\in A}w_a\,\mathbb{1}[j\in S_a]}{\sum_{a\in A}w_a},
+\end{equation}
+and the consensus panel $S_c$ holds the $k$ genes with the largest $\pi_j$ (ties: genes of the best member first, then larger
+mean key, then smaller index). $S_c$ is evaluated once, so $N_{\mathrm{eval}}\le P(T+1)+1$. Aggregating several near-optimal
+panels follows ensemble feature selection~\cite{abeel2010,meinshausen2010} and targets the instability of wrapper panels; the
+best individual $S_{\mathrm{best}}$ of the same run is reported as ablation A4.
+
+\begin{algorithm}[t]
+\caption{MPQDA-DE for one outer fold and one budget $k$}\label{alg:mpqda}
+\begin{algorithmic}[1]
+\Require training part $(X,y)$ after the prefilter, budget $k$, seed
+\State build the fitness $f$ of~\eqref{eq:fitness} with three fixed inner folds; cache by panel
+\State $x_i\gets$ logistic-map keys; draw $F_i\sim U(0.3,0.8)$; $s_i\gets1$; $Q\gets0$ \Comment{$i=1,\dots,P$}
+\State $S_i\gets\mathrm{top}_k(x_i)$; $x_i\gets\mathrm{band}(x_i)$; evaluate $f(S_i)$; offer $(S_i,f_i,x_i)$ to $A$
+\For{$t=1,\dots,T$}
+  \State for each $i$: $a_i\sim\mathrm{softmax}(Q[s_i,\cdot]/\tau)$; $F_i'\gets\mathrm{clip}(F_i+a_i)$
+  \State for each $i$: draw leader $L_i$ from $A$ by roulette; draw $r_1\neq r_2\neq i$
+  \State for each $i$: $v_i$ by~\eqref{eq:mutation}; $u_i\gets$ binomial crossover of $x_i$ and $v_i$
+  \State evaluate $f(\mathrm{top}_k(u_i))$ for all $i$ in one batch
+  \State for each $i$: update $Q$ by~\eqref{eq:q}; $s_i\gets s_i'$
+  \State for each $i$ with $f(u_i)\ge f(x_i)$: $x_i\gets\mathrm{band}(u_i)$; $F_i\gets F_i'$; offer $(S(u_i),f(u_i),x_i)$ to $A$
+\EndFor
+\State $S_c\gets$ consensus of $A$ by~\eqref{eq:consensus}; evaluate $f(S_c)$
+\State \Return $S_c$ (primary output) and $S_{\mathrm{best}}$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Implementation.} All random numbers of a generation are drawn before its trials are evaluated, so the trials can be
+evaluated in parallel by worker processes (master--slave model~\cite{alba2002}) with results identical to a serial run. This is
+an implementation detail and not a contribution. With $P=30$ and $T=50$ the cost is dominated by at most 1{,}531 fitness
+evaluations, each fitting three logistic regressions on $k$ genes; the archive and controller add $O(A_{\max}^2k)$ and $O(P)$
+operations per generation.
+
+% TODO khi có kết quả: thêm câu ngắn về thời gian thực đo ở T6 (Mục 5.6), kèm % source.
+% Khoá BibTeX cần có trong Ref.bib: gneiting2007, bean1994, zhang2009, tanabe2013, eiben2015, abeel2010, meinshausen2010, alba2002
+% (DOI ở Bảng 11 và Mục 8 của Review-2026-11-14).

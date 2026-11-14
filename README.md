@@ -10,7 +10,7 @@ on the data, splits and evaluation protocol of the survey `datachain-uit/RNA-Seq
 | `tests/` | unit tests of every module and runner; smoke tests on synthetic data |
 | `vendor/` | byte-identical copy of the survey code and of its GA, BPSO reference results (`vendor/VENDORED.md`); never edited |
 | `docs/taimma/` | `PREREG.md` (pre-registration), `REPRODUCE.md`, `baselines/qlde.md` |
-| `working/taimma/` | contribution contract and response to the ICAART reviews (internal) |
+| `working/taimma/` | contribution contract, notation, baseline tables, number register, draft of the Method section, response to the ICAART reviews (internal) |
 | `legacy_icaart/` | code of the rejected ICAART 2027 version; not used, its numbers are not reproducible |
 
 Start with `docs/taimma/REPRODUCE.md`. Design decisions: Review-2026-11-14 (TQĐ1–TQĐ10) and
