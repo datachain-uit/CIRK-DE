@@ -1,0 +1,27 @@
+"""Notebook Kaggle sinh bằng script, khớp danh sách phiên của taimma_jobs và không bật cờ chạy không truy vết."""
+import ast
+import json
+
+from conftest import ROOT
+from scripts import make_kaggle_notebook as NB
+from scripts.taimma_jobs import JOBS, SESSIONS
+
+
+def test_notebook_matches_generator_and_parses():
+    assert NB.main(["--check"]) == 0
+    nb = json.loads(NB.OUT.read_text(encoding="utf-8"))
+    code = ["".join(c["source"]) for c in nb["cells"] if c["cell_type"] == "code"]
+    for src in code:
+        ast.parse(src)
+    joined = "\n".join(code)
+    assert "datachain-uit/MPQDA-DE" in joined and "'taimma-2027'" in joined
+    assert "KLTN_ALLOW_UNPUSHED" in joined and "os.environ.pop(flag" in joined          # cờ smoke bị gỡ, không bị đặt
+    assert "'KLTN_STRICT_N': '1'" in joined and "branch', '-r', '--contains', 'HEAD'" in joined
+
+
+def test_sessions_cover_every_job_once():
+    jobs = [j for js in SESSIONS.values() for j in js]
+    assert sorted(jobs) == sorted(JOBS) and len(jobs) == len(set(jobs))
+    assert SESSIONS["S0"] == ["t0_det", "t0_shuffle", "gt1"]
+    assert all(JOBS[j].session == s for s, js in SESSIONS.items() for j in js)
+    assert (ROOT / "notebooks" / "kaggle_taimma_runner.ipynb").is_file()
