@@ -90,7 +90,7 @@ def smoke_run(tmp_path_factory):
     split = make_smoke_data(data)
     env = smoke_env(data)
     args = ["--scenario", "SMOKE", "--metric", "logloss", "--datasets", SMOKE_COHORT, "--methods", "mpqda_de", "ga", "bpso",
-            "de_rand1", "shade", "jde", "jade", "mpqda_a3_fixedF", "--k", "2", "5", "--repeats", "0", "--folds", "0", "1",
+            "de_rand1", "shade", "qlde", "jde", "jade", "mpqda_a3_fixedF", "--k", "2", "5", "--repeats", "0", "--folds", "0", "1",
             "--pop", "6", "--generations", "3", "--workers", "2"]
     first = run_script(repo, "run_taimma.py", args, env)
     out = data / "results" / "survey_v2" / "taimma" / "SMOKE" / SMOKE_COHORT

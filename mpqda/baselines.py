@@ -223,15 +223,46 @@ def run_shade(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, 
 
 
 # ---------------------------------------------------------------------------------------------------
-# qlDE (Huynh, Do và Lee, 2021) — chờ cấu hình (Đ6)
+# qlDE (Huynh, Do và Lee, 2021) — cấu hình trích từ toàn văn, docs/taimma/baselines/qlde.md (Đ6)
 # ---------------------------------------------------------------------------------------------------
-def run_qlde(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T: int = M.T, n_jobs: int = 1) -> dict:
-    """Chưa cài đặt. Đ6: cấu hình (trạng thái, hành động, giá trị (F, CR), phần thưởng, chính sách, tốc độ học, chiết khấu,
-    giá trị đầu) phải trích từ toàn văn bài gốc vào docs/taimma/baselines/qlde.md rồi chép vào mpqda.config.QLDE.
-    Hàm này cố ý dừng thay vì chạy với tham số tự đặt."""
-    raise NotImplementedError(
-        "qlDE chưa có cấu hình (Đ6): điền docs/taimma/baselines/qlde.md từ toàn văn Huynh, Do và Lee (2021), "
-        "chép vào mpqda.config.QLDE rồi cài đặt run_qlde.")
+def qlde_alpha(t: int, T: int, start: float, drop: float) -> float:
+    """Tốc độ học của Eq. (7): alpha = start − drop·(eval / MaxEval), với eval = P·(t + 1) sau thế hệ t và MaxEval = P·(T + 1)
+    (số lần đánh giá danh nghĩa như Algorithm 2 của bài gốc, không trừ lần trúng cache)."""
+    return start - drop * (t + 1) / (T + 1)
+
+
+def run_qlde(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T: int = M.T, actions=None,
+             gamma: float | None = None, n_jobs: int = 1) -> dict:
+    """qlDE theo docs/taimma/baselines/qlde.md: DE/rand/1/bin, mỗi thế hệ dùng một tổ hợp (F, Cr) cho cả quần thể.
+    Đầu thế hệ: hành động có Q lớn nhất (tham lam; hoà thì chỉ số nhỏ nhất); bảng Q bắt đầu bằng 0 và có một trạng thái.
+    Cuối thế hệ: r = +1 nếu fitness tốt nhất của quần thể tăng hẳn, ngược lại −1 (Eq. 8);
+    Q[a] += alpha·(r + gamma·max Q − Q[a]) (Eq. 6), alpha theo Eq. (7), gamma = 0,8.
+    Khác bài gốc chỉ ở phần chung của mọi baseline DE: khoá đều và giải mã top-k, mã hoá lại theo dải, sửa biên trung điểm
+    (bài gốc: phản xạ), ngân sách P, T cố định (bài gốc: thêm tiêu chí hội tụ), không có hàm phạt ràng buộc.
+    Thứ tự rút số: như DE/rand/1/bin — khoá đều rng.random((P, p0)); mỗi thế hệ: (r1, r2, r3) cho i = 0..P − 1 bằng
+    rng.choice(np.delete(np.arange(P), i), size=3, replace=False); U = rng.random((P, p0)); j_rand = rng.integers(0, p0, size=P).
+    Chọn hành động không dùng số ngẫu nhiên."""
+    cfg = M.QLDE
+    actions = tuple(cfg["actions"] if actions is None else actions)
+    gamma = cfg["gamma"] if gamma is None else gamma
+    pop = _Population(fitness, p0, k, rng, P, n_jobs)
+    Q = np.full(len(actions), float(cfg["q_init"]))
+    chosen, rewards = [], []
+    pop.record(n_ties_accepted=0)
+    for t in range(1, T + 1):
+        a = int(np.argmax(Q))                                      # tham lam; hoà thì chỉ số nhỏ nhất
+        F, CR = actions[a]
+        best_before = float(pop.f.max())
+        R = np.array([_others(rng, P, i, 3) for i in range(P)])
+        U, jr = _crossover_numbers(rng, P, p0)
+        pop.step(pop.X[R[:, 0]] + F * (pop.X[R[:, 1]] - pop.X[R[:, 2]]), CR, U, jr)
+        r = cfg["reward"][0] if float(pop.f.max()) > best_before else cfg["reward"][1]
+        alpha = qlde_alpha(t, T, cfg["alpha_start"], cfg["alpha_drop"])
+        Q[a] += alpha * (r + gamma * Q.max() - Q[a])
+        chosen.append(a)
+        rewards.append(r)
+        pop.record(**pop._stats, **_F_stats(np.full(P, F)))
+    return pop.result(Q=Q.copy(), actions=chosen, rewards=rewards)
 
 
 # ---------------------------------------------------------------------------------------------------

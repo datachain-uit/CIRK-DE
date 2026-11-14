@@ -45,9 +45,17 @@ EXPECTED_SPLIT_SHA256 = {   # runner dừng nếu repeated_splits.csv khác (ngu
     # "tcga_luad_egfr", "gse31210_egfr": điền từ bàn giao B7 bước 1
 }
 
-# qlDE (Đ6): CHƯA có cấu hình. Điền từ docs/taimma/baselines/qlde.md sau khi đối chiếu toàn văn Huynh, Do và Lee (2021).
-# Khi QLDE là None, mpqda.baselines.run_qlde dừng với lỗi rõ ràng thay vì chạy với tham số tự đặt.
-QLDE = None
+# qlDE (Đ6): trích từ toàn văn Huynh, Do và Lee (2021), Applied Soft Computing 107:107464; số mục, phương trình và các chỗ
+# bài gốc để ngỏ ghi trong docs/taimma/baselines/qlde.md. Khi QLDE là None, runner từ chối --methods qlde.
+QLDE = {
+    "actions": ((0.4, 0.7), (0.6, 0.7), (0.8, 0.7), (0.4, 0.9), (0.6, 0.9), (0.8, 0.9), (0.9, 0.9)),   # (F, Cr), Table 1
+    "gamma": 0.8,                               # Mục 3.1
+    "alpha_start": 1.0, "alpha_drop": 0.9,      # Eq. (7): alpha = 1 − 0,9·eval/MaxEval
+    "reward": (1.0, -1.0),                      # Eq. (8): fitness tốt nhất của quần thể tăng hẳn / không
+    "q_init": 0.0,                              # Algorithm 2 dòng 10
+    "n_states": 1,                              # bài gốc không định nghĩa trạng thái
+    "policy": "greedy", "tie_break": "lowest_index",
+}
 
 # Quyết định trước khi đăng ký PREREG (Mục 3.8, PREREG Mục 4): chạy mức 2 (jDE, JADE) hay không. False = không chạy.
 RUN_TIER2 = False
@@ -74,7 +82,13 @@ CHOICES_TO_CONFIRM = (
     f"biến môi trường {ENV_SMOKE}=1 (chỉ smoke test): cho phép SHA-256 bản chia khác giá trị chờ và cờ --nan-outer-test; "
     "config.json ghi smoke = true và traceable = false",
     "T0 nhãn xáo trộn: LR-L2 ngoài dùng seed pha B của survey, seed_for(cid, split_seed, fold, k, 90)",
-    "qlDE chưa có cấu hình (Đ6): run_qlde dừng cho tới khi docs/taimma/baselines/qlde.md được điền từ toàn văn",
+    "qlDE: bài gốc không định nghĩa trạng thái; cài đặt dùng một trạng thái (bảng Q 1 × 7) và một tổ hợp (F, Cr) cho cả "
+    "quần thể mỗi thế hệ, như Mục 3.2 và Algorithm 2 (không phải theo từng cá thể như Bảng 6 của Review ghi)",
+    "qlDE: Table 1 của bài gốc ghi alpha = 0,8 còn Mục 3.1 ghi alpha theo Eq. (7) và gamma = 0,8; cài đặt theo Mục 3.1",
+    "qlDE: chính sách tham lam không có thăm dò (Algorithm 2); bài gốc không nêu cách phá hoà, cài đặt lấy chỉ số nhỏ nhất, "
+    "nên thế hệ đầu luôn dùng (F, Cr) = (0,4; 0,7)",
+    "qlDE: eval / MaxEval của Eq. (7) tính bằng số lần đánh giá danh nghĩa P·(t + 1) / (P·(T + 1)), không trừ lần trúng cache; "
+    "bỏ tiêu chí hội tụ delta < tol của bài gốc để mọi wrapper cùng T = 50",
 )
 
 

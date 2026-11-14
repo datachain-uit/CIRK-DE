@@ -5,7 +5,7 @@ on the data, splits and evaluation protocol of the survey `datachain-uit/RNA-Seq
 
 | Path | Content |
 |---|---|
-| `mpqda/` | method code: `config`, `encoding`, `fitness`, `archive`, `control`, `de` (MPQDA-DE and ablation flags), `baselines` (GA, BPSO, DE/rand/1/bin, SHADE, jDE, JADE; qlDE pending), `runlog` |
+| `mpqda/` | method code: `config`, `encoding`, `fitness`, `archive`, `control`, `de` (MPQDA-DE and ablation flags), `baselines` (GA, BPSO, DE/rand/1/bin, SHADE, qlDE, jDE, JADE), `runlog` |
 | `scripts/` | `run_taimma.py` (phase A), `check_gate_gt1.py`, `run_taimma_eval.py` (phase B and T4 through the survey scripts), `taimma_jobs.py` (Kaggle jobs), `make_taimma_tables.py`, `vendor_survey.py` |
 | `tests/` | unit tests of every module and runner; smoke tests on synthetic data |
 | `vendor/` | byte-identical copy of the survey code and of its GA, BPSO reference results (`vendor/VENDORED.md`); never edited |

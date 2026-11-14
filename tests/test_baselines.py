@@ -18,7 +18,7 @@ def run(method, n_jobs=1, seed=3, metric="logloss", P=P, T=T):
     return B.run_method(method, fit, X.shape[1], K, B.make_rng(method, seed, K), P=P, T=T, n_jobs=n_jobs), fit
 
 
-@pytest.mark.parametrize("method", ["de_rand1", "shade", "jde", "jade", "ga", "bpso"])
+@pytest.mark.parametrize("method", ["de_rand1", "shade", "qlde", "jde", "jade", "ga", "bpso"])
 def test_deterministic_exact_k_and_budget(method):
     (a, fit), (b, _) = run(method), run(method, n_jobs=1 if method in ("ga", "bpso") else 3)
     assert a["best"].tolist() == b["best"].tolist() and a["best_fitness"] == b["best_fitness"] and a["n_eval"] == b["n_eval"]
@@ -69,10 +69,38 @@ def test_jde_parameters_follow_the_rule():
     assert changed.any() and ((always["F"][changed] >= 0.1) & (always["F"][changed] <= 1.0)).all()
 
 
-def test_qlde_stops_until_configured():
-    assert M.QLDE is None
-    with pytest.raises(NotImplementedError):
-        run("qlde")
+def test_qlde_configuration_matches_the_paper():
+    """Table 1, Eq. (7), (8) và Mục 3.1 của Huynh, Do và Lee (2021); xem docs/taimma/baselines/qlde.md."""
+    q = M.QLDE
+    assert q["actions"] == ((0.4, 0.7), (0.6, 0.7), (0.8, 0.7), (0.4, 0.9), (0.6, 0.9), (0.8, 0.9), (0.9, 0.9))
+    assert (q["gamma"], q["alpha_start"], q["alpha_drop"], q["reward"], q["q_init"], q["n_states"]) == (0.8, 1.0, 0.9, (1.0, -1.0), 0.0, 1)
+    assert np.isclose(B.qlde_alpha(50, 50, 1.0, 0.9), 0.1) and np.isclose(B.qlde_alpha(1, 50, 1.0, 0.9), 1 - 0.9 * 2 / 51)
+
+
+def test_qlde_q_table_follows_eq6_and_greedy_policy():
+    r, _ = run("qlde", P=8, T=12)
+    h = pd.DataFrame(r["history"])
+    improved = (h.best_fitness.diff().iloc[1:] > 0).tolist()
+    assert r["rewards"] == [1.0 if x else -1.0 for x in improved]                       # Eq. (8)
+    Q, actions = np.zeros(7), []
+    for t, rew in enumerate(r["rewards"], 1):                                           # tính lại bằng tay theo Eq. (6), (7)
+        a = int(np.argmax(Q))                                                           # tham lam; hoà thì chỉ số nhỏ nhất
+        actions.append(a)
+        Q[a] += B.qlde_alpha(t, 12, 1.0, 0.9) * (rew + 0.8 * Q.max() - Q[a])
+    assert actions == r["actions"] and actions[0] == 0 and np.allclose(Q, r["Q"])
+    assert h.mean_F.iloc[1:].tolist() == [M.QLDE["actions"][a][0] for a in actions] and (h.sd_F.iloc[1:] == 0).all()
+    first_failure = r["rewards"].index(-1.0)                                            # sau lần phạt đầu, chuyển sang hành động khác
+    assert first_failure + 1 >= len(actions) or actions[first_failure + 1] != actions[first_failure] or Q[actions[first_failure]] > 0
+
+
+def test_qlde_with_one_action_is_de_rand1():
+    """Một hành động duy nhất (0,5; 0,9): cùng thứ tự rút số nên trùng DE/rand/1/bin trên cùng seed."""
+    X, y = synthetic_xy(p=200)
+    a = B.run_qlde(InnerCVFitness(X, y, 21), 200, K, np.random.default_rng([3, K]), P=8, T=5, actions=((0.5, 0.9),))
+    b = B.run_de_rand1(InnerCVFitness(X, y, 21), 200, K, np.random.default_rng([3, K]), P=8, T=5)
+    assert a["best"].tolist() == b["best"].tolist() and a["best_fitness"] == b["best_fitness"] and a["n_eval"] == b["n_eval"]
+    cols = ["best_fitness", "mean_fitness", "diversity", "success_rate", "exploration_rate", "n_ties_accepted"]
+    assert pd.DataFrame(a["history"])[cols].to_csv() == pd.DataFrame(b["history"])[cols].to_csv()
 
 
 @pytest.mark.parametrize("method", ["ga", "bpso"])
@@ -92,7 +120,7 @@ def test_all_wrappers_share_one_fitness_function():
     """T-R3: mọi wrapper trên cùng fold ngoài gọi cùng một hàm fitness (cùng fold nội bộ, cùng LR-L2)."""
     X, y = synthetic_xy(p=200)
     probe = InnerCVFitness(X, y, fold_seed=21, metric="logloss")
-    for method in ("mpqda_de", "de_rand1", "shade", "jde", "jade", "ga", "bpso"):
+    for method in ("mpqda_de", "de_rand1", "shade", "qlde", "jde", "jade", "ga", "bpso"):
         fit = InnerCVFitness(X, y, fold_seed=21, metric="logloss")
         r = B.run_method(method, fit, X.shape[1], K, B.make_rng(method, 3, K), P=P, T=2)
         assert probe(r["best"]) == r["best_fitness"]

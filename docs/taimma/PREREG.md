@@ -14,8 +14,8 @@
 Sections 1–11 do not change after registration. Any later change is a deviation: it is logged in Section 12 with its date, the
 reason, and whether any output of T1–T5 had been seen.
 
-To fill before registration: the fields above; Section 2 (B7 rows and gate outcomes); Section 4 (tier-2 decision, qlDE
-configuration); Section 11 (parallel sessions, `pip freeze` hash). Delete this paragraph at registration.
+To fill before registration: the fields above; Section 2 (B7 rows and gate outcomes); Section 4 (tier-2 decision; supervisor's ruling on the four open
+points of qlDE listed in `docs/taimma/baselines/qlde.md`); Section 11 (parallel sessions, `pip freeze` hash). Delete this paragraph at registration.
 
 ## 1. Purpose and scope
 
@@ -207,7 +207,7 @@ survey encodings (exactly k by construction or by repair) and the survey code un
 | BPSO | 1 | inertia 0.9 → 0.4, c1 = c2 = 2, v_max = 6, sigmoid sampling, repair to exactly k | Kennedy and Eberhart (1997); survey code |
 | DE/rand/1/bin | 1 | F = 0.5, CR = 0.9 | Storn and Price (1997) |
 | SHADE | 1 | memory H = 30 (M_CR = M_F = 0.5 initially); CR ~ N(M_CR, 0.1) clipped to [0, 1]; F ~ Cauchy(M_F, 0.1), regenerated if ≤ 0, set to 1 if > 1; p ~ U(2/P, 0.2); current-to-pbest/1 with an external archive of size P; weighted arithmetic and weighted Lehmer means | Tanabe and Fukunaga (2013) |
-| qlDE | 1 | [TO FILL from Huynh, Do and Lee (2021): states, actions, (F, CR) values, reward, policy, learning rate, discount, initial values, with section and equation numbers; copy of `docs/taimma/baselines/qlde.md`] | Huynh, Do and Lee (2021) |
+| qlDE | 1 | DE/rand/1/bin with one (F, CR) pair per generation for the whole population, chosen greedily (largest Q; ties: smallest index) among seven pairs: (0.4, 0.7), (0.6, 0.7), (0.8, 0.7), (0.4, 0.9), (0.6, 0.9), (0.8, 0.9), (0.9, 0.9) (Table 1, Eq. 9); Q-table of zeros with a single state (the paper defines no state); reward +1 if the best fitness of the population improved strictly in the generation, otherwise −1 (Eq. 8); Q[a] += α·(r + γ·max Q − Q[a]) (Eq. 6) with α = 1 − 0.9·(t + 1)/(T + 1) after generation t (Eq. 7) and γ = 0.8 (Section 3.1). Open points of the paper and deviations: `docs/taimma/baselines/qlde.md` | Huynh, Do and Lee (2021) |
 | jDE | 2 | τ1 = τ2 = 0.1, F ∈ [0.1, 1.0] when regenerated (0.1 + 0.9·rand), initial F = 0.5, CR = 0.9 | Brest et al. (2006) |
 | JADE | 2 | p = 0.05 (at least 2 individuals), c = 0.1, external archive of size P, μ_CR = μ_F = 0.5 initially | Zhang and Sanderson (2009) |
 

@@ -10,7 +10,7 @@ from conftest import SMOKE_COHORT, run_script, smoke_env
 pytestmark = pytest.mark.slow
 
 OUTPUTS = {"mpqda_de", "mpqda_de_best", "mpqda_a3_fixedF", "mpqda_a3_fixedF_best", "ga", "bpso", "de_rand1", "shade",
-           "jde", "jade"}
+           "qlde", "jde", "jade"}
 
 
 def read(out, name):
@@ -33,7 +33,7 @@ def test_files_and_columns(smoke_run):
     assert (sel.groupby(["repeat", "fold"]).inner_fold_seed.nunique() == 1).all()
     a3, full = sel[sel.method == "mpqda_a3_fixedF"], sel[sel.method == "mpqda_de"]
     assert a3.search_seed.tolist() == full.search_seed.tolist() and (a3.base_method == "mpqda_de").all()
-    assert sel.groupby(["repeat", "fold"]).search_seed.nunique().min() == 7          # 7 phương pháp gốc, seed khác nhau
+    assert sel.groupby(["repeat", "fold"]).search_seed.nunique().min() == 8          # 8 phương pháp gốc, seed khác nhau
     sizes = genes.groupby(["repeat", "fold", "method", "k"]).gene.nunique().reset_index()
     assert (sizes.gene == sizes.k).all() and len(sizes) == len(sel)
     # lịch sử: t = 0..T cho mọi lần chạy; fitness tốt nhất không giảm; cột Q chỉ có ở MPQDA-DE đầy đủ
@@ -51,7 +51,7 @@ def test_config_marks_smoke_run_as_not_citable(smoke_run):
     cfg = json.loads((smoke_run["out"] / "config.json").read_text(encoding="utf-8"))
     assert cfg["smoke"] is True and cfg["traceable"] is False and cfg["split_sha256_match"] is False
     assert cfg["commit_hash"] and cfg["vendor_commit"] and cfg["constants"]["P"] == 30 and cfg["pop"] == 6
-    assert cfg["choices_to_confirm"] and cfg["fitness_metric"] == "logloss" and cfg["n_rows_selection_per_fold"] == 40
+    assert cfg["choices_to_confirm"] and cfg["fitness_metric"] == "logloss" and cfg["n_rows_selection_per_fold"] == 44
     assert any(k.endswith("expression.h5") for k in cfg["provenance"]["data_sha256"])
     assert any(k.endswith("repeated_splits.csv") for k in cfg["provenance"]["data_sha256"])
 
@@ -60,7 +60,7 @@ def test_rerun_skips_checkpoints_and_is_byte_identical(smoke_run):
     out = smoke_run["out"]
     before = {n: (out / n).read_bytes() for n in ("selected_genes.csv", "history.csv", "selection_per_fold.csv")}
     again = run_script(smoke_run["repo"], "run_taimma.py", smoke_run["args"], smoke_run["env"])
-    assert again.stdout.count("checkpoint exists, skip") == 16 and "checkpoint saved" not in again.stdout
+    assert again.stdout.count("checkpoint exists, skip") == 18 and "checkpoint saved" not in again.stdout
     assert all((out / n).read_bytes() == b for n, b in before.items())
 
 
