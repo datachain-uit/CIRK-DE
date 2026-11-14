@@ -68,3 +68,8 @@ hoặc hằng số tương ứng để người đọc đối chiếu.
 | ρ | tỉ số test/train của Nadeau–Bengio, ρ = 1/4 | `C.NB_TEST_TRAIN_RATIO` |
 | Φ | độ ổn định Nogueira | `survey_v2.stability.nogueira` |
 | m* | baseline wrapper có log-loss ngoài trung bình thấp nhất (H3) | `make_taimma_tables.comparator` |
+| C ∈ {0,01; 0,1; 1; 10} | hằng số điều chuẩn của LR-L2 ở pha B (khác C = 1 cố định của fitness pha A) | `C.C_GRID` |
+| C* | giá trị C có log-loss OOF nội bộ (3 fold) nhỏ nhất, hoà giữ C nhỏ hơn (B-LL, TQĐ11) | `mpqda.phase_b.evaluate_panel_ll` |
+| B-LL, B-AUC | pha B chọn C theo log-loss nội bộ (chính) và theo AUROC nội bộ của survey (độ nhạy) | `taimma/T5LL/`, `taimma/T5/` |
+
+Kiểm trùng ký hiệu: C* và C chưa dùng ở các mục trên; CR (lai ghép) và C1–C4 (đóng góp) là ký hiệu khác, không viết tắt thành C.

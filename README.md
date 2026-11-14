@@ -6,7 +6,7 @@ on the data, splits and evaluation protocol of the survey `datachain-uit/RNA-Seq
 | Path | Content |
 |---|---|
 | `mpqda/` | method code: `config`, `encoding`, `fitness`, `archive`, `control`, `de` (MPQDA-DE and ablation flags), `baselines` (GA, BPSO, DE/rand/1/bin, SHADE, qlDE, jDE, JADE), `runlog` |
-| `scripts/` | `run_taimma.py` (phase A), `check_gate_gt1.py`, `run_taimma_eval.py` (phase B and T4 through the survey scripts), `taimma_jobs.py` (Kaggle jobs), `make_taimma_tables.py`, `vendor_survey.py` |
+| `scripts/` | `run_taimma.py` (phase A), `check_gate_gt1.py`, `run_taimma_eval.py` (phase B and T4 through the survey scripts; `--phase-b ll` runs B-LL through `run_taimma_phase_b.py`, `--phase-b auc` the survey phase B), `run_taimma_phase_b.py` (B-LL: survey phase B with C chosen by the inner log-loss), `count_survey_c_choice.py`, `taimma_jobs.py` (Kaggle jobs), `make_taimma_tables.py`, `vendor_survey.py` |
 | `tests/` | unit tests of every module and runner; smoke tests on synthetic data |
 | `vendor/` | byte-identical copy of the survey code and of its GA, BPSO reference results (`vendor/VENDORED.md`); never edited |
 | `docs/taimma/` | `PREREG.md` (pre-registration), `REPRODUCE.md`, `baselines/qlde.md` |

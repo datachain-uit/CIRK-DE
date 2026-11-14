@@ -7,15 +7,15 @@
 | Registration commit | [TO FILL: 7-character hash of the tagged commit; the tag message repeats it with the SHA-256 of this file] |
 | Registered on | [TO FILL: date and time, ICT] |
 | Author | LuanNT (student ID 23520899), 23520899@gm.uit.edu.vn |
-| Reviewed by | [TO FILL: supervisor], on [TO FILL: date] |
-| Vendored survey code | `RNA-Seq-FS-Survey`, branch `dmkd-revision`, commit `c1828d2` at the time of this draft [TO FILL: replace by the B7 step 1 hand-over commit if `vendor/` is updated before registration] (file list and SHA-256 in `vendor/VENDORED.md`) |
-| Basis | Review-2026-11-14 (decisions TQĐ1–TQĐ10); code request YEU-CAU-DOI-CODE-2026-11-14-TAIMMA (adjustments Đ1–Đ7) |
+| Reviewed by | [TO FILL: supervisor], on [TO FILL: date of approval] |
+| Vendored survey code | `RNA-Seq-FS-Survey`, branch `dmkd-revision`, commit `c1828d2`, unchanged until submission (TQĐ16; file list and SHA-256 in `vendor/VENDORED.md`) |
+| Basis | Review-2026-11-14 (decisions TQĐ1–TQĐ10); code request YEU-CAU-DOI-CODE-2026-11-14-TAIMMA (adjustments Đ1–Đ7); Review-2026-11-14b (decisions TQĐ11–TQĐ18) |
 
 Sections 1–11 do not change after registration. Any later change is a deviation: it is logged in Section 12 with its date, the
 reason, and whether any output of T1–T5 had been seen.
 
-To fill before registration: the fields above; Section 2 (B7 rows and gate outcomes); Section 4 (tier-2 decision; supervisor's ruling on the four open
-points of qlDE listed in `docs/taimma/baselines/qlde.md`); Section 11 (parallel sessions, `pip freeze` hash). Delete this paragraph at registration.
+To fill before registration: the fields above; Section 2 (B7 rows and gate outcomes, or their exclusion under TQĐ17);
+Section 11 (environment of S0, parallel sessions); Section 12 (registration row). Delete this paragraph at registration.
 
 ## 1. Purpose and scope
 
@@ -30,16 +30,16 @@ Research questions:
 - RQ1 (fitness). Under an exactly-k budget, does a log-loss fitness remove the plateau of the AUROC fitness, and how does it change
   the outer performance and the stability of wrapper panels?
 - RQ2 (search quality). With the same evaluation budget, does MPQDA-DE reach a better inner fitness than DE/rand/1/bin, and an
-  outer log-loss and AUROC that are not worse than those of GA, BPSO, DE/rand/1/bin, SHADE and qlDE?
-- RQ3 (components). What does each component contribute: chaotic initialisation, the archive-based leader, the per-individual
-  Q-learning control of F, and the consensus output?
+  outer log-loss and AUROC that are not worse than those of GA, BPSO, DE/rand/1/bin, SHADE, qlDE, jDE and JADE?
+- RQ3 (components). What does each component contribute: band re-encoding, chaotic initialisation, the archive-based leader, the
+  per-individual Q-learning control of F, and the consensus output?
 - RQ4 (stability). Is the archive consensus panel more stable across seeds than the best-individual panel and the panels of other
   wrappers, without loss of outer performance?
 
 | Contribution | RQ | Scenarios | Hypotheses | Paper section |
 |---|---|---|---|---|
 | C1. Exactly-k wrapper selection with a log-loss fitness, with evidence that the AUROC fitness saturates | RQ1 | T1, T1b | H1 | 5.1 |
-| C2. MPQDA-DE: exactly-k random-key DE with band re-encoding, archive-based leader selection, per-individual Q-learning control of F | RQ2, RQ3 | T1, T2 | H2, H3, H5 | 3, 5.2, 5.3 |
+| C2. Band re-encoding of random keys, which keeps the panel of the base vector under DE mutation with exactly-k decoding, and MPQDA-DE, which combines it with a leader drawn from a Jaccard archive and per-individual Q-learning control of F, two components adapted from earlier DE designs to exactly-k panels | RQ2, RQ3 | T1, T2 | H2, H3, H5 (A0) | 3, 5.2, 5.3 |
 | C3. Consensus panel from the archive | RQ4 | T1, T3 | H3, H4, H5 (A4) | 3, 5.4 |
 | C4. Leakage-free, equal-budget, pre-registered evaluation with code and result files | – | all | – | 4 |
 
@@ -73,7 +73,10 @@ SHA-256 of the input files. GPL570 values come from the provenance of the survey
 | tcga_luad_egfr | expression.h5, metadata.csv, repeated_splits.csv | [TO FILL] |
 | gse31210_egfr | expression.h5, metadata.csv, repeated_splits.csv | [TO FILL] |
 
-B7 gates (from survey B7 step 1; a dataset is included only if it passes both; the survey's TP53 fallback is not used here):
+B7 gates (from survey B7 step 1; the survey's TP53 fallback is not used here). A B7 dataset is included only if it passed both
+survey gates before registration; otherwise it is excluded from this study, and the exclusion is not a deviation. If no gate result
+is available at 08:00 ICT on 16 November 2026, both B7 datasets are excluded (TQĐ17).
+
 
 | Dataset | G1: permutation p of E0 (≤ 0.05) | G2: mean AUROC(B0) − mean AUROC(random-k, k = 10) over 25 folds (≥ 0.05) | Decision |
 |---|---|---|---|
@@ -164,7 +167,7 @@ All variants use the search seed of MPQDA-DE (common random numbers) and report 
 
 | Variant | Change relative to MPQDA-DE | Component examined |
 |---|---|---|
-| A0 | no band re-encoding | mechanism check of the encoding |
+| A0 | no band re-encoding | band re-encoding (credited through H5) |
 | A1 | uniform keys U(0, 1) instead of chaotic keys | chaotic initialisation |
 | A2a | leader = best individual of the population (one uniform number still drawn per i) | archive-based leader |
 | A2b | leader drawn uniformly from the archive | roulette weights of the leader |
@@ -185,7 +188,7 @@ cid = survey `cohort_id` (gse10245 = 101, gse30219 = 102, gse37745 = 103, tcga_l
 | random generator per k | DE family: `default_rng([seed_run, k])`; GA, BPSO: `default_rng([seed_run, k, 0 or 1])` (survey) |
 | inner folds | log-loss mode: `seed_for(cid, split_seed, fold, 900)`, shared; AUROC mode: `seed_run` of the method (survey) |
 | label permutation in T0 | `default_rng([cid, split_seed, fold, 999]).permutation(n_train)` |
-| phase B | survey: `seed_for(cid, split_seed, fold, k, METHOD_ID_survey.get(method, 90))` |
+| phase B | B-LL and B-AUC use the same seeds, survey `seed_for(cid, split_seed, fold, k, METHOD_ID_survey.get(method, 90))`; every DE-family output, absent from the survey table, uses tag 90 |
 
 Per generation t = 0..T: N_eval; best and mean fitness; diversity (mean pairwise Jaccard distance among population panels); success
 rate (share of i with f(u_i) > f(x_i)); exploration rate (share of trial panels whose Jaccard distance to the nearest panel of the
@@ -211,15 +214,21 @@ survey encodings (exactly k by construction or by repair) and the survey code un
 | jDE | 2 | τ1 = τ2 = 0.1, F ∈ [0.1, 1.0] when regenerated (0.1 + 0.9·rand), initial F = 0.5, CR = 0.9 | Brest et al. (2006) |
 | JADE | 2 | p = 0.05 (at least 2 individuals), c = 0.1, external archive of size P, μ_CR = μ_F = 0.5 initially | Zhang and Sanderson (2009) |
 
-Tier-2 decision: [TO FILL: run / not run; the code default is `RUN_TIER2 = False` in `mpqda/config.py`, jDE and JADE are implemented and tested]. If run, jDE and JADE join T1 and T1b and the comparator set of H3; T3 keeps tier 1.
+Tier-2 decision: run (`RUN_TIER2 = True` in `mpqda/config.py`, TQĐ13). jDE and JADE join T1 and T1b, the comparator set of H3,
+the secondary comparisons and the Friedman test (8 methods); T3 keeps tier 1.
 
 Non-wrapper references (T4, survey code unchanged): L1-LR, stability selection, F-test, mRMR, SVM-RFE, abess, at
 k ∈ {2, 5, 10, 50}; B0 (LR-L2 on all genes, no prefilter); random-k (100 random panels per fold inside the prefilter).
 
-Phase B (all panels, survey `run_e1_classification.py` unchanged): LR-L2 with standardisation and class_weight = balanced;
-C ∈ {0.01, 0.1, 1, 10} chosen by inner 3-fold AUROC on the outer-training part; decision threshold maximising balanced accuracy on
-the inner out-of-fold scores; refit on the whole outer-training part. Outer-test metrics: AUROC, balanced accuracy, MCC, log-loss
-(probabilities clipped to [1e−6, 1 − 1e−6]) and Brier score.
+Phase B. Primary (B-LL, `scripts/run_taimma_phase_b.py`): the survey procedure of `run_e1_classification.py` with one change:
+C ∈ {0.01, 0.1, 1, 10} is chosen by the smallest inner 3-fold out-of-fold log-loss (probabilities clipped to [1e−6, 1 − 1e−6];
+ties keep the smaller C). Unchanged: LR-L2 with standardisation and class_weight = balanced; the inner folds and seeds of the
+survey phase B; the decision threshold maximising balanced accuracy on the inner out-of-fold scores of the chosen C; refit on the
+whole outer-training part; rule M5 (C = 1, threshold 0.5 when the smaller class has at most 10 training samples).
+Sensitivity (B-AUC): the survey `run_e1_classification.py` unchanged (C chosen by the inner AUROC). With that rule and the
+ascending grid, ties at the maximum keep C = 0.01; in the survey this held for 874 of 1,125 selector panels at k ∈ {5, 10} on the
+three GPL570 cohorts, and the outer log-loss then reflects the shrinkage of LR-L2 rather than the panel. Outer-test metrics are
+unchanged: AUROC, balanced accuracy, MCC, log-loss (probabilities clipped to [1e−6, 1 − 1e−6]) and Brier score.
 
 ## 5. Scenarios
 
@@ -231,16 +240,19 @@ the inner out-of-fold scores; refit on the whole outer-training part. Outer-test
 | T2 | ablation | 3 GPL570 × 15 folds | 2, 5, 10 | A0, A1, A2a, A2b, A3, A5_A1, A5_A30 | 0 (seed of MPQDA-DE) | log-loss |
 | T3 | seed stability | GSE37745 × 15 folds | 5, 10 | MPQDA-DE, tier 1 | 1–4 (0 from T1) | log-loss |
 | T4 | non-wrapper references | 3 GPL570 (+ included B7) × 15 folds | 2, 5, 10, 50 | six selectors, B0, random-k | – | – |
-| T5 | phase B | every panel of T1–T4 | – | LR-L2 | – | – |
+| T5 | phase B: B-LL (primary) and B-AUC (sensitivity) on every panel of T1–T4 | every panel of T1–T4 | – | LR-L2 | – | – |
 | T6 | cost | GSE37745, repeat 0, folds 0–4, one machine, nothing else running | 10 | MPQDA-DE with n_jobs ∈ {1, 4} | 0 | log-loss |
 
 ## 6. Endpoints
 
-- Primary: outer log-loss of the MPQDA-DE consensus panel against the best wrapper baseline, at k ∈ {5, 10}, on the three GPL570
-  cohorts, 15 outer folds each (H3).
+- Primary: outer log-loss of the MPQDA-DE consensus panel against the best wrapper baseline under B-LL, at k ∈ {5, 10}, on the
+  three GPL570 cohorts, 15 outer folds each (H3).
 - Secondary: outer AUROC (ROPE 0.01), balanced accuracy, MCC, Brier; k ∈ {2, 50}; best inner fitness at T = 50; anytime curves;
   seed stability (Nogueira, T3); fold stability (descriptive); Jaccard overlap between methods; N_eval; time.
-- Exploratory: B7; tier 2 (if run); A0 and A5_A30; behaviour metrics; T6.
+- Exploratory: B7; A5_A30; behaviour metrics; T6.
+- Sensitivity: H3 and the secondary comparisons under B-AUC.
+- Every quantity of H1–H5 that comes from phase B (outer log-loss, AUROC and the other outer metrics), the main tables and the
+  figures use B-LL.
 
 ## 7. Hypotheses, tests and decision rules
 
@@ -273,7 +285,8 @@ below 0.02.
 (b) AUROC: Δ = AUROC(MPQDA-DE consensus) − AUROC(m*). With the pooled posterior Student t (df 14, location Δ̄, scale SE_Δ),
 P(Δ < −0.01) < 0.05.
 H3 holds at k if (a) and (b) hold. Test (a) is one-sided at level 2.5 %, so over the two values of k its family-wise error stays at
-or below 5 %. Choosing m* after seeing the results can only make the test harder for MPQDA-DE.
+or below 5 %. Choosing m* after seeing the results can only make the test harder for MPQDA-DE. H3 is computed under B-LL and
+repeated under B-AUC; if the two decisions differ, both are reported and the B-LL decision stands.
 Secondary: in each (cohort, k), against each baseline, a two-sided Nadeau–Bengio t-test and a two-sided Wilcoxon test with Holm
 within the baselines, and the Bayesian correlated t-test for AUROC with ROPE 0.01 (P(left), P(rope), P(right)). Friedman test on
 the mean outer log-loss over 12 blocks (3 cohorts × 4 values of k), Nemenyi critical difference with q(0.05) = 2.850 for 6 methods
@@ -288,12 +301,13 @@ for every method, fold stability (Nogueira over the 15 fold panels of seed index
 H5 (RQ3; T1, T2). Each variant is paired with the full MPQDA-DE run of T1 (seed index 0, same folds), for k ∈ {2, 5, 10}.
 Q1 (search): d = best inner fitness(full) − best inner fitness(variant); one-sided Wilcoxon (greater) over the 45 folds of the three
 cohorts. Q2 (outer): d = log-loss(primary output of the variant) − log-loss(full consensus); one-sided pooled Nadeau–Bengio test,
-p = P(t(14) > d̄/SE). Family: A1, A2a, A2b, A3, A5_A1 × {Q1, Q2} × 3 values of k (30 tests) plus A4 × Q2 × 3 values of k (3 tests,
-d = log-loss(best individual) − log-loss(consensus) of the same run): 33 tests, one Holm family. Credit rule: chaotic initialisation
-← A1; archive-based leader ← A2a, A2b or A5_A1; Q-learning control ← A3; consensus output ← A4 (Q2) or H4 (i). A component is
-credited only if at least one of its tests is significant after Holm; otherwise the paper states that it had no measurable effect.
-A0 (mechanism check) is tested the same way in its own Holm family of 6 tests; A5_A30 is descriptive. Two-sided CIs are reported for
-every difference, so a removal that improves a quantity is visible.
+p = P(t(14) > d̄/SE). Family: A0, A1, A2a, A2b, A3, A5_A1 × {Q1, Q2} × 3 values of k (36 tests) plus A4 × Q2 × 3 values of k
+(3 tests, d = log-loss(best individual) − log-loss(consensus) of the same run): 39 tests, one Holm family. Credit rule: band
+re-encoding ← A0; chaotic initialisation ← A1; archive-based leader ← A2a, A2b or A5_A1; Q-learning control ← A3; consensus output
+← A4 (Q2) or H4 (i). A component is credited only if at least one of its tests is significant after Holm; otherwise the paper states
+that it had no measurable effect. Every DE baseline also uses band re-encoding and midpoint bound handling, so the effect of
+band re-encoding is credited only through A0. A5_A30 is descriptive. Two-sided CIs are reported for every difference, so a removal
+that improves a quantity is visible.
 
 ## 8. Reading rules and negative results
 
@@ -306,6 +320,8 @@ every difference, so a removal that improves a quantity is visible.
   chosen after results are seen.
 - "Novel", "superior" and "significantly" appear only next to the number and the test that support them; "state of the art" is not
   used.
+- C is chosen by log-loss because log-loss is the endpoint; this protocol decision was taken before any run, and the paper does not
+  present B-LL as an improvement of the results.
 - B7 results are reported in a separate table: per included dataset, the secondary comparisons of H3 (each baseline, Holm within
   baselines) and AUPRC from the saved outer-test scores. They are not pooled with the GPL570 cohorts and do not enter H1–H5.
 
@@ -317,8 +333,8 @@ every difference, so a removal that improves a quantity is visible.
   The mean leader overlap at t = 1 of MPQDA-DE is recorded; a value below 0.2 is reported before any other run.
 - G-T1 passes when GA and BPSO in AUROC mode reproduce the survey panels (`vendor/reference/`) exactly, with identical best fitness
   and N_eval: first on GSE10245, repeat 0, k ∈ {5, 10, 50} (session S0), then on every GA and BPSO unit of T1b.
-- GO/NO-GO at 12:00 ICT on 18 November 2026: GO when T0 passed, G-T1 passed on all of T1b, T1 and T1b with their phase B are
-  complete for the three GPL570 cohorts, T2 and T3 are complete, and every `config.json` has `traceable = true` at a pushed commit.
+- GO/NO-GO at 12:00 ICT on 18 November 2026: GO when T0 passed, G-T1 passed on all of T1b, T1 and T1b with both phase B variants
+  (B-LL and B-AUC) are complete for the three GPL570 cohorts, T2 and T3 are complete, and every `config.json` has `traceable = true` at a pushed commit.
   NO-GO moves the submission to the third round (deadline 2 December 2026 AoE) with the same design. B7 is not a GO condition.
 - A failed check stops the dependent runs. The fix is a new commit; outputs produced before the fix are discarded and listed in
   Section 12.
@@ -336,8 +352,8 @@ every difference, so a removal that improves a quantity is visible.
 
 | Item | Value |
 |---|---|
-| Python and packages | Python 3.13.15; numpy 2.1.3; pandas 2.3.3; scipy 1.16.3; scikit-learn 1.6.1; joblib 1.6.0; threadpoolctl 3.6.0; abess 0.4.11; skrebate 0.8.4 (survey `requirements-kaggle.txt`) |
-| `pip freeze` of the run sessions | [TO FILL: MD5 of `logs/pip_freeze_<job>.txt`] |
+| Python and packages | The Kaggle image of session S0, listed in `logs/S0/pip_freeze_session.txt` with its MD5 [TO FILL: MD5]. numpy, scipy, pandas and scikit-learn of the image are not overwritten; only skrebate 0.8.4 and abess 0.4.11 are installed (`--no-deps`). Packages that differ from the survey `vendor/requirements-kaggle.txt`: [TO FILL: list printed by GATE2]. This difference is not a deviation; G-T1 in S0 is the equivalence check with the survey environment (TQĐ16) |
+| Same environment in every session | S1–S3 start only if the MD5 of their `pip freeze` equals that of S0 (GATE2). If G-T1 fails because of package versions, `PIN_SURVEY_ENV = True` installs `vendor/requirements-kaggle.txt`, S0 is re-run, and every later session uses the same flag |
 | Machine | Kaggle CPU sessions, 4 vCPU; BLAS limited to one thread |
 | Parallel sessions | [TO FILL: number available on the account] |
 | Tags | `taimma-2027-prereg` (this registration); `taimma-2027-submission` (code and results cited in the paper) |

@@ -1,7 +1,10 @@
 """Bảng, hình, kiểm định và sổ số liệu của bài TAIMMA (Mục 4.5; PREREG Mục 7).
 
-    python scripts/make_taimma_tables.py --results <thư mục chứa T1, T1b, T2, T3_s1..4, T5/...> --out tables
+    python scripts/make_taimma_tables.py --results <thư mục chứa T1, T1b, T2, T3_s1..4, T5LL/..., T5/...> --out tables
 
+Pha B (TQĐ11): mọi bảng chính, H3, H4 (qua H3), H5 (Q2), phép thử phụ và Friedman đọc B-LL (`T5LL/`). Bảng độ nhạy
+`*_bauc` đọc pha B của survey (`T5/`), nhãn trong claims.csv có hậu tố `_BAUC`. `table_s_c_choice` ghi tỉ lệ panel nhận
+từng giá trị C dưới hai pha B. Cột `phase_b` của claims.csv ghi pha của từng số (B-LL, B-AUC hoặc phase A).
 Đầu vào là các thư mục kết quả đã giải nén (cấu trúc của results/survey_v2/taimma/). SHA-256 của mọi tệp đầu vào ghi vào
 `inputs_sha256.csv`. Mọi phép thống kê dùng `survey_v2.stats` (nadeau_bengio_ttest, holm, bayesian_correlated_ttest),
 `survey_v2.stability.nogueira`, `scipy.stats.wilcoxon`, `scipy.stats.friedmanchisquare`; công thức gộp ba cohort là
@@ -38,11 +41,14 @@ PRIMARY_K = (5, 10)
 BASELINE_ORDER = ("ga", "bpso", "de_rand1", "shade", "qlde", "jde", "jade")
 NEMENYI_Q05 = {6: 2.850, 8: 3.031}             # Demšar (2006), alpha = 0,05
 N_GENES_DEFAULT = 16479
-H5_VARIANTS = ("mpqda_a1_uniform", "mpqda_a2a_bestleader", "mpqda_a2b_randleader", "mpqda_a3_fixedF", "mpqda_a5_A1")
-COMPONENT = {"mpqda_a1_uniform": "chaotic initialisation", "mpqda_a2a_bestleader": "archive-based leader",
+H5_VARIANTS = ("mpqda_a0_noband", "mpqda_a1_uniform", "mpqda_a2a_bestleader", "mpqda_a2b_randleader", "mpqda_a3_fixedF",
+               "mpqda_a5_A1")                  # TQĐ14: A0 vào họ Holm chính
+COMPONENT = {"mpqda_a0_noband": "band re-encoding", "mpqda_a1_uniform": "chaotic initialisation", "mpqda_a2a_bestleader": "archive-based leader",
              "mpqda_a2b_randleader": "archive-based leader", "mpqda_a5_A1": "archive-based leader",
              "mpqda_a3_fixedF": "Q-learning control", "A4": "consensus output"}
 FMT = "%.10g"
+PHASE_B_DIRS = {"B-LL": "T5LL", "B-AUC": "T5"}  # pha B -> thư mục kết quả
+PHASE_A = "phase A"
 
 
 # ------------------------------------------------------------------------------------------------- thống kê
@@ -92,8 +98,8 @@ class Inputs:
         frames = [f for f in frames if f is not None]
         return pd.concat(frames, ignore_index=True) if len(frames) == len(cohorts) else None
 
-    def evaluation(self, scenario: str, cohorts=COHORTS) -> pd.DataFrame | None:
-        ev = self.scenario(f"T5/{scenario}", "classification_per_fold.csv", cohorts, encoding="utf-8-sig")
+    def evaluation(self, scenario: str, cohorts=COHORTS, phase_b: str = "B-LL") -> pd.DataFrame | None:
+        ev = self.scenario(f"{PHASE_B_DIRS[phase_b]}/{scenario}", "classification_per_fold.csv", cohorts, encoding="utf-8-sig")
         return None if ev is None else ev[ev.model == "lr_l2"].reset_index(drop=True)
 
 
@@ -245,12 +251,12 @@ def h4(phi: pd.DataFrame, h3_table: pd.DataFrame | None) -> pd.DataFrame:
 def h5(sel1, sel2, ev1, ev2) -> pd.DataFrame:
     """Mỗi biến thể ghép với lần chạy MPQDA-DE đầy đủ của T1. Q1: best_fitness(đầy đủ) − best_fitness(biến thể), Wilcoxon
     một phía trên 45 fold; Q2: log-loss(đầu ra chính của biến thể) − log-loss(đồng thuận đầy đủ), Nadeau–Bengio gộp một phía.
-    Họ Holm chính 33 phép thử; A0 trong họ riêng 6 phép thử; A5_A30 chỉ mô tả."""
+    Một họ Holm 39 phép thử (A0, A1, A2a, A2b, A3, A5_A1 × {Q1, Q2} × 3 k, cộng A4 × Q2 × 3 k; TQĐ14); A5_A30 chỉ mô tả."""
     sel, ev = pd.concat([sel1, sel2], ignore_index=True), pd.concat([ev1, ev2], ignore_index=True)
     rows = []
-    for variant in (*H5_VARIANTS, "A4", "mpqda_a0_noband", "mpqda_a5_A30"):
+    for variant in (*H5_VARIANTS, "A4", "mpqda_a5_A30"):
         other = "mpqda_de" + M.BEST_SUFFIX if variant == "A4" else variant
-        family = "main" if variant in (*H5_VARIANTS, "A4") else ("a0" if variant == "mpqda_a0_noband" else "descriptive")
+        family = "main" if variant in (*H5_VARIANTS, "A4") else "descriptive"
         for k in (2, 5, 10):
             if variant != "A4":
                 d = np.concatenate([paired(sel, "mpqda_de", other, "best_fitness", k, c) for c in COHORTS])
@@ -262,12 +268,26 @@ def h5(sel1, sel2, ev1, ev2) -> pd.DataFrame:
                          "mean_diff": pool["mean"], "ci_low": pool["ci_low"], "ci_high": pool["ci_high"], "p": pooled_p_greater(pool)})
     out = pd.DataFrame(rows)
     out["p_holm"] = np.nan
-    for family in ("main", "a0"):
-        mask = (out.family == family).to_numpy()
-        out.loc[mask, "p_holm"] = holm(out.p.to_numpy()[mask])
+    mask = (out.family == "main").to_numpy()
+    out.loc[mask, "p_holm"] = holm(out.p.to_numpy()[mask])
     out["significant"] = out.p_holm < ALPHA
     out["component"] = out.variant.map(COMPONENT).fillna("")
+    out["phase_b"] = np.where(out.question == "Q2_outer_logloss", "B-LL", PHASE_A)
     return out
+
+
+def c_choice(evs: dict) -> pd.DataFrame:
+    """Tỉ lệ panel nhận từng giá trị C của LR-L2 theo pha B, kịch bản, phương pháp và k (B0, random-k không tính)."""
+    rows = []
+    for (phase_b, scenario), ev in sorted(evs.items()):
+        part = ev[~ev.method.isin(["b0", "random_k"]) & ev["C"].notna()]
+        for (method, k), g in part.groupby(["method", "k"], sort=True):
+            n = len(g)
+            for c in C.C_GRID:
+                hit = int(np.isclose(g["C"].to_numpy(dtype=float), c).sum())
+                rows.append({"phase_b": phase_b, "scenario": scenario, "method": method, "k": int(k), "C": float(c),
+                             "n_panels": n, "n_with_C": hit, "rate": hit / n})
+    return pd.DataFrame(rows, columns=["phase_b", "scenario", "method", "k", "C", "n_panels", "n_with_C", "rate"])
 
 
 # ------------------------------------------------------------------------------------------------- ghi tệp
@@ -353,15 +373,18 @@ def fig_cd(ranks: pd.DataFrame, info: dict, path: Path) -> None:
     plt.close(fig)
 
 
-def claims_rows(tag: str, frame: pd.DataFrame, file: str, columns, keys) -> list[dict]:
-    """Sổ số liệu: mỗi giá trị một dòng (mã số liệu, giá trị, tệp, cột, bộ lọc)."""
+CLAIM_COLUMNS = ["claim_id", "value", "file", "column", "filter", "phase_b"]
+
+
+def claims_rows(tag: str, frame: pd.DataFrame, file: str, columns, keys, phase_b: str) -> list[dict]:
+    """Sổ số liệu: mỗi giá trị một dòng (mã số liệu, giá trị, tệp, cột, bộ lọc, pha B). Bảng có cột phase_b thì lấy theo dòng."""
     rows = []
     for rec in frame.to_dict("records"):
         flt = ";".join(f"{c}={rec[c]}" for c in keys)
         for col in columns:
             v = rec[col]
             rows.append({"claim_id": f"{tag}:{flt}:{col}", "value": FMT % v if isinstance(v, (float, np.floating)) else str(v),
-                         "file": file, "column": col, "filter": flt})
+                         "file": file, "column": col, "filter": flt, "phase_b": rec.get("phase_b", phase_b)})
     return rows
 
 
@@ -370,41 +393,57 @@ def build(results: Path, out: Path) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     inp, claims, done = Inputs(results), [], []
 
-    def emit(name, frame, caption=None, tag=None, columns=(), keys=()):
+    def emit(name, frame, caption=None, tag=None, columns=(), keys=(), phase_b=PHASE_A):
         write_csv(frame, out / f"{name}.csv")
         if caption:
             write_tex(frame, out / f"{name}.tex", caption, f"tab:{name}")
         if tag:
-            claims.extend(claims_rows(tag, frame, f"{name}.csv", columns, keys))
+            claims.extend(claims_rows(tag, frame, f"{name}.csv", columns, keys, phase_b))
         done.append(name)
 
     sel1, sel1b, sel2 = (inp.scenario(s, "selection_per_fold.csv") for s in ("T1", "T1b", "T2"))
     ev1, ev1b, ev2 = (inp.evaluation(s) for s in ("T1", "T1b", "T2"))
+    ev1_bauc = inp.evaluation("T1", phase_b="B-AUC")
     hist1 = inp.scenario("T1", "history.csv")
     h3_table = None
     if sel1b is not None:
         emit("stats_h1_saturation", h1(sel1b), tag="H1", columns=["n_runs", "n_saturated", "rate", "decision"], keys=["cohort"])
     if sel1 is not None and (sel1.method == "de_rand1").any():
         emit("stats_h2_inner_fitness", h2(sel1), tag="H2", columns=["mean_diff", "p", "p_holm", "decision_k"], keys=["k", "cohort"])
-    if ev1 is not None:
-        methods = ["mpqda_de", "mpqda_de" + M.BEST_SUFFIX, *BASELINE_ORDER]
-        emit("table3_main", summary_table(ev1, methods, (2, 5, 10, 50)),
-             "Outer log-loss and AUROC (mean and SD over the outer folds; n = number of folds).", "T3",
-             ["n", "logloss_mean", "logloss_sd", "auroc_mean", "auroc_sd"], ["cohort", "k", "method"])
-        h3_table = h3(ev1)
-        emit("stats_h3_noninferiority", h3_table, tag="H3", keys=["k"],
+    methods = ["mpqda_de", "mpqda_de" + M.BEST_SUFFIX, *BASELINE_ORDER]
+    for ev, suffix, phase_b in ((ev1, "", "B-LL"), (ev1_bauc, "_bauc", "B-AUC")):
+        if ev is None:
+            continue
+        tag_sfx = suffix.upper()
+        caption_sfx = "" if not suffix else " Sensitivity analysis: phase B of the survey (C chosen by the inner AUROC)."
+        emit(f"table3_main{suffix}", summary_table(ev, methods, (2, 5, 10, 50)),
+             "Outer log-loss and AUROC (mean and SD over the outer folds; n = number of folds)." + caption_sfx, f"T3{tag_sfx}",
+             ["n", "logloss_mean", "logloss_sd", "auroc_mean", "auroc_sd"], ["cohort", "k", "method"], phase_b)
+        table = h3(ev)
+        h3_table = table if not suffix else h3_table
+        emit(f"stats_h3_noninferiority{suffix}", table, tag=f"H3{tag_sfx}", keys=["k"], phase_b=phase_b,
              columns=["comparator", "logloss_diff", "logloss_ci_high", "auroc_diff", "p_auroc_below_minus_rope", "h3_holds"])
-        emit("stats_secondary_pairwise", secondary(ev1, (2, 5, 10, 50)))
-        ranks, info = friedman(ev1, (2, 5, 10, 50))
-        emit("stats_friedman_ranks", ranks.assign(**info), tag="FRIEDMAN", columns=["mean_rank", "chi2", "p", "cd"], keys=["method"])
-        fig_cd(ranks, info, out / "fig3_critical_difference.pdf")
-        done.append("fig3_critical_difference.pdf")
+        emit(f"stats_secondary_pairwise{suffix}", secondary(ev, (2, 5, 10, 50)))
+        if not suffix:
+            ranks, info = friedman(ev, (2, 5, 10, 50))
+            emit("stats_friedman_ranks", ranks.assign(**info), tag="FRIEDMAN", columns=["mean_rank", "chi2", "p", "cd"],
+                 keys=["method"], phase_b=phase_b)
+            fig_cd(ranks, info, out / "fig3_critical_difference.pdf")
+            done.append("fig3_critical_difference.pdf")
+    evs = {("B-LL", "T1"): ev1, ("B-AUC", "T1"): ev1_bauc}
+    for phase_b, sub in PHASE_B_DIRS.items():                 # T4 (selector không wrapper) nếu đã có
+        if (results / sub / "T4").is_dir():
+            evs[(phase_b, "T4")] = inp.evaluation("T4", phase_b=phase_b)
+    evs = {key: frame for key, frame in evs.items() if frame is not None}
+    if evs:
+        emit("table_s_c_choice", c_choice(evs), "Share of panels receiving each value of C (LR-L2) under the two phase B rules.",
+             "CCHOICE", ["n_panels", "n_with_C", "rate"], ["phase_b", "scenario", "method", "k", "C"])
     if hist1 is not None:
         fig_anytime(hist1, out / "fig2_anytime.pdf", ["mpqda_de", *BASELINE_ORDER])
         done.append("fig2_anytime.pdf")
     if all(x is not None for x in (sel1, sel2, ev1, ev2)):
         t = h5(sel1, sel2, ev1, ev2)
-        emit("table4_ablation", t, "Ablation: paired differences against the full MPQDA-DE run (Holm within the stated family).",
+        emit("table4_ablation", t, "Ablation: paired differences against the full MPQDA-DE run (one Holm family of 39 tests).",
              "H5", ["mean_diff", "ci_low", "ci_high", "p", "p_holm", "significant"], ["variant", "k", "question"])
     phi = seed_stability(inp)
     if phi is not None and len(phi):
@@ -413,9 +452,9 @@ def build(results: Path, out: Path) -> dict:
              "T5", ["n", "phi_mean", "phi_sd"], ["k", "method"])
         if {"mpqda_de", "mpqda_de" + M.BEST_SUFFIX, "ga", "bpso"} <= set(phi.method):
             emit("stats_h4_stability", h4(phi, h3_table), tag="H4", columns=["mean_diff_minus_margin", "p", "p_holm", "h4_holds"],
-                 keys=["k", "test"])
+                 keys=["k", "test"], phase_b="phase A; h4_holds uses H3 under B-LL")
     write_csv(pd.DataFrame(sorted(inp.used.items()), columns=["file", "sha256"]), out / "inputs_sha256.csv")
-    write_csv(pd.DataFrame(claims, columns=["claim_id", "value", "file", "column", "filter"]), out / "claims.csv")
+    write_csv(pd.DataFrame(claims, columns=CLAIM_COLUMNS), out / "claims.csv")
     (out / "missing_inputs.txt").write_text("".join(m + "\n" for m in sorted(set(inp.missing))), encoding="utf-8", newline="\n")
     return {"written": done, "missing": sorted(set(inp.missing))}
 
@@ -425,7 +464,7 @@ def main(argv=None) -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--results", type=Path, required=True, help="thư mục chứa T1, T1b, T2, T3_s1..4, T5 (đã giải nén)")
+    ap.add_argument("--results", type=Path, required=True, help="thư mục chứa T1, T1b, T2, T3_s1..4, T5LL, T5 (đã giải nén)")
     ap.add_argument("--out", type=Path, default=Path("tables"))
     args = ap.parse_args(argv)
     res = build(args.results, args.out)

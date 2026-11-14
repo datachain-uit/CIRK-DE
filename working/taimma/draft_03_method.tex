@@ -9,7 +9,7 @@
 Let $X\in\mathbb{R}^{n\times p_0}$ and $y\in\{0,1\}^n$ be the training part of one outer fold after a label-free variance
 prefilter that keeps the $p_0=5{,}000$ genes with the largest variance on these samples. Given a budget $k$, the task is to
 find a panel $S\subset\{1,\dots,p_0\}$ with $|S|=k$ that maximises a fitness $f(S)$ computed on $(X,y)$ only. The outer test
-part is never read during the search. A wrapper is given a fixed number of fitness evaluations; we count $N_{\mathrm{eval}}$ as
+part is never read during the search. A wrapper is given a fixed number of fitness evaluations; $N_{\mathrm{eval}}$ denotes
 the number of distinct panels evaluated, since fitness values are cached by panel.
 
 \paragraph{Fitness.} The training part is split once into three stratified inner folds, which stay fixed during the run and
@@ -34,9 +34,10 @@ the indices of the $k$ largest keys, ties going to the smaller index. Every indi
 with exactly $k$ genes, and no size penalty is needed.
 
 \paragraph{Band re-encoding.} The fitness depends only on which keys are among the $k$ largest; the other $p_0-k$ keys are not
-under selection pressure and do not converge. A difference vector $x_{r_1}-x_{r_2}$ then has magnitude of order $F$ in every
-coordinate, far larger than the gaps between the top keys (order $1/p_0$), so a mutant would retain almost nothing of the panel
-of its base vector. We therefore re-encode every vector that enters the population (initial individuals and accepted trials):
+under selection pressure and do not converge. The scaled difference $F(x_{r_1}-x_{r_2})$ then has magnitude of order $F$ in
+every coordinate, far larger than the gaps between the top keys (order $1/p_0$), so a mutant would retain almost nothing of the
+panel of its base vector. Every vector that enters the population (initial individuals and accepted trials) is therefore
+re-encoded:
 \begin{equation}\label{eq:band}
   \mathrm{band}(x)_j=
   \begin{cases}
@@ -44,8 +45,11 @@ of its base vector. We therefore re-encode every vector that enters the populati
     \tfrac12\,\frac{r_j+1/2}{p_0-k}, & j\notin S(x),
   \end{cases}
 \end{equation}
-where $r_j$ is the stable rank of $x_j$ within its group. The panel and the order of keys within each group are unchanged; the
-genes of the panel are separated from the others by a margin that a small scale factor does not cross.
+where $r_j$ is the stable rank of $x_j$ within its group. The panel and the order of keys within each group are unchanged. The
+perturbation needed to remove a gene from the panel grows with its rank within the upper band, so $F$ controls how much of the
+base panel a mutant keeps. Re-encoding random keys without changing the decoded solution has been used to maintain diversity in a
+permutation model-based evolutionary algorithm~\cite{bosman2016}; here the two bands serve a different purpose, namely to let the
+DE mutation transmit the panel of its base vector under top-$k$ decoding.
 
 \paragraph{Bound handling.} A mutant coordinate outside $[0,1]$ is moved half-way towards the bound from the target $x_i$:
 $v_j>1$ becomes $(1+x_{ij})/2$ and $v_j<0$ becomes $x_{ij}/2$, as in JADE and SHADE~\cite{zhang2009,tanabe2013}. Clipping to
@@ -120,9 +124,12 @@ best individual $S_{\mathrm{best}}$ of the same run is reported as ablation A4.
 \paragraph{Implementation.} All random numbers of a generation are drawn before its trials are evaluated, so the trials can be
 evaluated in parallel by worker processes (master--slave model~\cite{alba2002}) with results identical to a serial run. This is
 an implementation detail and not a contribution. With $P=30$ and $T=50$ the cost is dominated by at most 1{,}531 fitness
-evaluations, each fitting three logistic regressions on $k$ genes; the archive and controller add $O(A_{\max}^2k)$ and $O(P)$
-operations per generation.
+evaluations, each fitting three logistic regressions on $k$ genes. Each leader draw and each offer to a full archive recomputes
+the novelty at cost $O(A_{\max}^2k)$, so the archive adds $O(P\,A_{\max}^2k)$ operations per generation and the controller
+$O(P)$.
 
 % TODO khi có kết quả: thêm câu ngắn về thời gian thực đo ở T6 (Mục 5.6), kèm % source.
-% Khoá BibTeX cần có trong Ref.bib: gneiting2007, bean1994, zhang2009, tanabe2013, eiben2015, abeel2010, meinshausen2010, alba2002
-% (DOI ở Bảng 11 và Mục 8 của Review-2026-11-14).
+% Khoá BibTeX cần có trong Ref.bib: gneiting2007, bean1994, zhang2009, tanabe2013, eiben2015, abeel2010, meinshausen2010, alba2002,
+% bosman2016 (doi:10.1145/2908812.2908917) (DOI ở Bảng 11 và Mục 8 của Review-2026-11-14).
+% Sửa ngày 14/11 theo T-Y6 (Review-2026-11-14b): bỏ "we" ở dòng 12 và 39; câu về vector hiệu; câu về khoảng cách giữa hai dải;
+% chi phí archive O(P A_max^2 k) mỗi thế hệ.

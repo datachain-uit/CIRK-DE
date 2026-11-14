@@ -64,6 +64,15 @@ def _phase_a_outputs(sub, datasets, methods, k, n_folds=M.N_OUTER_FOLDS):
     return [(f"{M.RESULT_SUBDIR}/{sub}/{d}", _rows(methods, k, n_folds)) for d in datasets]
 
 
+def _eval(scenario, *extra):
+    """Pha B của một kịch bản: B-LL trước (chính, TQĐ11), rồi pha B của survey (B-AUC, độ nhạy)."""
+    return [[EVAL, "--scenario", scenario, "--phase-b", "ll", *extra], [EVAL, "--scenario", scenario, "--phase-b", "auc", *extra]]
+
+
+def _b_outputs(sub, datasets):
+    return [(f"{M.RESULT_SUBDIR}/{pb}/{sub}/{d}", None) for pb in ("T5LL", "T5") for d in datasets]
+
+
 def build_jobs() -> dict[str, Job]:
     W = ["--workers", "{WORKERS}"]
     t1m, b7 = list(M.t1_methods()), list(M.B7_INCLUDED)
@@ -88,34 +97,35 @@ def build_jobs() -> dict[str, Job]:
              [GATE, "--run-root", "{RESULTS}/" + f"{M.RESULT_SUBDIR}/GT1_s0", "--datasets", "gse10245",
               "--report", "{RESULTS}/" + f"{M.RESULT_SUBDIR}/GT1_s0/gate_gt1.csv"]],
             _phase_a_outputs("GT1_s0", ["gse10245"], ["ga", "bpso"], [5, 10, 50], 5), "0,15"),
-        Job("t1", "S1", "T1 so sánh chính (log-loss) trên ba cohort GPL570, rồi pha B",
-            [_run("T1", "logloss", GPL570, t1m, [2, 5, 10, 50], *W), [EVAL, "--scenario", "T1"]],
-            _phase_a_outputs("T1", GPL570, t1m, [2, 5, 10, 50]) + [(f"{M.RESULT_SUBDIR}/T5/T1/{d}", None) for d in GPL570], "2,6"),
-        Job("t1_b7", "S1", "T1 trên các bộ B7 đã qua cổng G1, G2 (k ∈ {5, 10}), rồi pha B; bỏ qua nếu không bộ nào qua",
-            [_run("T1", "logloss", b7, t1m, [5, 10], *W), [EVAL, "--scenario", "T1_b7"]] if b7 else [],
-            _phase_a_outputs("T1", b7, t1m, [5, 10]) + [(f"{M.RESULT_SUBDIR}/T5/T1/{d}", None) for d in b7], "1,4"),
-        Job("t1b", "S2", "T1b bão hoà (AUROC) chạy đủ, check_gate_gt1 trên toàn bộ, rồi pha B",
+        Job("t1", "S1", "T1 so sánh chính (log-loss) trên ba cohort GPL570, rồi pha B-LL và B-AUC",
+            [_run("T1", "logloss", GPL570, t1m, [2, 5, 10, 50], *W), *_eval("T1")],
+            _phase_a_outputs("T1", GPL570, t1m, [2, 5, 10, 50]) + _b_outputs("T1", GPL570), "3,5"),
+        Job("t1_b7", "S1", "T1 trên các bộ B7 đã qua cổng G1, G2 (k ∈ {5, 10}), rồi pha B-LL và B-AUC; bỏ qua nếu không bộ nào qua",
+            [_run("T1", "logloss", b7, t1m, [5, 10], *W), *_eval("T1_b7")] if b7 else [],
+            _phase_a_outputs("T1", b7, t1m, [5, 10]) + _b_outputs("T1", b7), "1,9"),
+        Job("t1b", "S2", "T1b bão hoà (AUROC) chạy đủ, check_gate_gt1 trên toàn bộ, rồi pha B-LL và B-AUC",
             [_run("T1b", "auroc", GPL570, t1m, [5, 10, 50], *W),
              [GATE, "--run-root", "{RESULTS}/" + f"{M.RESULT_SUBDIR}/T1b", "--report", "{RESULTS}/" + f"{M.RESULT_SUBDIR}/T1b/gate_gt1.csv"],
-             [EVAL, "--scenario", "T1b"]],
-            _phase_a_outputs("T1b", GPL570, t1m, [5, 10, 50]) + [(f"{M.RESULT_SUBDIR}/T5/T1b/{d}", None) for d in GPL570], "2,3"),
-        Job("t4", "S2", "T4 tham chiếu không wrapper (sáu selector) và pha B kèm B0, random-k",
-            [[EVAL, "--scenario", "T4"]],
-            [(f"{M.RESULT_SUBDIR}/{sub}/{d}", None) for sub in ("T4", "T5/T4") for d in [*GPL570, *b7]], "0,5"),
+             *_eval("T1b")],
+            _phase_a_outputs("T1b", GPL570, t1m, [5, 10, 50]) + _b_outputs("T1b", GPL570), "3,0"),
+        Job("t4", "S2", "T4 tham chiếu không wrapper (sáu selector) một lần, rồi pha B-LL và B-AUC kèm B0, random-k",
+            [[EVAL, "--scenario", "T4", "--phase-b", "ll"], [EVAL, "--scenario", "T4", "--phase-b", "auc", "--no-phase-a"]],
+            [(f"{M.RESULT_SUBDIR}/T4/{d}", None) for d in [*GPL570, *b7]] + _b_outputs("T4", [*GPL570, *b7]), "1,5"),
         Job("t6", "S2", "T6 chi phí: GSE37745, lần lặp 0, fold 0–4, k = 10, MPQDA-DE với n_jobs_eval 1 và 4; chạy một mình, cuối phiên",
             [_run("T6", "logloss", ["gse37745"], ["mpqda_de"], [10], "--workers", "1", "--n-jobs-eval", n,
                   out=f"{M.RESULT_SUBDIR}/T6_j{n}", repeats=("0",)) for n in ("1", "4")],
             [(f"{M.RESULT_SUBDIR}/T6_j{n}/gse37745", _rows(["mpqda_de"], [10], 5)) for n in ("1", "4")], "0,2"),
-        Job("t2", "S3", "T2 ablation: bảy biến thể, k ∈ {2, 5, 10}, ba cohort GPL570, rồi pha B",
-            [_run("T2", "logloss", GPL570, variants, [2, 5, 10], *W), [EVAL, "--scenario", "T2"]],
-            _phase_a_outputs("T2", GPL570, variants, [2, 5, 10]) + [(f"{M.RESULT_SUBDIR}/T5/T2/{d}", None) for d in GPL570], "1,5"),
-        Job("t3", "S3", "T3 ổn định theo seed: GSE37745, s = 1..4, sáu phương pháp mức 1 của T1, k ∈ {5, 10}, rồi pha B",
+        Job("t2", "S3", "T2 ablation: bảy biến thể, k ∈ {2, 5, 10}, ba cohort GPL570, rồi pha B-LL và B-AUC",
+            [_run("T2", "logloss", GPL570, variants, [2, 5, 10], *W), *_eval("T2")],
+            _phase_a_outputs("T2", GPL570, variants, [2, 5, 10]) + _b_outputs("T2", GPL570), "1,6"),
+        Job("t3", "S3", "T3 ổn định theo seed: GSE37745, s = 1..4, MPQDA-DE và năm baseline mức 1, k ∈ {5, 10}, rồi pha B-LL "
+            "và B-AUC",
             [step for s in (1, 2, 3, 4) for step in (
                 _run(f"T3_s{s}", "logloss", ["gse37745"], ["mpqda_de", *M.TIER1], [5, 10], "--seed-index", str(s), *W),
-                [EVAL, "--scenario", f"T3_s{s}"])],
+                *_eval(f"T3_s{s}"))],
             [out for s in (1, 2, 3, 4) for out in (
                 (f"{M.RESULT_SUBDIR}/T3_s{s}/gse37745", _rows(["mpqda_de", *M.TIER1], [5, 10])),
-                (f"{M.RESULT_SUBDIR}/T5/T3_s{s}/gse37745", None))], "1,5"),
+                *_b_outputs(f"T3_s{s}", ["gse37745"]))], "1,6"),
     ]
     return {j.name: j for j in jobs}
 
@@ -139,6 +149,18 @@ def results_root() -> Path:
 def render(argv, workers: int = 4) -> list[str]:
     res = results_root().as_posix() if os.environ.get("KLTN_DATA_ROOT") else "$KLTN_DATA_ROOT/results/survey_v2"
     return [a.replace("{RESULTS}", res).replace("{WORKERS}", str(workers)) for a in argv]
+
+
+def pip_freeze_md5() -> str | None:
+    """MD5 của `python -m pip freeze`, cùng cách tính với GATE2 của notebook (TQĐ16)."""
+    import hashlib
+    try:
+        txt = subprocess.run([sys.executable, "-m", "pip", "freeze"], capture_output=True, text=True, timeout=180,
+                             check=True).stdout
+    except Exception as exc:  # noqa: BLE001
+        print(f"[pip freeze] không tính được MD5: {exc}", flush=True)
+        return None
+    return hashlib.md5(txt.encode("utf-8")).hexdigest()
 
 
 def write_pip_freeze(job: Job, log_dir: Path) -> Path | None:
@@ -230,6 +252,8 @@ def check_t0(root: Path | None = None) -> tuple[list[str], dict]:
 
 def cmd_check_t0() -> int:
     problems, info = check_t0()
+    info["pip_freeze_md5"] = pip_freeze_md5()
+    print(f"PIP_FREEZE_MD5 {info['pip_freeze_md5']}")
     out = results_root() / M.RESULT_SUBDIR / "T0_report.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"passed": not problems, "problems": problems, **info}, ensure_ascii=False, indent=2) + "\n",

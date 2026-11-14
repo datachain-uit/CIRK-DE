@@ -57,8 +57,8 @@ QLDE = {
     "policy": "greedy", "tie_break": "lowest_index",
 }
 
-# Quyết định trước khi đăng ký PREREG (Mục 3.8, PREREG Mục 4): chạy mức 2 (jDE, JADE) hay không. False = không chạy.
-RUN_TIER2 = False
+# Chạy mức 2 (jDE, JADE) trong T1, T1b: True theo TQĐ13 (Review-2026-11-14b). T3 giữ mức 1.
+RUN_TIER2 = True
 # Bộ B7 đã qua cả hai cổng G1, G2 của survey (TQĐ3); điền sau bàn giao B7 bước 1, kèm SHA-256 ở EXPECTED_SPLIT_SHA256.
 B7_INCLUDED = ()
 N_OUTER_FOLDS = 15                              # 3 lần lặp × 5 fold
@@ -66,7 +66,8 @@ N_OUTER_FOLDS = 15                              # 3 lần lặp × 5 fold
 RESULT_SUBDIR = "taimma"                        # $KLTN_DATA_ROOT/results/survey_v2/taimma/<kịch bản>/<cohort>/
 ENV_SMOKE = "MPQDA_SMOKE"                       # chỉ cho smoke test trên dữ liệu giả; config.json ghi smoke = true, traceable = false
 
-# Lựa chọn cài đặt mà đặc tả chưa nêu (quy tắc chung 5); ghi vào config.json của mọi lần chạy để giảng viên duyệt.
+# Lựa chọn cài đặt mà đặc tả chưa nêu (quy tắc chung 5); ghi vào config.json của mọi lần chạy. Cả 13 mục đã được duyệt
+# (TQĐ12 cho bốn mục qlDE, TQĐ15 cho mọi mục; Review-2026-11-14b). Giữ τ = 1; không chỉnh sau khi xem kết quả.
 CHOICES_TO_CONFIRM = (
     "selection_time_s và cpu_time_s đo cho từng (phương pháp, k), không gộp mọi k của một đơn vị như survey; "
     "cpu_time_s chỉ tính tiến trình chính (không gồm tiến trình con khi n_jobs_eval > 1)",

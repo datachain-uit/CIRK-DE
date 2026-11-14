@@ -4,8 +4,10 @@ Nguồn: Huynh TN, Do DTT, Lee J (2021) Q-learning-based parameter control in di
 optimization. Applied Soft Computing 107:107464. doi:10.1016/j.asoc.2021.107464
 
 **Trạng thái: đã điền từ toàn văn ngày 14/11/2026** (bản PDF của nhà xuất bản, 14 trang). Cấu hình nằm ở
-`mpqda.config.QLDE`; cài đặt là `mpqda.baselines.run_qlde`. Bốn chỗ bài gốc để ngỏ hoặc tự mâu thuẫn (Mục 3 dưới đây) chờ
-giảng viên duyệt và đã ghi vào `CHOICES_TO_CONFIRM`.
+`mpqda.config.QLDE`; cài đặt là `mpqda.baselines.run_qlde`. Bốn chỗ bài gốc để ngỏ hoặc tự mâu thuẫn (Mục 3 dưới đây) đã ghi
+vào `CHOICES_TO_CONFIRM` và **được giảng viên chấp nhận cả bốn** (TQĐ12, Review-2026-11-14b): một trạng thái; α theo Eq. (7) và
+γ = 0,8 theo Mục 3.1; phá hoà bằng chỉ số nhỏ nhất; một tổ hợp (F, CR) cho cả quần thể mỗi thế hệ. Mục 4 của bài nêu hai chỗ bài
+gốc để ngỏ (trạng thái, cách phá hoà).
 
 ## 1. Cấu hình của bài gốc
 

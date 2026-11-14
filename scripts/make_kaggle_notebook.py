@@ -32,8 +32,11 @@ Notebook chỉ chọn **phiên** và gọi `scripts/taimma_jobs.py`: lệnh, đ�
 
 Mỗi phiên (Save Version → Save & Run All):
 1. Add Input: **experiment-data-v3** (bản 29/10 sau QC của survey). Phiên S1, S2, S3 gắn thêm output của S0
-   (`S0_results.zip`) và đặt đường dẫn vào `S0_RESULTS`: notebook dừng nếu T0 hoặc G-T1 chưa đạt.
+   (`S0_results.zip`) và đặt đường dẫn vào `S0_RESULTS`: notebook dừng nếu T0 hoặc G-T1 chưa đạt, hoặc nếu MD5 của
+   `pip freeze` khác của S0 (TQĐ16). Khi `mpqda.config.B7_INCLUDED` khác rỗng, gắn thêm Input chứa `experiment-data-b7`
+   (output B7 bước 1 của survey) và đặt `INPUT_B7_DATASET`.
 2. Sửa ô cấu hình: `SESSION`, `REPO_COMMIT` (cùng một commit đã push cho mọi phiên, sau tag `taimma-2027-prereg`).
+   `PIN_SURVEY_ENV` giữ False; chỉ bật khi G-T1 trượt vì phiên bản gói, và khi đó bật cho mọi phiên (TQĐ16).
 3. Kết quả: `/kaggle/working/<SESSION>_results.zip` kèm `<SESSION>_results.zip.sha256`, gồm `results/survey_v2/taimma/`,
    log pytest, log lệnh và `pip freeze`.
 
@@ -48,6 +51,8 @@ import hashlib, json, os, shutil, subprocess, sys, time, zipfile
 SESSION = 'S0'                 # S0 | S1 | S2 | S3
 INPUT_V3_DATASET = Path('/kaggle/input/experiment-data-v3')   # sửa theo slug Kaggle Input
 S0_RESULTS = None              # S1–S3: đường dẫn tới S0_results.zip (hoặc thư mục đã giải nén) của phiên S0
+INPUT_B7_DATASET = None        # Input chứa experiment-data-b7/<bộ>/ khi B7_INCLUDED khác rỗng (T-Y5)
+PIN_SURVEY_ENV = False         # TQĐ16: True = cài đúng vendor/requirements-kaggle.txt; chỉ bật khi G-T1 trượt vì gói
 REPO_URL = 'https://github.com/datachain-uit/MPQDA-DE.git'
 REPO_BRANCH = 'taimma-2027'
 REPO_COMMIT = None             # vd. 'b446e03' — ghim một commit đã push cho mọi phiên; None = đầu nhánh (chỉ khi thử)
@@ -76,7 +81,8 @@ print('INPUT_OK')
 """
 
 GATE2 = """
-# Gate 2 — clone đúng commit đã push; cài phần thiếu theo vendor/requirements-kaggle.txt (không nâng numpy, scipy của ảnh Kaggle).
+# Gate 2 — clone đúng commit đã push; cài phần thiếu (skrebate, abess) mà không cài đè numpy, scipy, pandas, scikit-learn
+# của ảnh Kaggle, trừ khi PIN_SURVEY_ENV (TQĐ16). Ghi pip freeze và MD5; S1–S3 dừng nếu MD5 khác của S0.
 if REPO_DIR.exists(): shutil.rmtree(REPO_DIR)
 subprocess.run(['git', 'clone', '--branch', REPO_BRANCH, REPO_URL, str(REPO_DIR)], check=True)
 if REPO_COMMIT:
@@ -84,6 +90,9 @@ if REPO_COMMIT:
 commit_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPO_DIR, text=True).strip()
 pushed = subprocess.run(['git', 'branch', '-r', '--contains', 'HEAD'], cwd=REPO_DIR, capture_output=True, text=True).stdout.strip()
 assert pushed, f'{commit_hash} không có trên remote — kết quả sẽ không truy vết được'
+if PIN_SURVEY_ENV:
+    subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', '-r', str(REPO_DIR / 'vendor' / 'requirements-kaggle.txt')],
+                   check=True)
 for pkg in ('skrebate==0.8.4', 'abess==0.4.11'):
     subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', '--no-deps', pkg], check=False)
 from importlib import metadata
@@ -97,8 +106,27 @@ for name, ver in want.items():
         have = None
     if have != ver:
         mismatch[name] = [have, ver]
-print('PYTHON', sys.version.split()[0], '| COMMIT', commit_hash)
+print('PYTHON', sys.version.split()[0], '| COMMIT', commit_hash, '| PIN_SURVEY_ENV', PIN_SURVEY_ENV)
 print('Lệch so với requirements-kaggle.txt (có, cần):', mismatch or '—')
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+freeze = subprocess.run([sys.executable, '-m', 'pip', 'freeze'], capture_output=True, text=True, check=True).stdout
+freeze_md5 = hashlib.md5(freeze.encode('utf-8')).hexdigest()
+(LOG_DIR / 'pip_freeze_session.txt').write_text(freeze, encoding='utf-8')
+print('PIP_FREEZE_MD5', freeze_md5)
+s0_dir = None
+if SESSION != 'S0':
+    assert S0_RESULTS, 'S1–S3 chỉ mở sau khi S0 đạt: đặt S0_RESULTS'
+    s0_dir = Path(S0_RESULTS)
+    if s0_dir.suffix == '.zip':
+        tmp = Path('/kaggle/working/_s0')
+        with zipfile.ZipFile(s0_dir) as zf: zf.extractall(tmp)
+        s0_dir = tmp
+    s0_freeze = next(iter(s0_dir.rglob('S0/pip_freeze_session.txt')), None)
+    assert s0_freeze is not None, f'Không thấy logs/S0/pip_freeze_session.txt trong {S0_RESULTS}'
+    s0_md5 = hashlib.md5(s0_freeze.read_text(encoding='utf-8').encode('utf-8')).hexdigest()
+    assert s0_md5 == freeze_md5, (f'Môi trường khác S0 (MD5 {freeze_md5} khác {s0_md5}); không chạy tiếp. '
+                                  'Dùng cùng ảnh Kaggle và cùng PIN_SURVEY_ENV như S0 (TQĐ16).')
+    print('ENV_SAME_AS_S0', s0_md5)
 """
 
 GATE3 = """
@@ -107,24 +135,31 @@ WORK_ROOT.mkdir(parents=True, exist_ok=True)
 for folder in ('experiment-data-perm', 'experiment-data-geo-target'):
     link = WORK_ROOT / folder
     if not link.exists(): link.symlink_to(INPUT_V3_DATASET / folder, target_is_directory=True)
+b7 = json.loads(subprocess.check_output([sys.executable, '-c', 'import json; from mpqda import config as M; '
+                                         'print(json.dumps(list(M.B7_INCLUDED)))'], cwd=REPO_DIR, text=True))
+if b7:                                                     # T-Y5: chỉ khi có bộ B7 đã qua G1, G2
+    assert INPUT_B7_DATASET, f'B7_INCLUDED = {b7}: đặt INPUT_B7_DATASET'
+    b7_src = Path(INPUT_B7_DATASET)
+    b7_src = b7_src if b7_src.name == 'experiment-data-b7' else b7_src / 'experiment-data-b7'
+    for name in b7:
+        for f in ('expression.h5', 'metadata.csv', 'repeated_splits.csv'):
+            assert (b7_src / name / f).is_file(), f'Thiếu experiment-data-b7/{name}/{f}'
+    link = WORK_ROOT / 'experiment-data-b7'
+    if not link.exists(): link.symlink_to(b7_src, target_is_directory=True)
+print('B7_INCLUDED', b7 or '—')
 os.environ.update({'KLTN_DATA_ROOT': str(WORK_ROOT), 'KLTN_STRICT_N': '1', 'KLTN_LOG_DIR': str(LOG_DIR), 'PYTHONUTF8': '1',
                    'OMP_NUM_THREADS': '1', 'OPENBLAS_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1'})
 for flag in ('KLTN_ALLOW_UNPUSHED', 'KLTN_ALLOW_UNTRACKED', 'MPQDA_SMOKE'):
     os.environ.pop(flag, None)
 if SESSION != 'S0':
-    assert S0_RESULTS, 'S1–S3 chỉ mở sau khi S0 đạt: đặt S0_RESULTS'
-    src = Path(S0_RESULTS)
-    if src.suffix == '.zip':
-        tmp = Path('/kaggle/working/_s0')
-        with zipfile.ZipFile(src) as zf: zf.extractall(tmp)
-        src = tmp
-    taimma = next((p for p in src.rglob('taimma') if p.is_dir()), None)
+    taimma = next((p for p in s0_dir.rglob('taimma') if p.is_dir()), None)
     assert taimma is not None, f'Không thấy results/survey_v2/taimma trong {S0_RESULTS}'
     t0 = json.loads((taimma / 'T0_report.json').read_text(encoding='utf-8'))
     gate = (taimma / 'GT1_s0' / 'gate_gt1.csv').read_text(encoding='utf-8').strip().splitlines()
     assert t0['passed'], f"T0 chưa đạt: {t0['problems']}"
     assert len(gate) <= 1, f'G-T1 chưa đạt: {len(gate) - 1} dòng lệch'
     assert not t0.get('leader_overlap_report_now'), 'leader_overlap ở t = 1 dưới 0,2: báo GVHD trước khi chạy tiếp'
+    assert t0.get('pip_freeze_md5') == freeze_md5, f"MD5 pip freeze của T0_report.json ({t0.get('pip_freeze_md5')}) khác phiên này"
     print('S0_OK', {k: t0[k] for k in ('shuffle_mean_outer_auroc', 'leader_overlap_t1_gse10245')})
 subprocess.run([sys.executable, 'scripts/taimma_jobs.py', 'plan'], cwd=REPO_DIR, check=True)
 """
@@ -158,7 +193,7 @@ subprocess.run([sys.executable, 'scripts/taimma_jobs.py', 'status'], cwd=REPO_DI
 SAVE = """
 # Lưu output: results/ + logs + run_info -> /kaggle/working/<SESSION>_results.zip kèm SHA-256.
 info = {'session': SESSION, 'jobs': SESSIONS[SESSION], 'exit_codes': codes, 'commit_hash': commit_hash,
-        'package_mismatch': mismatch, 'hours': round((time.time() - T0) / 3600, 2),
+        'package_mismatch': mismatch, 'pip_freeze_md5': freeze_md5, 'pin_survey_env': PIN_SURVEY_ENV, 'hours': round((time.time() - T0) / 3600, 2),
         'finished_at': time.strftime('%Y-%m-%d %H:%M:%S %Z')}
 res = WORK_ROOT / 'results'
 res.mkdir(exist_ok=True)
