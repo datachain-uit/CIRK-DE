@@ -14,8 +14,7 @@
 Sections 1–11 do not change after registration. Any later change is a deviation: it is logged in Section 12 with its date, the
 reason, and whether any output of T1–T5 had been seen.
 
-To fill before registration: the fields above; Section 2 (B7 rows and gate outcomes, or their exclusion under TQĐ17);
-Section 11 (environment of S0, parallel sessions); Section 12 (registration row). Delete this paragraph at registration.
+To fill before registration: the fields above; Section 11 (environment of S0, parallel sessions); Section 12 (registration row). Delete this paragraph at registration.
 
 ## 1. Purpose and scope
 
@@ -53,11 +52,13 @@ that passed the survey gates (Section 2). No claim is made beyond these data and
 | `gse10245` | main | GPL570 | 55 (37 / 18) | 16,479 | fixed |
 | `gse30219` | main | GPL570 | 141 (81 / 60) | 16,479 | fixed |
 | `gse37745` | main; T0 shuffled labels; T3 | GPL570 | 169 (104 / 65) | 16,479 | fixed |
-| `tcga_luad_egfr` | B7 | RNA-seq, log2(TPM + 1) | [TO FILL] (wild type / mutant; 435 / 58 expected) | [TO FILL] | [TO FILL: included / excluded] |
-| `gse31210_egfr` | B7 | GPL570 | [TO FILL after QC] (negative / positive; 99 / 127 before QC) | [TO FILL] | [TO FILL: included / excluded] |
+| `tcga_luad_egfr` | B7 (EGFR mutation in LUAD) | RNA-seq, log2(TPM + 1) | 493 (435 / 58; wild type / mutant) | 19,938 | included (passed G1 and G2) |
+| `gse31210_egfr` | B7 (EGFR mutation in LUAD) | GPL570 | 224 (98 / 126; negative / positive; 2 samples removed by the survey QC from 99 / 127) | 16,479 | included (passed G1 and G2) |
 
 SHA-256 of the input files. GPL570 values come from the provenance of the survey's wrapper runs (commit `9b2d6a5`, Kaggle input
-`lfreedom2750/experiment-data-v3`); the runner stops if `repeated_splits.csv` differs.
+`lfreedom2750/experiment-data-v3`); B7 values come from the hand-over of survey B7 step 1 (commit `c1828d2`, Kaggle session of
+13 November 2026, `b7_step1_results.zip` SHA-256 `3febfbc23d377804f96a25bef35db29da4e28b0683c6a60ded2777acf0b28ee9`, folder
+`B7_data/experiment-data-b7/`). The runner stops if `repeated_splits.csv` differs.
 
 | Dataset | File | SHA-256 |
 |---|---|---|
@@ -70,18 +71,23 @@ SHA-256 of the input files. GPL570 values come from the provenance of the survey
 | gse37745 | expression.h5 | `f5dcaf11d7f36defc37ad67cf47da30b2f85823e3360fef2f8f4d0ab96a34ec7` |
 | gse37745 | metadata.csv | `568b557e43c09daee94f8959f0144db642064502d73cb6493e8f5ff77c031328` |
 | gse37745 | repeated_splits.csv | `18dc9577a10b86f9dec236cefad6beac48fb43db4c9d1383fed547b80712fd20` |
-| tcga_luad_egfr | expression.h5, metadata.csv, repeated_splits.csv | [TO FILL] |
-| gse31210_egfr | expression.h5, metadata.csv, repeated_splits.csv | [TO FILL] |
+| tcga_luad_egfr | expression.h5 | `f688eb7b5c6785933915f5572b1a8143780953f0e36f4b1f3048a7f53176960d` |
+| tcga_luad_egfr | metadata.csv | `63ca7cade4d45b2ca64dae7e97dbc635d0b0b6101aa1dec09761ed8c13ebbdc5` |
+| tcga_luad_egfr | repeated_splits.csv | `6302d7f2e752fc80e7fa2b6675ed5451efddf53b82ba35323fa12c0475d6a7f6` |
+| gse31210_egfr | expression.h5 | `6d2a9fbfc65194d2acb7b3b520006a54af244eec2f1fe06255d5e03a81019d0e` |
+| gse31210_egfr | metadata.csv | `2679de2dc105205b880e30de5c537b81dc8585bd24c3427e54dc4ee330514b00` |
+| gse31210_egfr | repeated_splits.csv | `91ff5e92e75eff26159bcba1310abb787b4b2c536e460c0faac4913ddc5dfa05` |
 
 B7 gates (from survey B7 step 1; the survey's TP53 fallback is not used here). A B7 dataset is included only if it passed both
 survey gates before registration; otherwise it is excluded from this study, and the exclusion is not a deviation. If no gate result
-is available at 08:00 ICT on 16 November 2026, both B7 datasets are excluded (TQĐ17).
-
+is available at 08:00 ICT on 16 November 2026, both B7 datasets are excluded (TQĐ17). Gate results below are copied from
+`B7_gate/b7_gate_table.csv` of the hand-over (200 permutations; 25 folds; 100 random-k draws per fold); every `config.json` of
+the hand-over has `traceable = true` at survey commit `c1828d2`.
 
 | Dataset | G1: permutation p of E0 (≤ 0.05) | G2: mean AUROC(B0) − mean AUROC(random-k, k = 10) over 25 folds (≥ 0.05) | Decision |
 |---|---|---|---|
-| tcga_luad_egfr | [TO FILL] | [TO FILL] | [TO FILL] |
-| gse31210_egfr | [TO FILL] | [TO FILL] | [TO FILL] |
+| tcga_luad_egfr | p = 0.0050 (pass) | 0.934 − 0.744 = 0.190 (pass) | included |
+| gse31210_egfr | p = 0.0050 (pass) | 0.888 − 0.655 = 0.234 (pass) | included |
 
 Splits: the survey's patient-level stratified repeated 5-fold CV (split seeds 42–46). This study uses repeats 0, 1, 2 (split seeds
 42, 43, 44), that is 15 outer folds per dataset, identical for every method.

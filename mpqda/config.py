@@ -42,7 +42,10 @@ EXPECTED_SPLIT_SHA256 = {   # runner dừng nếu repeated_splits.csv khác (ngu
     "gse10245": "823637702262a5fea795a52e9d2972f7857d9b75156d0667b1f7cac769496d5e",
     "gse30219": "de92722bd27a853fef77abe4fda22bcd64886ef2724c298ac386b0bfd9b979bc",
     "gse37745": "18dc9577a10b86f9dec236cefad6beac48fb43db4c9d1383fed547b80712fd20",
-    # "tcga_luad_egfr", "gse31210_egfr": điền từ bàn giao B7 bước 1
+    # B7 (TQĐ17): bàn giao B7 bước 1 của survey, commit c1828d2, phiên Kaggle 13/11/2026 (b7_step1_results.zip,
+    # SHA-256 3febfbc23d377804f96a25bef35db29da4e28b0683c6a60ded2777acf0b28ee9); cả hai bộ qua G1 và G2.
+    "tcga_luad_egfr": "6302d7f2e752fc80e7fa2b6675ed5451efddf53b82ba35323fa12c0475d6a7f6",
+    "gse31210_egfr": "91ff5e92e75eff26159bcba1310abb787b4b2c536e460c0faac4913ddc5dfa05",
 }
 
 # qlDE (Đ6): trích từ toàn văn Huynh, Do và Lee (2021), Applied Soft Computing 107:107464; số mục, phương trình và các chỗ
@@ -59,8 +62,8 @@ QLDE = {
 
 # Chạy mức 2 (jDE, JADE) trong T1, T1b: True theo TQĐ13 (Review-2026-11-14b). T3 giữ mức 1.
 RUN_TIER2 = True
-# Bộ B7 đã qua cả hai cổng G1, G2 của survey (TQĐ3); điền sau bàn giao B7 bước 1, kèm SHA-256 ở EXPECTED_SPLIT_SHA256.
-B7_INCLUDED = ()
+# Bộ B7 đã qua cả hai cổng G1, G2 của survey (TQĐ3, TQĐ17): B7_gate/b7_gate_table.csv của bàn giao B7 bước 1.
+B7_INCLUDED = ("tcga_luad_egfr", "gse31210_egfr")
 N_OUTER_FOLDS = 15                              # 3 lần lặp × 5 fold
 
 RESULT_SUBDIR = "taimma"                        # $KLTN_DATA_ROOT/results/survey_v2/taimma/<kịch bản>/<cohort>/
