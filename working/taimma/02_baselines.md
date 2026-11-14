@@ -39,26 +39,30 @@ Chung cho họ DE: sửa biên trung điểm theo cá thể đích, lai ghép nh
 L1-LR, stability selection, F-test, mRMR, SVM-RFE, abess (mã survey nguyên trạng), B0 (LR-L2 trên mọi gen) và random-k (100 panel
 ngẫu nhiên mỗi fold trong phần lọc sơ bộ).
 
-## Kiểm tra tính mới (tra cứu ngày 14/11/2026)
+## Kiểm tra tính mới (tra cứu ngày 14/11/2026, hai lượt)
 
-Phạm vi: tìm kiếm web (Google Scholar không được dùng) và đọc toàn văn hai bài; **chưa phải tổng quan có hệ thống**. "Không
-tìm thấy" dưới đây chỉ có nghĩa là các lượt tra này không thấy, không phải bằng chứng rằng chưa ai làm. Trước khi viết Mục 1
-và Mục 2 của bài, cần tra thêm trên Scopus hoặc Google Scholar với các cụm từ ở cột cuối.
+Phạm vi: lượt 1 là tìm kiếm web; lượt 2 tra OpenAlex và Semantic Scholar (API mở). Google Scholar chặn truy cập tự động
+(HTTP 429, trang "unusual traffic") nên chưa tra được. Đã đọc toàn văn qlDE, QDEHHO và các mục 3.3–3.4 của Bosman et al.
+(2016); các bài khác mới đọc tóm tắt. **Chưa phải tổng quan có hệ thống.** "Chưa thấy" chỉ có nghĩa là các lượt tra này không
+thấy. Trước khi viết Mục 1–2 vẫn nên tra lại trên Google Scholar hoặc Scopus từ máy của người viết.
 
-| Điểm của MPQDA-DE | Công trình gần nhất đã thấy | Khác ở đâu | Kết luận tạm | Tra thêm |
-|---|---|---|---|---|
-| Mã hoá lại theo dải cho random key, để vector hiệu không xoá panel của leader (Đ2) | Bean (1994); Londe et al. (2025) tổng quan RKGA (arXiv:2506.02120); Whalen (2018), luận văn DE random key cho chọn đặc trưng trong dự đoán hệ gen | RKGA lai ghép bằng cách chép khoá của cha mẹ, không có vector hiệu nên không gặp vấn đề này; không nguồn nào đã thấy mã hoá lại khoá theo panel | chưa thấy ai làm; điểm kỹ thuật dễ bảo vệ nhất | "random key" + "differential evolution" + "re-encoding" / "key normalization" / "rank-based keys"; đọc toàn văn Whalen (2018) |
-| Q-learning theo trạng thái từng cá thể điều khiển F | **Huang C, Wang M, Heidari AA, Wang Z, Chen H (2025)** QDEHHO, J King Saud Univ Comput Inf Sci 37:280, doi:10.1007/s44443-025-00303-z (đọc toàn văn); DE-RLFR (mỗi cá thể là một agent, trạng thái theo hạng fitness, hành động là chiến lược đột biến; chỉ thấy qua mô tả thứ cấp ở arXiv:2501.12881); qlDE (2021) | QDEHHO: mỗi cá thể chọn ε-greedy một trong 4 chiến lược đột biến và 5 bộ (F, CR), nhưng bảng Q **không có trạng thái** (chỉ đánh chỉ số theo hành động; Mục 3.1.3, phần Bellman updates), phần thưởng là mức cải thiện liên tục, mã hoá nhị phân sigmoid, fitness = độ chính xác KNN + tỉ lệ đặc trưng. DE-RLFR có trạng thái theo cá thể nhưng chọn chiến lược đột biến, không điều khiển F. qlDE: một tổ hợp cho cả quần thể | phần "trạng thái theo cá thể" đã có ở DE-RLFR; cái riêng còn lại hẹp: trạng thái là kết quả lần thử trước của chính cá thể, hành động là bước tăng giảm F | tìm toàn văn DE-RLFR (Li et al.); "per-individual state" Q-learning DE parameter |
-| Leader lấy từ archive theo novelty và fitness | Wang P, Xue B, Liang J, Zhang M (2023) niching DE đa mục tiêu cho chọn đặc trưng (đã có trong Bảng 11 của Review): dùng độ đông đúc để tỉa archive tinh hoa và chọn leader toàn cục; JADE, SHADE: archive ngoài chỉ cho vector hiệu | Wang et al. đa mục tiêu, kích thước tự do; MPQDA-DE đơn mục tiêu, đúng k, novelty theo Jaccard giữa panel | ý tưởng "leader từ archive có xét đa dạng" đã có; không nên trình bày là mới, chỉ là cách áp vào bài toán đúng k | "novelty" + "archive" + "base vector" differential evolution |
-| Panel đồng thuận từ archive | Abeel et al. (2010), Meinshausen và Bühlmann (2010): gộp tập chọn qua nhiều mẫu con hoặc nhiều lần chạy | MPQDA-DE gộp các nghiệm gần tối ưu **trong một lần chạy**, có trọng số theo hạng fitness, không tốn thêm lần chạy | chưa thấy ai làm trong DE đúng k; đóng góp phải dựa vào H4 | "ensemble" / "consensus" + "evolutionary feature selection" + "archive" + "stability" |
+| Điểm của MPQDA-DE | Công trình gần nhất đã thấy | Khác ở đâu | Kết luận tạm |
+|---|---|---|---|
+| Biểu diễn đúng k gen trong DE | **Khushaba RN, Al-Ani A, Al-Jumaily A (2011)** DEFS, Expert Syst Appl 38(9):11515–11526, doi:10.1016/j.eswa.2011.03.028 (219 trích dẫn); Bean (1994) random key | DEFS là DE cho tập con có số đặc trưng định trước, sửa gen trùng bằng cơ chế thống kê. Theo hiểu biết của người tra (chưa đọc toàn văn), mỗi cá thể DEFS là k chỉ số thực làm tròn, không phải random key trên toàn bộ p0 gen | DE chọn đúng k đặc trưng **đã có**; phải trích DEFS và không nêu "DE đúng k" là mới. Cần đọc toàn văn DEFS để mô tả chính xác |
+| Mã hoá lại theo dải (Đ2) | **Bosman PAN, Luong NH, Thierens D (2016)** Permutation GOMEA, GECCO, 637–644, doi:10.1145/2908812.2908917, Mục 3.3 "random rescaling" và Mục 3.4 "re-encoding" (đã đọc) | Bosman et al. gán lại khoá ngẫu nhiên mới cho cả quần thể đầu mỗi thế hệ, giữ nguyên hoán vị, để **duy trì đa dạng** trong GOM, bài toán hoán vị. MPQDA-DE gán lại khoá **tất định theo hạng vào hai dải tách nhau ở 0,5** (trong panel, ngoài panel), sau mỗi lần nhận cá thể, để **vector hiệu của DE truyền được panel của leader** khi giải mã top-k trên p0 lớn | ý tưởng "mã hoá lại random key mà không đổi lời giải" **đã có**; phần riêng là cấu trúc hai dải và lý do (vector hiệu trong DE xoá panel khi p0 ≫ k), có số đo hỗ trợ (A0). Phải trích Bosman et al. (2016) và nêu khác biệt |
+| Q-learning theo trạng thái từng cá thể điều khiển F | **Li Z, Shi L, Yue C, Shang Z, Qu B (2019)** DE-RLFR, Swarm Evol Comput 49:234–244, doi:10.1016/j.swevo.2019.06.010: mỗi cá thể là một agent, trạng thái theo hạng fitness, hành động là 3 chiến lược đột biến. **Cao Y, Peng H (2026)** Q-LSHADE-PS, Int J Comput Sci Inf Technol 8(5):9–30, doi:10.62051/ijcsit.v8n5.02: mỗi cá thể có bảng Q riêng, trạng thái theo mức trì trệ, chọn chiến lược đột biến. **Huang C, Wang M, Heidari AA, Wang Z, Chen H (2025)** QDEHHO, doi:10.1007/s44443-025-00303-z: Q-learning chọn chiến lược và bộ (F, CR) theo cá thể, không có trạng thái, cho chọn gen. Tang L, Dong Y, Liu J (2015) IEEE TEVC 19(4):560–574: F, CR theo cá thể dựa trên hạng fitness. qlDE (2021) | Các bài trên chọn **chiến lược đột biến** (hoặc bộ tham số rời rạc); MPQDA-DE điều chỉnh **F theo bước ±0,05**, trạng thái là kết quả lần thử trước của chính cá thể, một bảng Q dùng chung | Q-learning theo trạng thái từng cá thể **đã có** (DE-RLFR 2019, Q-LSHADE-PS 2026). Chỉ nên trình bày là biến thể điều khiển F; ablation A3 quyết định có nêu được hiệu ứng hay không |
+| Leader lấy từ archive theo novelty và fitness | Wang P, Xue B, Liang J, Zhang M (2023) niching DE đa mục tiêu cho chọn đặc trưng: độ đông đúc dùng để tỉa archive tinh hoa và chọn leader; JADE, SHADE: archive ngoài cho vector hiệu | Wang et al. đa mục tiêu, kích thước tự do; MPQDA-DE đơn mục tiêu, đúng k, novelty theo Jaccard | ý tưởng **đã có**; chỉ là cách áp vào bài toán đúng k |
+| Panel đồng thuận từ archive trong một lần chạy | Abeel et al. (2010), Meinshausen và Bühlmann (2010): gộp tập chọn qua nhiều mẫu con; Mandal AK et al. (2024) IEEE Access 12:62341–62357, doi:10.1109/access.2024.3390684: gộp năm bộ lọc **trước** khi DE tìm kiếm | Các bài trên gộp qua nhiều lần chạy hoặc trước tìm kiếm; MPQDA-DE gộp các nghiệm gần tối ưu đã có trong archive **của chính lần chạy**, trọng số theo hạng fitness, không tốn thêm đánh giá ngoài một lần | **chưa thấy ai làm** trong hai lượt tra; đây là điểm cơ chế mới nhất còn lại. Đóng góp phải dựa vào H4 (i) và A4 |
+| C1: fitness log-loss thay AUROC cho wrapper đúng k, kèm bằng chứng bão hoà | không thấy bài nào đo bão hoà fitness AUROC của wrapper hay đề xuất log-loss làm fitness wrapper (tra "wrapper" + "log-loss" / "proper scoring rule" / "saturation") | – | **chưa thấy ai làm**; là đóng góp thực nghiệm, độc lập với thuật toán |
 
-QDEHHO phải có trong Table 1 và Mục 2 của bài. Đây là công trình mới nhất đã thấy dùng Q-learning trong DE để chọn gen trên dữ
-liệu biểu hiện gen nhiều chiều (13 bộ, 2.000–15.000 đặc trưng). Đánh giá của bài đó chia 8:2 rồi CV 10 fold, P = 20, T = 50,
-fitness có hệ số phạt kích thước. Đây là đúng kiểu thiết kế mà R4 đã phê bình ở bản ICAART, nên phần khác biệt về giao thức
-(đúng k, fitness log-loss, cùng ngân sách, không rò rỉ, đăng ký trước) là điểm tựa an toàn hơn phần khác biệt về cơ chế.
-QDEHHO không cần đưa vào baseline (TQĐ6 đã chốt danh sách), nhưng nếu phản biện hỏi thì đây là ứng viên mức 2.
+Hệ quả cho cách viết, sau lượt 2 (thay kết luận của lượt 1):
+- Có thể nêu là mới: panel đồng thuận từ archive trong một lần chạy (C3, nếu H4 đạt), và C1 (bão hoà fitness AUROC, fitness
+  log-loss cho wrapper đúng k).
+- Mã hoá lại theo dải: nêu là **dạng mã hoá lại mới cho DE với giải mã top-k**, trích Bosman et al. (2016) là tiền lệ mã hoá lại
+  random key. Không viết "lần đầu mã hoá lại random key".
+- DE đúng k (DEFS 2011), Q-learning theo cá thể (DE-RLFR 2019, Q-LSHADE-PS 2026), leader từ archive (Wang et al. 2023): trình
+  bày là thành phần đã biết, được điều chỉnh cho bài toán. Cả năm bài này vào Table 1 và Mục 2.
+- QDEHHO là công trình gần nhất về ứng dụng (Q-learning trong DE chọn gen trên dữ liệu biểu hiện gen). Giao thức của nó (chia
+  8:2, phạt kích thước, KNN) là kiểu R4 đã phê bình, nên khác biệt về giao thức (C4) là điểm tựa an toàn.
 
-Hệ quả cho cách viết, tính tới giờ: hai đóng góp có thể nêu là mới ở mức cơ chế là mã hoá lại theo dải và panel đồng thuận
-trong một lần chạy. Archive làm nguồn leader và Q-learning điều khiển F nên trình bày là "điều chỉnh cho bài toán đúng k" của
-các ý đã có, trích Wang et al. (2023), qlDE, QDEHHO và DE-RLFR. C1 (bão hoà fitness AUROC) và C4 (giao thức) không phụ thuộc
-vào tra cứu này.
+Việc còn lại: đọc toàn văn DEFS và DE-RLFR; tra lại trên Google Scholar từ trình duyệt của người viết.
