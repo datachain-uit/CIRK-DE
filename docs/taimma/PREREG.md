@@ -362,4 +362,5 @@ that improves a quantity is visible.
 
 | Date | Section | Change | Reason | Outputs of T1–T5 seen before the change? |
 |---|---|---|---|---|
+| 2026-11-15 | 9 | Before registration: one trial run of session S0 on Kaggle at commit `72cccb9` (jobs `t0_det`, `t0_shuffle`; `gt1` not reached). Its outputs are discarded and S0 is run again after registration. It showed that condition (2) of `check-t0` compared CSV text, so an integer column read as float (0 versus 0.0) was reported as a difference although every value was identical; the check now compares values (`taimma_jobs.same_values`) | bug in the check, not in the method | No (no job of T1–T5 was run) |
 | [TO FILL] | – | Registration | – | No |

@@ -21,6 +21,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -205,6 +206,22 @@ def _frame(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, float_precision="round_trip")
 
 
+def same_values(a: pd.DataFrame, b: pd.DataFrame) -> bool:
+    """Hai bảng trùng từng giá trị (không dung sai), không phụ thuộc kiểu số: một cột int trong tệp chỉ có MPQDA-DE thành float
+    khi tệp có thêm dòng GA để trống cột đó (0 so với 0.0). NaN trùng NaN."""
+    a, b = a.reset_index(drop=True), b.reset_index(drop=True)
+    if list(a.columns) != list(b.columns) or len(a) != len(b):
+        return False
+    for c in a.columns:
+        x, y = a[c], b[c]
+        if pd.api.types.is_numeric_dtype(x) and pd.api.types.is_numeric_dtype(y):
+            if not np.array_equal(x.to_numpy(dtype=float), y.to_numpy(dtype=float), equal_nan=True):
+                return False
+        elif not (x.astype(str) == y.astype(str)).all():
+            return False
+    return True
+
+
 def check_t0(root: Path | None = None) -> tuple[list[str], dict]:
     """Bốn điều kiện của T0 (Mục 6) trên kết quả của t0_det và t0_shuffle. Trả về (danh sách không đạt, số liệu ghi lại)."""
     root = results_root() / M.RESULT_SUBDIR if root is None else Path(root)
@@ -224,7 +241,7 @@ def check_t0(root: Path | None = None) -> tuple[list[str], dict]:
     for name in ("selected_genes.csv", "history.csv"):                       # (2) n_jobs_eval 1 và 4
         one = _frame(a / name)
         one = one[one.method.isin(M.output_names("mpqda_de"))].reset_index(drop=True)
-        same = one.to_csv(index=False) == _frame(j4 / name).to_csv(index=False)
+        same = same_values(one, _frame(j4 / name))
         info[f"njobs_identical_{name}"] = same
         if not same:
             problems.append(f"(2) song song: {name} của MPQDA-DE khác nhau giữa n_jobs_eval 1 và 4")
