@@ -20,3 +20,6 @@ models/
 venv/
 .idea/
 .vscode/
+
+# TAIMMA: bảng và hình sinh bằng script
+tables/

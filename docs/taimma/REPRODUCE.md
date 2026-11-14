@@ -1,0 +1,84 @@
+# Reproducing the TAIMMA 2027 experiments
+
+All cited numbers come from a pushed commit of branch `taimma-2027` (tag `taimma-2027-submission`). Every result directory has a
+`config.json` with `traceable = true` and `commit_hash` equal to that commit. Runs made with `KLTN_ALLOW_UNPUSHED`,
+`KLTN_ALLOW_UNTRACKED` or `MPQDA_SMOKE` are smoke tests and are never cited.
+
+## 1. Environment
+
+```bash
+pip install -r vendor/requirements-kaggle.txt
+```
+
+```bash
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 KLTN_STRICT_N=1 KLTN_DATA_ROOT=/path/to/data
+```
+
+Python 3.13.15, numpy 2.1.3, pandas 2.3.3, scipy 1.16.3, scikit-learn 1.6.1, joblib 1.6.0, threadpoolctl 3.6.0, abess 0.4.11,
+skrebate 0.8.4 (Kaggle CPU session, 4 vCPU). Each job writes `logs/pip_freeze_<job>.txt`.
+
+`$KLTN_DATA_ROOT` holds the survey data layout (`experiment-data-geo-target/<cohort>/{expression.h5, metadata.csv,
+repeated_splits.csv}`, and `experiment-data-perm/tcga_luad_lusc_primary_tumor/` for the gene space). The runner stops if the
+SHA-256 of `repeated_splits.csv` differs from `mpqda.config.EXPECTED_SPLIT_SHA256`.
+
+## 2. Tests
+
+```bash
+python -m pytest tests -q
+```
+
+```bash
+python -m pytest vendor/tests -m "not slow" -q
+```
+
+```bash
+python scripts/vendor_survey.py --check
+```
+
+## 3. Sessions
+
+Results go to `$KLTN_DATA_ROOT/results/survey_v2/taimma/<scenario>/<cohort>/`. S1–S3 open only after every S0 job passes.
+
+| Session | Jobs, in order | What they produce |
+|---|---|---|
+| S0 | `t0_det`, `t0_shuffle`, `gt1` | T0 checks (`T0_report.json`), gate G-T1 on GSE10245 repeat 0 (`GT1_s0/gate_gt1.csv`) |
+| S1 | `t1`, `t1_b7` | T1 (log-loss fitness) and its phase B (`T5/T1`) |
+| S2 | `t1b`, `t4`, `t6` | T1b (AUROC fitness), gate G-T1 on all of T1b, T4 references, phase B, T6 cost |
+| S3 | `t2`, `t3` | T2 ablation, T3 seed stability (`T3_s1` … `T3_s4`), phase B |
+
+```bash
+python scripts/taimma_jobs.py plan
+```
+
+```bash
+python scripts/taimma_jobs.py run t0_det --workers 4 --log-dir logs
+```
+
+```bash
+python scripts/taimma_jobs.py verify t1
+```
+
+`show <job>` prints the exact commands of a job. A job that stops can be run again: completed units are skipped.
+
+## 4. Tables and figures
+
+```bash
+python scripts/make_taimma_tables.py --results $KLTN_DATA_ROOT/results/survey_v2/taimma --out tables
+```
+
+| Output | Content | Inputs |
+|---|---|---|
+| `stats_h1_saturation.csv` | H1: saturation rate of the AUROC fitness per cohort | `T1b/<cohort>/selection_per_fold.csv` |
+| `stats_h2_inner_fitness.csv` | H2: best inner fitness, MPQDA-DE against DE/rand/1/bin | `T1/<cohort>/selection_per_fold.csv` |
+| `table3_main.{csv,tex}`, `stats_h3_noninferiority.csv`, `stats_secondary_pairwise.csv`, `stats_friedman_ranks.csv`, `fig3_critical_difference.pdf` | Table 3, H3, secondary tests, Fig. 3 | `T5/T1/<cohort>/classification_per_fold.csv` |
+| `fig2_anytime.pdf` | Fig. 2: anytime curves, median and IQR | `T1/<cohort>/history.csv` |
+| `table4_ablation.{csv,tex}` | Table 4, H5 | T1, T2 and their phase B |
+| `table5_seed_stability.{csv,tex}`, `stats_h4_stability.csv` | Table 5, H4 | `T1/gse37745/selected_genes.csv`, `T3_s1..4/gse37745/selected_genes.csv` |
+| `claims.csv`, `inputs_sha256.csv` | number register and SHA-256 of every input file | – |
+
+Running the script twice gives byte-identical files.
+
+## 5. Vendored survey code
+
+`vendor/` is a byte-identical copy of `datachain-uit/RNA-Seq-FS-Survey` at the commit recorded in `vendor/VENDORED.md`. It is
+never edited by hand; `python scripts/vendor_survey.py --survey <clone> --commit <hash>` refreshes it.
