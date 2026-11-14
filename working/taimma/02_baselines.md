@@ -80,3 +80,10 @@ Hệ quả cho cách viết (TQĐ14, Review-2026-11-14b; thay kết luận của
 Việc còn lại (T-Y8, trước khi viết Mục 2 ngày 18–19/11): đọc toàn văn DEFS, DE-RLFR (lượt này mới đọc qua mô tả thứ cấp,
 arXiv:2501.12881) và hai bài của Wang et al. (TCYB 53(7), TEVC 27(2)), rồi trích đúng bài cho từng ý; đọc GA/KNN để mô tả chính
 xác cách gộp; tra lại trên Google Scholar từ trình duyệt của người viết.
+
+Tra bản mở ngày 15/11/2026 (tìm kiếm web): không thấy bản toàn văn mở của DE-RLFR (doi:10.1016/j.swevo.2019.06.010), Wang et al.
+TCYB (doi:10.1109/TCYB.2021.3128540) và GA/KNN (doi:10.1093/bioinformatics/17.12.1131); chỉ có trang nhà xuất bản và trang tóm tắt.
+Tóm tắt khẳng định: DE-RLFR coi mỗi cá thể là một agent chọn một trong ba phép đột biến DE; Wang et al. (TCYB) tìm nhiều tập con
+đặc trưng tối ưu bằng DE đa mục tiêu; GA/KNN xếp hạng gen theo tần suất được chọn qua nhiều lần chạy GA độc lập. Ý "subarchive với
+crowding distance" của bài TCYB chưa được kiểm trên toàn văn. Cần tải toàn văn qua quyền truy cập của trường (IEEE Xplore,
+ScienceDirect, Oxford Academic).

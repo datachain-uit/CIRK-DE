@@ -139,8 +139,10 @@ b7 = json.loads(subprocess.check_output([sys.executable, '-c', 'import json; fro
                                          'print(json.dumps(list(M.B7_INCLUDED)))'], cwd=REPO_DIR, text=True))
 if b7:                                                     # T-Y5: chỉ khi có bộ B7 đã qua G1, G2
     assert INPUT_B7_DATASET, f'B7_INCLUDED = {b7}: đặt INPUT_B7_DATASET'
-    b7_src = Path(INPUT_B7_DATASET)
-    b7_src = b7_src if b7_src.name == 'experiment-data-b7' else b7_src / 'experiment-data-b7'
+    # nhận thư mục chứa thẳng các bộ, hoặc thư mục cha có experiment-data-b7/ hay B7_data/ (gói `pack` của survey)
+    cands = [Path(INPUT_B7_DATASET)] + [Path(INPUT_B7_DATASET) / d for d in ('experiment-data-b7', 'B7_data')]
+    b7_src = next((c for c in cands if all((c / name).is_dir() for name in b7)), None)
+    assert b7_src is not None, f'Không thấy {b7} trong {[str(c) for c in cands]}'
     for name in b7:
         for f in ('expression.h5', 'metadata.csv', 'repeated_splits.csv'):
             assert (b7_src / name / f).is_file(), f'Thiếu experiment-data-b7/{name}/{f}'
