@@ -42,7 +42,7 @@ def make_smoke_data(root: Path, n_repeats: int = 1) -> Path:
     from survey_v2.e1_splits import build_repeated_split_manifest
     from survey_v2.synthetic import make_all
     make_all(root, n=120, p=300, n_target=80)
-    ds = load_dataset(root, SMOKE_COHORT)
+    ds = load_dataset(root, SMOKE_COHORT, strict_n=False)   # dữ liệu giả: bỏ qua KLTN_STRICT_N mà notebook Kaggle đặt
     manifest = build_repeated_split_manifest(ds.sample_ids, ds.groups, ds.y, seeds=C.REPEAT_SEEDS[:n_repeats])
     manifest.to_csv(ds.data_dir / "repeated_splits.csv", index=False)
     return ds.data_dir / "repeated_splits.csv"
