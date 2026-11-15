@@ -37,16 +37,35 @@ def test_returns_2_when_one_gene_differs(tmp_path):
     assert len(pd.read_csv(report)) == 1
 
 
-def test_fitness_and_n_eval_must_be_exactly_equal(tmp_path):
+def test_n_eval_exact_and_fitness_beyond_tolerance_fail(tmp_path):
     root = copy_reference(tmp_path)
     path = root / COHORT / "selection_per_fold.csv"
     sel = pd.read_csv(path, float_precision="round_trip")
-    sel.loc[0, "best_fitness"] = float(sel.loc[0, "best_fitness"]) - 1e-15
+    sel.loc[0, "best_fitness"] = float(sel.loc[0, "best_fitness"]) - 1e-9
     sel.loc[1, "n_eval"] = int(sel.loc[1, "n_eval"]) + 1
     sel.to_csv(path, index=False)
     table, _ = G.compare(root / COHORT, REF / COHORT, COHORT)
     assert sorted(table.field) == ["best_fitness", "n_eval"]
     assert G.main(["--run-root", str(root), "--datasets", COHORT]) == 2
+
+
+def test_last_bit_fitness_difference_is_reported_but_passes(tmp_path):
+    """Trường hợp gặp trên Kaggle ngày 15/11/2026: cùng tập gen và n_eval, best_fitness khác ở bit cuối."""
+    import numpy as np
+    root = copy_reference(tmp_path)
+    path = root / COHORT / "selection_per_fold.csv"
+    sel = pd.read_csv(path, float_precision="round_trip")
+    i = int(np.flatnonzero(sel.method.isin(["ga", "bpso"]).to_numpy())[0])
+    sel.loc[i, "best_fitness"] = float(np.nextafter(float(sel.loc[i, "best_fitness"]), -1.0))
+    sel.to_csv(path, index=False)
+    near = []
+    table, _ = G.compare(root / COHORT, REF / COHORT, COHORT, within_tol=near)
+    assert table.empty and len(near) == 1 and 0 < near[0]["abs_diff"] <= G.FITNESS_TOL
+    report = tmp_path / "gate.csv"
+    assert G.main(["--run-root", str(root), "--datasets", COHORT, "--report", str(report)]) == 0
+    assert pd.read_csv(report).empty and len(pd.read_csv(tmp_path / "gate_within_tol.csv")) == 1
+    from mpqda import config as M
+    assert G.FITNESS_TOL == M.SATURATION_EPS
 
 
 def test_subset_of_units_passes_and_empty_run_fails(tmp_path):
