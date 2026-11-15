@@ -31,7 +31,23 @@ RULES = {"logloss": "smallest inner 3-fold out-of-fold log-loss (probabilities c
          "auroc": "survey rule: largest inner 3-fold out-of-fold AUROC (ties keep the smaller C)"}
 
 
+def use_repo_root_for_tracking() -> None:
+    """survey_v2.runlog.is_tracked lấy vendor/ làm gốc kho (REPO = parents[1] của survey_v2), nên coi script nằm ngoài
+    vendor/ là chưa được Git theo dõi. Gốc Git thật là ROOT (vendor/ là thư mục con của cùng một kho), nên phép kiểm chạy
+    với ROOT. Kiểm push (is_pushed) giữ nguyên vì vendor/ và ROOT là cùng một kho. Không sửa tệp nào trong vendor/."""
+    import survey_v2.runlog as R
+    if getattr(R.is_tracked, "_taimma_root", False):
+        return
+    original = R.is_tracked
+
+    def is_tracked(path, repo=R.REPO) -> bool:
+        return original(path, ROOT)
+    is_tracked._taimma_root = True
+    R.is_tracked = is_tracked
+
+
 def main(argv=None) -> int:
+    use_repo_root_for_tracking()
     ap = argparse.ArgumentParser(add_help=False)
     ap.add_argument("--criterion", choices=sorted(RULES), default="logloss")
     args, rest = ap.parse_known_args(argv)

@@ -105,6 +105,11 @@ def test_script_auroc_mode_matches_survey_and_logloss_mode_records_rule(smoke_ru
     assert cfg_ll["c_selection"]["grid"] == [0.01, 0.1, 1.0, 10.0] and cfg_ll["c_selection"]["decision"] == "TQĐ11"
     assert cfg_ll["provenance"]["script"].replace("\\", "/").endswith("scripts/run_taimma_phase_b.py")
     assert not cfg_a["provenance"]["script"].replace("\\", "/").endswith("scripts/run_taimma_phase_b.py")
+    # bản sao kho trong test đã commit nhưng chưa push: lỗi truy vết duy nhất được phép là "chưa push"; script ngoài vendor/
+    # phải được nhận là đã theo dõi (lỗi gặp trên Kaggle ngày 15/11/2026 ở commit 38bc3fe)
+    for cfg in (cfg_b, cfg_ll):
+        errors = cfg.get("traceable_errors") or cfg["provenance"].get("traceable_errors")
+        assert errors is not None and len(errors) == 1 and "remote" in errors[0], errors
     pll = pd.read_csv(ll / "classification_per_fold.csv", float_precision="round_trip")
     assert len(pll) == len(pa) and set(pll.method) == set(pa.method)
     assert check() == []                                                    # vendor/ của kho đang test không đổi
