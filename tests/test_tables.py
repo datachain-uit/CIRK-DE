@@ -136,6 +136,52 @@ def test_t4_c_choice_is_read_when_present(tmp_path):
     assert set(cc.scenario) == {"T1", "T4"}
 
 
+def fake_b7(root, seed=1):
+    """Pha B-LL giả cho các bộ B7: classification_per_fold.csv và e1_scores.csv (điểm từng mẫu để tính AUPRC)."""
+    rng = np.random.default_rng(seed)
+    for cohort in M.B7_INCLUDED:
+        ev, sc = [], []
+        for repeat in range(3):
+            for fold in range(5):
+                for m in T1_METHODS:
+                    for out in M.output_names(m):
+                        for k in (5, 10):
+                            ev.append({"cohort": cohort, "repeat": repeat, "seed": 42 + repeat, "fold": fold, "method": out,
+                                       "k": k, "model": "lr_l2", "auroc": float(rng.uniform(0.7, 0.9)),
+                                       "logloss": float(rng.uniform(0.3, 0.6)), "C": 1.0})
+                            y = rng.integers(0, 2, 20)
+                            y[:2] = [0, 1]
+                            sc += [{"cohort": cohort, "repeat": repeat, "fold": fold, "method": out, "k": k,
+                                    "sample_id": f"S{i}", "label": int(l), "score": float(rng.random())} for i, l in enumerate(y)]
+        d = root / "T5LL" / "T1" / cohort
+        d.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(ev).to_csv(d / "classification_per_fold.csv", index=False, encoding="utf-8-sig")
+        pd.DataFrame(sc).to_csv(d / "e1_scores.csv", index=False)
+
+
+def test_b7_table_is_separate_and_has_auprc(tmp_path):
+    """PREREG Mục 8: bảng riêng cho B7 (so sánh phụ, Holm trong các baseline, AUPRC); không vào H1–H5 và Table 3."""
+    from sklearn.metrics import average_precision_score
+    fake_results(tmp_path / "results")
+    fake_b7(tmp_path / "results")
+    out = tmp_path / "out"
+    info = T.build(tmp_path / "results", out)
+    assert {"table_b7_main", "stats_b7_secondary"} <= set(info["written"]) and info["missing"] == []
+    t = pd.read_csv(out / "table_b7_main.csv")
+    assert set(t.cohort) == set(M.B7_INCLUDED) and set(t.k) == {5, 10} and t.auprc_mean.between(0, 1).all()
+    sc = pd.read_csv(tmp_path / "results" / "T5LL" / "T1" / M.B7_INCLUDED[0] / "e1_scores.csv")
+    g = sc[(sc.method == "ga") & (sc.k == 5)]
+    want = np.mean([average_precision_score(f.label, f.score) for _, f in g.groupby(["repeat", "fold"])])
+    got = t[(t.cohort == M.B7_INCLUDED[0]) & (t.method == "ga") & (t.k == 5)].auprc_mean.iloc[0]
+    assert np.isclose(got, want)
+    s = pd.read_csv(out / "stats_b7_secondary.csv")
+    assert len(s) == len(M.B7_INCLUDED) * 2 * (len(T1_METHODS) - 1) and (s.p_nb_holm >= s.p_nb).all()
+    assert not set(pd.read_csv(out / "table3_main.csv").cohort) & set(M.B7_INCLUDED)
+    claims = pd.read_csv(out / "claims.csv")
+    tag = claims.claim_id.str.split(":").str[0]
+    assert (claims[tag.isin(["B7", "B7_SEC"])].phase_b == "B-LL").all() and tag.isin(["B7", "B7_SEC"]).any()
+
+
 def test_missing_scenarios_are_reported_not_fatal(tmp_path):
     info = T.build(tmp_path / "empty", tmp_path / "out")
     assert info["written"] == [] and info["missing"]

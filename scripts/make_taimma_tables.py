@@ -21,6 +21,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy import stats as st
+from sklearn.metrics import average_precision_score
 
 ROOT = Path(__file__).resolve().parents[1]
 for _p in (ROOT / "vendor", ROOT):
@@ -49,6 +50,7 @@ COMPONENT = {"mpqda_a0_noband": "band re-encoding", "mpqda_a1_uniform": "chaotic
 FMT = "%.10g"
 PHASE_B_DIRS = {"B-LL": "T5LL", "B-AUC": "T5"}  # pha B -> thư mục kết quả
 PHASE_A = "phase A"
+B7_K = (5, 10)
 
 
 # ------------------------------------------------------------------------------------------------- thống kê
@@ -276,6 +278,26 @@ def h5(sel1, sel2, ev1, ev2) -> pd.DataFrame:
     return out
 
 
+def auprc_per_fold(scores: pd.DataFrame) -> pd.DataFrame:
+    """AUPRC (average precision, lớp 1 là dương) trên test ngoài của từng (cohort, lần lặp, fold, phương pháp, k), từ điểm từng
+    mẫu mà pha B lưu (--save-scores)."""
+    rows = [{"cohort": c, "repeat": int(r), "fold": int(f), "method": m, "k": int(k),
+             "auprc": float(average_precision_score(g.label.to_numpy(dtype=int), g.score.to_numpy(dtype=float)))}
+            for (c, r, f, m, k), g in scores.groupby(["cohort", "repeat", "fold", "method", "k"], sort=True)]
+    return pd.DataFrame(rows, columns=["cohort", "repeat", "fold", "method", "k", "auprc"])
+
+
+def b7_summary(ev: pd.DataFrame, scores: pd.DataFrame | None, methods) -> pd.DataFrame:
+    """Bảng B7 (PREREG Mục 8): log-loss, AUROC và AUPRC ngoài (trung bình, độ lệch chuẩn) theo bộ, k, phương pháp."""
+    out = summary_table(ev, methods, B7_K)
+    if scores is not None and len(scores):
+        ap = auprc_per_fold(scores[scores.method.isin(methods) & scores.k.isin(B7_K)])
+        agg = ap.groupby(["cohort", "k", "method"]).agg(auprc_mean=("auprc", "mean"), auprc_sd=("auprc", "std")).reset_index()
+        out = out.merge(agg, on=["cohort", "k", "method"], how="left")
+        out["positive_rate"] = out.cohort.map(scores.groupby("cohort").label.mean())
+    return out.sort_values(["cohort", "k", "method"], kind="stable").reset_index(drop=True)
+
+
 def c_choice(evs: dict) -> pd.DataFrame:
     """Tỉ lệ panel nhận từng giá trị C của LR-L2 theo pha B, kịch bản, phương pháp và k (B0, random-k không tính)."""
     rows = []
@@ -445,6 +467,19 @@ def build(results: Path, out: Path) -> dict:
         t = h5(sel1, sel2, ev1, ev2)
         emit("table4_ablation", t, "Ablation: paired differences against the full MPQDA-DE run (one Holm family of 39 tests).",
              "H5", ["mean_diff", "ci_low", "ci_high", "p", "p_holm", "significant"], ["variant", "k", "question"])
+    b7 = [d for d in M.B7_INCLUDED if (results / PHASE_B_DIRS["B-LL"] / "T1" / d).is_dir()]
+    if b7:                                                    # B7: bảng riêng, không gộp với GPL570 (PREREG Mục 8)
+        ev_b7 = inp.evaluation("T1", cohorts=b7)
+        sc_b7 = inp.scenario(f"{PHASE_B_DIRS['B-LL']}/T1", "e1_scores.csv", b7, encoding="utf-8")
+        if ev_b7 is not None:
+            emit("table_b7_main", b7_summary(ev_b7, sc_b7, methods),
+                 "B7 (EGFR mutation in LUAD): outer log-loss, AUROC and AUPRC (mean and SD over the outer folds; n = number of "
+                 "folds); separate from the GPL570 cohorts.", "B7",
+                 ["n", "logloss_mean", "logloss_sd", "auroc_mean", "auroc_sd", "auprc_mean", "auprc_sd"],
+                 ["cohort", "k", "method"], "B-LL")
+            emit("stats_b7_secondary", secondary(ev_b7, B7_K), tag="B7_SEC", phase_b="B-LL",
+                 columns=["logloss_diff", "ci_low", "ci_high", "p_nb_holm", "p_wilcoxon_holm", "auroc_p_left", "auroc_p_rope",
+                          "auroc_p_right"], keys=["cohort", "k", "baseline"])
     phi = seed_stability(inp)
     if phi is not None and len(phi):
         table5 = phi.groupby(["k", "method"]).phi.agg(n="size", phi_mean="mean", phi_sd="std").reset_index()

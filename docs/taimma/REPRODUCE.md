@@ -93,6 +93,7 @@ Every table and figure below reads B-LL (`T5LL/`), except the files ending in `_
 | `table_s_c_choice.{csv,tex}` | share of panels receiving each value of C under B-LL and B-AUC | `T5LL/T1`, `T5/T1`, and `T5LL/T4`, `T5/T4` when present |
 | `fig2_anytime.pdf` | Fig. 2: anytime curves, median and IQR | `T1/<cohort>/history.csv` |
 | `table4_ablation.{csv,tex}` | Table 4, H5 (one Holm family of 39 tests, A0 included) | T1, T2 and their B-LL phase B |
+| `table_b7_main.{csv,tex}`, `stats_b7_secondary.csv` | B7 (separate table, PREREG Section 8): outer log-loss, AUROC, AUPRC; MPQDA-DE against each baseline, Holm within baselines | `T5LL/T1/<B7 dataset>/classification_per_fold.csv`, `e1_scores.csv` |
 | `table5_seed_stability.{csv,tex}`, `stats_h4_stability.csv` | Table 5, H4 | `T1/gse37745/selected_genes.csv`, `T3_s1..4/gse37745/selected_genes.csv` |
 | `claims.csv`, `inputs_sha256.csv` | number register and SHA-256 of every input file | – |
 
