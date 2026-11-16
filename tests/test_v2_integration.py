@@ -108,6 +108,23 @@ def _j(v):
     return v
 
 
+FLOAT_TOL = 1e-12        # như cổng G-T1 (TQĐ20): số thực lệch bit cuối giữa Windows và Linux; panel, n_eval trùng tuyệt đối
+
+
+def _same(got, want) -> bool:
+    """So kết quả: panel, số nguyên, None trùng tuyệt đối; số thực (ghi bằng repr) lệch tối đa FLOAT_TOL."""
+    if isinstance(want, dict):
+        return isinstance(got, dict) and got.keys() == want.keys() and all(_same(got[k], want[k]) for k in want)
+    if isinstance(want, list):
+        return isinstance(got, list) and len(got) == len(want) and all(_same(g, w) for g, w in zip(got, want))
+    if isinstance(want, str) and isinstance(got, str):
+        try:
+            return got == want or abs(float(got) - float(want)) <= FLOAT_TOL
+        except ValueError:
+            return got == want
+    return got == want
+
+
 def test_v1_and_baselines_unchanged_since_4fea32f():
     ref = json.loads(REFERENCE.read_text(encoding="utf-8"))
     old_cols = ref["history_columns"]
@@ -122,11 +139,18 @@ def test_v1_and_baselines_unchanged_since_4fea32f():
         if "consensus" in want:
             got["consensus"] = sorted(int(g) for g in r["consensus"])
             got["consensus_fitness"] = repr(float(r["consensus_fitness"]))
-        assert got == want, key
+        assert got["best"] == want["best"] and got["n_eval"] == want["n_eval"] and got.get("consensus") == want.get("consensus"), key
+        assert _same(got, want), key
         assert all(np.isnan(h.get("mean_CR", np.nan)) and np.isnan(h.get("n_new_genes", np.nan)) for h in r["history"]), key
 
 
 # ---------------------------------------------------------------- B-C1
+def test_reference_comparison_tolerates_only_last_bit_differences():
+    assert _same({"a": "-0.6533160127680584", "b": [1, 2]}, {"a": "-0.6533160127680585", "b": [1, 2]})
+    assert not _same({"a": "-0.6533160127680584"}, {"a": "-0.6533160127"})
+    assert not _same({"b": [1, 2]}, {"b": [1, 3]}) and not _same({"a": None}, {"a": "0.1"})
+
+
 def test_phase_b_c1_is_survey_lr_with_c_fixed_at_one():
     rng = np.random.default_rng(0)
     y = np.r_[np.zeros(70, int), np.ones(50, int)]
