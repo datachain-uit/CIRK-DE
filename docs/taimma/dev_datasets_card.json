@@ -1,0 +1,57 @@
+{
+  "source": "tcga_luad_lusc_primary_tumor",
+  "source_files_sha256": {
+    "expression.h5": "41bf54bda90aae286eab2ceec7e705aeaa778cd77eb85587ab7ff8aaa75c2cff",
+    "metadata.csv": "ee65ea8b4075967867ce4f7fa8383122449d6ba2e10dd5e178a33b27b5ea7b26"
+  },
+  "draw_seed": 20261117,
+  "n_per_subset": 170,
+  "dropped_duplicate_patient_samples": [],
+  "subsets": {
+    "tcga_dev_a": {
+      "dir": "experiment-data-perm\\tcga_dev_a",
+      "split_seed": 1171,
+      "n": 170,
+      "n_per_class": [
+        86,
+        84
+      ],
+      "sha256": {
+        "expression.h5": "b37e5fa5ba4f605a9ee1eeed601a74bd1ea49a23a958963dfcce201b272d5cc3",
+        "metadata.csv": "71b22b8a2a0997e7403040c69bc52ada112882c945899d7135fe37436c5434c8",
+        "repeated_splits.csv": "52fce717b3fa574777af2090b3f21635d6f5328da7787644f75ef799bf1e950e"
+      },
+      "values_sha256": "cb9ad1e0f4355ff5b2b7cb59d5088f60e694c8edfa622558362a5d80ebc9248d"
+    },
+    "tcga_dev_b": {
+      "dir": "experiment-data-perm\\tcga_dev_b",
+      "split_seed": 1172,
+      "n": 170,
+      "n_per_class": [
+        86,
+        84
+      ],
+      "sha256": {
+        "expression.h5": "0dfb1a6a229f64375651a97a2721d24ac8ddad9d3f9317333f828001458dc31d",
+        "metadata.csv": "e552d796bbbf0d04150d26da10160c45b1fc3573105134a332f5de4ede764b6b",
+        "repeated_splits.csv": "9617e2c75abcdd9068f0d046c6b3e5b5b3839512420411f7bbb17c544569e9c0"
+      },
+      "values_sha256": "c527abfaacf97cb83e9a627086e1c877167de10678b3023d856c10415816d1c0"
+    },
+    "tcga_dev_c": {
+      "dir": "experiment-data-perm\\tcga_dev_c",
+      "split_seed": 1173,
+      "n": 170,
+      "n_per_class": [
+        86,
+        84
+      ],
+      "sha256": {
+        "expression.h5": "fed74c9dc310dbbf6e77cc58872c2d114141ae7753ed5121be4cd03531dee2d8",
+        "metadata.csv": "c01fe6b190fbf6f9a4f76d471770cd61d83205ae43a24486cebea46c8529e719",
+        "repeated_splits.csv": "4470d75fece1acefc9a1f9b4b1a5b4a422d711235647af2f99061854f66ef08d"
+      },
+      "values_sha256": "ea8a30a11b684940d650f021989ada4d30ab5ce1968ed5a2da7a812b8a2f9789"
+    }
+  }
+}

@@ -34,7 +34,8 @@ def test_method_ids_and_defaults():
     assert all(M.METHOD_ID[m] == C.METHOD_ID[m] for m in C.METHOD_ID)
     assert C.METHOD_ID["ga"] == 11 and C.METHOD_ID["bpso"] == 12
     new = {m: i for m, i in M.METHOD_ID.items() if m not in C.METHOD_ID}
-    assert new == {"mpqda_de": 13, "de_rand1": 14, "shade": 15, "qlde": 16, "jde": 17, "jade": 18}
+    assert new == {"mpqda_de": 13, "de_rand1": 14, "shade": 15, "qlde": 16, "jde": 17, "jade": 18,
+                   "mpqda_v2": 19, "de_g": 20}                                  # 19, 20: v2 (Review-2026-11-16)
     assert all(M.base_method(v) == "mpqda_de" for v in M.VARIANTS) and M.base_method("ga") == "ga"
     assert M.output_names("mpqda_a5_A1") == ("mpqda_a5_A1", "mpqda_a5_A1_best") and M.output_names("shade") == ("shade",)
     assert (M.P, M.T, M.CR, M.A_MAX, M.DELTA, M.TAU, M.MU) == (30, 50, 0.9, 15, 0.2, 1.0, 3.99)

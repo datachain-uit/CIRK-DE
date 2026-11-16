@@ -6,6 +6,7 @@
     python scripts/taimma_jobs.py verify <việc>        # traceable, commit, SHA-256 bản chia, số dòng chờ
     python scripts/taimma_jobs.py status
     python scripts/taimma_jobs.py check-t0             # bốn điều kiện của T0 (Mục 6) trên kết quả S0
+    python scripts/taimma_jobs.py build-dev            # dựng ba tập DEV của v2 nếu chưa có, rồi kiểm SHA-256 (TQĐ23)
 
 Mỗi việc là một chuỗi lệnh chạy lần lượt; lệnh pha A tự chạy song song theo --workers. Mỗi `run` ghi `pip freeze`.
 S1, S2, S3 chỉ mở sau khi mọi việc của S0 đạt. Thứ tự ưu tiên khi chậm: T0 → T1 → T1b → T3 → T2.
@@ -131,8 +132,29 @@ def build_jobs() -> dict[str, Job]:
     return {j.name: j for j in jobs}
 
 
-JOBS = build_jobs()
-SESSIONS = {"S0": ["t0_det", "t0_shuffle", "gt1"], "S1": ["t1", "t1_b7"], "S2": ["t1b", "t4", "t6"], "S3": ["t2", "t3"]}
+DEV_METHODS = ["mpqda_v2_m1", "mpqda_v2_m2", "mpqda_v2_m3", "mpqda_de", "de_g", "de_rand1", "ga"]
+DEV_TCGA = [d for d in M.DEV_DATASETS if d.startswith("tcga_dev_")]
+
+
+def build_dev_jobs() -> list[Job]:
+    """Pha phát triển của v2 (Review-2026-11-16, Mục 6.2): chỉ dữ liệu phát triển; không chạm GPL570 hay B7."""
+    W = ["--workers", "{WORKERS}"]
+    return [Job(
+        "dev", "DEV", "DEV: dựng ba tập TCGA, pha A (ứng viên M1–M3, v1, DE-G, DE/rand/1, GA; k ∈ {5, 10}), B-LL mô tả, "
+        "dev_select (quy tắc chọn và cổng G-DEV)",
+        [[SELF, "build-dev"],
+         _run("DEV", "logloss", DEV_TCGA, DEV_METHODS, [5, 10], *W, repeats=("0",)),
+         _run("DEV", "logloss", ["gse42127"], DEV_METHODS, [5, 10], *W, repeats=("0", "1")),
+         [EVAL, "--scenario", "DEV", "--phase-b", "ll"],
+         ["scripts/dev_select.py", "--results", "{RESULTS}/" + f"{M.RESULT_SUBDIR}/DEV", "--eval",
+          "{RESULTS}/" + f"{M.RESULT_SUBDIR}/T5LL/DEV", "--out", "{RESULTS}/" + f"{M.RESULT_SUBDIR}/DEV/dev_selection"]],
+        _phase_a_outputs("DEV", DEV_TCGA, DEV_METHODS, [5, 10], 5) + _phase_a_outputs("DEV", ["gse42127"], DEV_METHODS, [5, 10], 10)
+        + [(f"{M.RESULT_SUBDIR}/T5LL/DEV/{d}", None) for d in M.DEV_DATASETS], "2,5")]
+
+
+JOBS = {**build_jobs(), **{j.name: j for j in build_dev_jobs()}}
+SESSIONS = {"S0": ["t0_det", "t0_shuffle", "gt1"], "S1": ["t1", "t1_b7"], "S2": ["t1b", "t4", "t6"], "S3": ["t2", "t3"],
+            "DEV": ["dev"]}
 
 
 # ------------------------------------------------------------------------------------------------- helpers
@@ -282,6 +304,31 @@ def cmd_check_t0() -> int:
     return 0 if not problems else 3
 
 
+# ------------------------------------------------------------------------------------------------- DEV (v2)
+def cmd_build_dev() -> int:
+    """Dựng ba tập DEV vào gốc dữ liệu (ghi được) nếu chưa có; kiểm SHA-256 bản chia với mpqda.config. Bản dựng tất định
+    về nội dung (cùng values_sha256 và cùng bản chia); SHA-256 của expression.h5 thay đổi theo lần ghi nên không so."""
+    from survey_v2.data import sha256
+    root = data_root()
+    missing = [d for d in DEV_TCGA if not (root / C.dataset_dir(d) / "repeated_splits.csv").is_file()]
+    if missing:
+        if len(missing) != len(DEV_TCGA):
+            print(f"DỪNG: chỉ có một phần tập DEV ({missing} thiếu); xoá thư mục DEV cũ rồi dựng lại")
+            return 2
+        code = subprocess.run([sys.executable, "scripts/build_dev_datasets.py", "--data-root", str(root)], cwd=ROOT).returncode
+        if code != 0:
+            return code
+    problems = []
+    for d in M.DEV_DATASETS:
+        path = root / C.dataset_dir(d) / "repeated_splits.csv"
+        got = sha256(path) if path.is_file() else None
+        print(f"{d}: repeated_splits.csv {got}")
+        if got != M.EXPECTED_SPLIT_SHA256[d]:
+            problems.append(f"{d}: {got} khác giá trị chờ {M.EXPECTED_SPLIT_SHA256[d]}")
+    print("DEV_OK" if not problems else "DEV KHÔNG ĐẠT:\n  " + "\n  ".join(problems))
+    return 0 if not problems else 3
+
+
 # ------------------------------------------------------------------------------------------------- lệnh
 def cmd_plan():
     for session, names in SESSIONS.items():
@@ -342,7 +389,7 @@ def cmd_status():
 def main(argv=None) -> int:
     utf8_console()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=["plan", "list", "show", "run", "verify", "status", "check-t0"])
+    ap.add_argument("command", choices=["plan", "list", "show", "run", "verify", "status", "check-t0", "build-dev"])
     ap.add_argument("job", nargs="?")
     ap.add_argument("--workers", type=int, default=4, help="số đơn vị pha A chạy song song (Kaggle: 4 CPU)")
     ap.add_argument("--log-dir", type=Path, default=Path(os.environ.get("KLTN_LOG_DIR", "logs")))
@@ -353,6 +400,8 @@ def main(argv=None) -> int:
     if args.command == "status":
         cmd_status()
         return 0
+    if args.command == "build-dev":
+        return cmd_build_dev()
     if args.command == "check-t0":
         return cmd_check_t0()
     if args.job not in JOBS:

@@ -23,7 +23,7 @@ from .encoding import band_encode, decode_topk, init_chaotic, init_uniform, jacc
 Q_COLUMNS = tuple(f"q_{s}{a}" for s in range(2) for a in range(len(M.ACTIONS)))
 HISTORY_COLUMNS = ("t", "n_eval", "best_fitness", "mean_fitness", "diversity", "success_rate", "exploration_rate",
                    "n_ties_accepted", "mean_F", "sd_F", "archive_size", "leader_is_archive_best", "leader_overlap",
-                   "n_best_ties", *Q_COLUMNS)
+                   "n_best_ties", *Q_COLUMNS, "mean_CR", "n_new_genes")   # hai cột cuối: v2 (Review-2026-11-16)
 
 
 def diversity(panels) -> float:

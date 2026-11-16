@@ -3,6 +3,8 @@
 Giống hệt survey_v2.classify.evaluate_panel với LR-L2, chỉ khác tiêu chí chọn C: log-loss OOF nội bộ nhỏ nhất thay cho
 AUROC OOF nội bộ lớn nhất. Ngưỡng, quy tắc M5 (lớp nhỏ <= SMALL_N_T_MAX mẫu), seed, chuẩn hoá và refit giữ nguyên.
 criterion = "auroc" tái tạo đúng evaluate_panel của survey; dùng để kiểm đường mã, không dùng cho số liệu của bài.
+criterion = "c1" (B-C1, T-Y9 của Review-2026-11-16): C = 1 cố định như fitness, không dò lưới; ngưỡng, M5, seed, refit
+giữ như B-LL. Chỉ dùng cho phân tích độ nhạy.
 """
 from __future__ import annotations
 
@@ -14,7 +16,8 @@ import mpqda  # noqa: F401  (đặt vendor/ vào sys.path)
 from survey_v2 import config as C
 from survey_v2.classify import EvalResult, _best_threshold, _fit_predict, evaluate_panel, probability_metrics
 
-CRITERIA = ("logloss", "auroc")
+CRITERIA = ("logloss", "auroc", "c1")
+C_FIXED = 1.0                                  # B-C1: bằng C của fitness (mpqda.config.FITNESS_C)
 PROB_CLIP = 1e-6          # cùng mức cắt với probability_metrics của survey
 
 
@@ -30,11 +33,13 @@ def evaluate_panel_ll(Xtr, ytr, Xte, yte, seed: int = 0, c_grid=C.C_GRID, inner_
                               inner_folds=inner_folds, n_jobs=n_jobs, small_n=small_n)
     inner = list(StratifiedKFold(n_splits=inner_folds, shuffle=True, random_state=seed).split(np.zeros(len(ytr)), ytr))
     best_c, best_score, best_oof = None, -np.inf, None
-    for c in c_grid:                                          # lưới tăng dần; hoà giữ C nhỏ hơn, như survey
+    for c in ((C_FIXED,) if criterion == "c1" else c_grid):                                          # lưới tăng dần; hoà giữ C nhỏ hơn, như survey
         oof = np.zeros(len(ytr))
         for tr, va in inner:
             oof[va] = _fit_predict("lr_l2", c, seed, n_jobs, Xtr[tr], ytr[tr], Xtr[va])
-        if criterion == "auroc":
+        if criterion == "c1":
+            score = 0.0                                       # một giá trị C duy nhất, không chọn
+        elif criterion == "auroc":
             score = roc_auc_score(ytr, oof)
         else:
             score = -log_loss(ytr, np.clip(oof, PROB_CLIP, 1 - PROB_CLIP), labels=[0, 1])

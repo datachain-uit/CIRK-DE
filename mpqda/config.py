@@ -46,6 +46,13 @@ EXPECTED_SPLIT_SHA256 = {   # runner dừng nếu repeated_splits.csv khác (ngu
     # SHA-256 3febfbc23d377804f96a25bef35db29da4e28b0683c6a60ded2777acf0b28ee9); cả hai bộ qua G1 và G2.
     "tcga_luad_egfr": "6302d7f2e752fc80e7fa2b6675ed5451efddf53b82ba35323fa12c0475d6a7f6",
     "gse31210_egfr": "91ff5e92e75eff26159bcba1310abb787b4b2c536e460c0faac4913ddc5dfa05",
+    # Dữ liệu phát triển của v2 (TQĐ23). Ba tập TCGA: scripts/build_dev_datasets.py, docs/taimma/dev_datasets_card.json
+    # (dựng ngày 16/11/2026 từ experiment-data-v3; dựng lại cho cùng values_sha256 và cùng bản chia). gse42127: bản chia
+    # của survey trong experiment-data-v3.
+    "tcga_dev_a": "52fce717b3fa574777af2090b3f21635d6f5328da7787644f75ef799bf1e950e",
+    "tcga_dev_b": "9617e2c75abcdd9068f0d046c6b3e5b5b3839512420411f7bbb17c544569e9c0",
+    "tcga_dev_c": "4470d75fece1acefc9a1f9b4b1a5b4a422d711235647af2f99061854f66ef08d",
+    "gse42127": "6a0f194aa586b94f3836019b273d12ac2bc8abbdfe0151e612c876be073fd959",
 }
 
 # qlDE (Đ6): trích từ toàn văn Huynh, Do và Lee (2021), Applied Soft Computing 107:107464; số mục, phương trình và các chỗ
@@ -96,14 +103,42 @@ CHOICES_TO_CONFIRM = (
 )
 
 
+# ---------------------------------------------------------------- MPQDA-DE v2 (Review-2026-11-16, TQĐ22–TQĐ24)
+# Viết thẳng ở đây, không import từ mpqda.de_v2 (de.py import config.py; import ngược sẽ tạo vòng). Test kiểm hai bảng
+# khớp CANDIDATES, ABLATIONS của mpqda/de_v2.py sau khi đổi tên khoá.
+METHOD_ID = {**METHOD_ID, "mpqda_v2": 19, "de_g": 20}
+V2_CANDIDATES = {"mpqda_v2_m1": {}, "mpqda_v2_m2": {"adapt": True},
+                 "mpqda_v2_m3": {"tour": 2}}
+V2_ABLATIONS = {"mpqda_v2_no_gap": {"eps": 0.5},
+                "mpqda_v2_no_new": {"rate_new": 0.0},
+                "mpqda_v2_no_tour": {"tour": 1, "r1_from": "population"},
+                "mpqda_v2_no_adapt": {"adapt": False}}   # chỉ khi chốt M2
+V2_CHOSEN = None        # điền tên ứng viên trong commit đăng ký (PREREG-v2)
+V2_FAMILY = ("mpqda_v2", *V2_CANDIDATES, *V2_ABLATIONS)
+TWO_OUTPUTS = (*MPQDA_FAMILY, *V2_FAMILY)   # đồng thuận và <tên>_best
+ALL_METHODS = (*ALL_METHODS, *V2_FAMILY, "de_g")
+DEV_DATASETS = ("tcga_dev_a", "tcga_dev_b", "tcga_dev_c", "gse42127")
+
+
 def base_method(method: str) -> str:
-    """Phương pháp cho seed: mọi biến thể T2 dùng seed của mpqda_de (common random numbers)."""
-    return "mpqda_de" if method in VARIANTS else method
+    """Phương pháp cho seed: biến thể T2 dùng seed của mpqda_de; mọi tên của họ v2 dùng seed của mpqda_v2."""
+    if method in VARIANTS:
+        return "mpqda_de"
+    return "mpqda_v2" if method in V2_FAMILY else method
+
+
+def v2_config(method: str) -> dict:
+    """Tham số truyền cho run_mpqda_v2: ứng viên dùng cấu hình của nó; mpqda_v2 và ablation cần V2_CHOSEN."""
+    if method in V2_CANDIDATES:
+        return dict(V2_CANDIDATES[method])
+    if V2_CHOSEN is None:
+        raise ValueError("V2_CHOSEN chưa chốt")
+    return {**V2_CANDIDATES[V2_CHOSEN], **V2_ABLATIONS.get(method, {})}
 
 
 def output_names(method: str) -> tuple[str, ...]:
-    """Tên các dòng đầu ra của một lần chạy: họ MPQDA có <tên> (đồng thuận) và <tên>_best."""
-    return (method, method + BEST_SUFFIX) if method in MPQDA_FAMILY else (method,)
+    """Tên các dòng đầu ra của một lần chạy: họ MPQDA v1 và v2 có <tên> (đồng thuận) và <tên>_best."""
+    return (method, method + BEST_SUFFIX) if method in TWO_OUTPUTS else (method,)
 
 
 def t1_methods() -> tuple[str, ...]:

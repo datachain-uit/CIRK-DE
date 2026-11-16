@@ -75,6 +75,17 @@ MD5, runs both test suites and writes their logs, runs the jobs of the session, 
 Sessions S1–S3 refuse to start unless the S0 output shows that T0 and G-T1 passed and the MD5 of `pip freeze` equals that of S0.
 When `mpqda.config.B7_INCLUDED` is not empty, set `INPUT_B7_DATASET` to the Kaggle input holding `experiment-data-b7/`.
 
+## 3b. Development phase of MPQDA-DE v2 (Review-2026-11-16, TQĐ23)
+
+Session `DEV` of the notebook (no `S0_RESULTS` needed) copies `experiment-data-perm` into a writable root with `cp -rs`, builds
+`tcga_dev_a`, `tcga_dev_b`, `tcga_dev_c` (`python scripts/taimma_jobs.py build-dev`; three patient-disjoint subsets of the TCGA
+LUAD/LUSC cohort, 170 samples each), checks their split SHA-256 against `mpqda.config.EXPECTED_SPLIT_SHA256`, runs the three
+candidates, v1, DE-G, DE/rand/1/bin and GA on them and on GSE42127 (repeats 0 and 1), runs B-LL, and applies the selection
+rule and gate G-DEV (`scripts/dev_select.py`). The build is deterministic in content: the matrix values (`values_sha256`),
+`metadata.csv` and `repeated_splits.csv` are identical between builds, while the bytes of `expression.h5` are not; the card
+is `docs/taimma/dev_datasets_card.json`. No v2 method runs on the three GPL570 cohorts or the two B7 datasets before the tag
+`taimma-2027-prereg-v2` (`mpqda/registration.py`).
+
 ## 4. Tables and figures
 
 ```bash

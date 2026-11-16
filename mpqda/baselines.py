@@ -297,6 +297,11 @@ def run_method(method: str, fitness, p0: int, k: int, rng: np.random.Generator, 
                n_jobs: int = 1) -> dict:
     """Chạy một phương pháp (kể cả biến thể T2) với ngân sách P, T. Họ MPQDA trả thêm consensus, pi, archive."""
     from .de import run_mpqda
+    from .de_v2 import run_de_gapped, run_mpqda_v2
+    if method in M.V2_FAMILY:                                       # v2: ứng viên, bản chốt và ablation (TQĐ22)
+        return run_mpqda_v2(fitness, p0, k, rng, P=P, T=T, n_jobs=n_jobs, **M.v2_config(method))
+    if method == "de_g":
+        return run_de_gapped(fitness, p0, k, rng, P=P, T=T, n_jobs=n_jobs)
     if method in M.MPQDA_FAMILY:
         return run_mpqda(fitness, p0, k, rng, P=P, T=T, n_jobs=n_jobs, **M.VARIANTS.get(method, {}))
     if method in SURVEY_RNG_TAG:

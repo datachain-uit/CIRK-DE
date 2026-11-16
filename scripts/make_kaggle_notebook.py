@@ -48,7 +48,7 @@ CONFIG = """
 from pathlib import Path
 import hashlib, json, os, shutil, subprocess, sys, time, zipfile
 
-SESSION = 'S0'                 # S0 | S1 | S2 | S3
+SESSION = 'S0'                 # S0 | S1 | S2 | S3 | DEV (pha phát triển của v2, không cần S0_RESULTS)
 INPUT_V3_DATASET = Path('/kaggle/input/experiment-data-v3')   # sửa theo slug Kaggle Input
 S0_RESULTS = None              # S1–S3: đường dẫn tới S0_results.zip (hoặc thư mục đã giải nén) của phiên S0
 INPUT_B7_DATASET = None        # Input chứa experiment-data-b7/<bộ>/ khi B7_INCLUDED khác rỗng (T-Y5)
@@ -71,6 +71,8 @@ GATE1 = """
 # Gate 1 — Kaggle Input đúng layout của survey (bản sau QC). TCGA cần để giới hạn không gian gen như survey.
 NEED = {'tcga_luad_lusc_primary_tumor': 'experiment-data-perm', 'gse10245': 'experiment-data-geo-target',
         'gse30219': 'experiment-data-geo-target', 'gse37745': 'experiment-data-geo-target'}
+if SESSION == 'DEV':                                       # pha phát triển của v2: thêm GSE42127 (TQĐ23)
+    NEED['gse42127'] = 'experiment-data-geo-target'
 assert INPUT_V3_DATASET.is_dir(), f'Không thấy Kaggle Input: {INPUT_V3_DATASET}'
 for name, branch in NEED.items():
     d = INPUT_V3_DATASET / branch / name
@@ -114,7 +116,7 @@ freeze_md5 = hashlib.md5(freeze.encode('utf-8')).hexdigest()
 (LOG_DIR / 'pip_freeze_session.txt').write_text(freeze, encoding='utf-8')
 print('PIP_FREEZE_MD5', freeze_md5)
 s0_dir = None
-if SESSION != 'S0':
+if SESSION not in ('S0', 'DEV'):
     assert S0_RESULTS, 'S1–S3 chỉ mở sau khi S0 đạt: đặt S0_RESULTS'
     s0_dir = Path(S0_RESULTS)
     if s0_dir.suffix == '.zip':
@@ -134,7 +136,12 @@ GATE3 = """
 WORK_ROOT.mkdir(parents=True, exist_ok=True)
 for folder in ('experiment-data-perm', 'experiment-data-geo-target'):
     link = WORK_ROOT / folder
-    if not link.exists(): link.symlink_to(INPUT_V3_DATASET / folder, target_is_directory=True)
+    if SESSION == 'DEV' and folder == 'experiment-data-perm':
+        # DEV ghi ba tập TCGA mới vào experiment-data-perm: thư mục thật, tệp là liên kết tới Input (cp -rs, Mục 6.2)
+        if link.is_symlink(): link.unlink()
+        link.mkdir(parents=True, exist_ok=True)
+        subprocess.run(['cp', '-rs', f'{INPUT_V3_DATASET / folder}/.', f'{link}/'], check=True)
+    elif not link.exists(): link.symlink_to(INPUT_V3_DATASET / folder, target_is_directory=True)
 b7 = json.loads(subprocess.check_output([sys.executable, '-c', 'import json; from mpqda import config as M; '
                                          'print(json.dumps(list(M.B7_INCLUDED)))'], cwd=REPO_DIR, text=True))
 if b7:                                                     # T-Y5: chỉ khi có bộ B7 đã qua G1, G2
@@ -153,7 +160,7 @@ os.environ.update({'KLTN_DATA_ROOT': str(WORK_ROOT), 'KLTN_STRICT_N': '1', 'KLTN
                    'OMP_NUM_THREADS': '1', 'OPENBLAS_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1'})
 for flag in ('KLTN_ALLOW_UNPUSHED', 'KLTN_ALLOW_UNTRACKED', 'MPQDA_SMOKE'):
     os.environ.pop(flag, None)
-if SESSION != 'S0':
+if SESSION not in ('S0', 'DEV'):
     taimma = next((p for p in s0_dir.rglob('taimma') if p.is_dir()), None)
     assert taimma is not None, f'Không thấy results/survey_v2/taimma trong {S0_RESULTS}'
     t0 = json.loads((taimma / 'T0_report.json').read_text(encoding='utf-8'))

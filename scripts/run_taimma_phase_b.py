@@ -3,6 +3,7 @@ chỉ thay hàm đánh giá và ghi thêm c_selection vào config.json. Không t
 
     python scripts/run_taimma_phase_b.py --criterion logloss <mọi đối số của run_e1_classification.py>
     python scripts/run_taimma_phase_b.py --criterion auroc   <...>      # chỉ để test: trùng hệt pha B của survey
+    python scripts/run_taimma_phase_b.py --criterion c1      <...>      # B-C1: C = 1 cố định (độ nhạy, v2)
 
 Chép từ taimma_ref/run_taimma_phase_b_ref.py; evaluate_panel_ll và make_evaluator nằm ở mpqda/phase_b.py.
 """
@@ -28,7 +29,9 @@ if Path(E.__file__).resolve().parent != (VENDOR / "scripts").resolve():
 
 C_GRID = [0.01, 0.1, 1.0, 10.0]
 RULES = {"logloss": "smallest inner 3-fold out-of-fold log-loss (probabilities clipped to [1e-6, 1-1e-6]; ties keep the smaller C)",
-         "auroc": "survey rule: largest inner 3-fold out-of-fold AUROC (ties keep the smaller C)"}
+         "auroc": "survey rule: largest inner 3-fold out-of-fold AUROC (ties keep the smaller C)",
+         "c1": "C = 1 fixed (the C of the wrapper fitness); no grid; threshold from the inner out-of-fold scores (B-C1)"}
+GRIDS = {"logloss": C_GRID, "auroc": C_GRID, "c1": [1.0]}
 
 
 def use_repo_root_for_tracking() -> None:
@@ -55,7 +58,7 @@ def main(argv=None) -> int:
     write_config = E.write_config
 
     def write_config_with_rule(out_dir, prov, config, data_files=()):
-        config = dict(config, c_selection={"criterion": args.criterion, "grid": C_GRID,
+        config = dict(config, c_selection={"criterion": args.criterion, "grid": GRIDS[args.criterion],
                                            "rule": RULES[args.criterion], "decision": "TQĐ11"})
         return write_config(out_dir, prov, config, data_files=data_files)
 

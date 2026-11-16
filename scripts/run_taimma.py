@@ -38,6 +38,8 @@ from mpqda import config as M  # noqa: E402
 from mpqda.baselines import make_rng, run_method  # noqa: E402
 from mpqda.de import HISTORY_COLUMNS  # noqa: E402
 from mpqda.fitness import METRICS, InnerCVFitness  # noqa: E402
+from mpqda.registration import RegistrationError, check_run  # noqa: E402
+from mpqda.registration import git as _git  # noqa: E402
 from mpqda.runlog import DATA_ROOT, all_versions, results_dir, smoke_mode, start_run, utf8_console, write_config  # noqa: E402
 
 KEYS = ["cohort", "repeat", "fold", "method", "seed_index", "k"]
@@ -88,6 +90,9 @@ def parse_args(argv=None):
         ap.error(f"phương pháp không có: {unknown}")
     if len(set(args.methods)) != len(args.methods):
         ap.error("--methods có tên lặp")
+    needs_choice = [m for m in args.methods if m in M.V2_FAMILY and m not in M.V2_CANDIDATES]
+    if needs_choice and M.V2_CHOSEN is None:
+        ap.error(f"{needs_choice}: mpqda.config.V2_CHOSEN chưa chốt (chỉ ứng viên {list(M.V2_CANDIDATES)} chạy được)")
     if "qlde" in args.methods and M.QLDE is None:
         ap.error("qlde chưa có cấu hình (Đ6): điền docs/taimma/baselines/qlde.md và mpqda.config.QLDE trước")
     if args.n_jobs_eval > 1 and args.workers > 1:
@@ -121,6 +126,14 @@ def checkpoint_paths(out: Path, repeat: int, fold: int, method: str, parts) -> d
     return {part: base.with_name(base.name + f".{part}.csv") for part in parts}
 
 
+def head_tags() -> list[str]:
+    """Tag ở HEAD của kho (ghi vào config.json); rỗng nếu không đọc được."""
+    try:
+        return sorted(_git("tag", "--points-at", "HEAD").split())
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def run_unit(unit: dict) -> str:
     """Một đơn vị (lần lặp, fold, phương pháp): chạy mọi k rồi ghi checkpoint. Chỉ nhận phần train; phần test chỉ có mặt
     khi nhãn train bị xáo trộn (T0) và chỉ dùng sau khi panel đã chọn xong."""
@@ -142,7 +155,7 @@ def run_unit(unit: dict) -> str:
             if not np.isfinite([h["best_fitness"] for h in res["history"]] + [res["best_fitness"]]).all():
                 raise FloatingPointError(f"{name} repeat {repeat} fold {fold} {method} k={k}: fitness không hữu hạn")
             best = np.sort(np.asarray(res["best"], dtype=int))
-            if method in M.MPQDA_FAMILY:
+            if method in M.TWO_OUTPUTS:
                 cons = np.sort(np.asarray(res["consensus"], dtype=int))
                 same = bool(np.array_equal(cons, best))
                 outputs = [(method, cons, res["consensus_fitness"], same),
@@ -171,7 +184,7 @@ def run_unit(unit: dict) -> str:
                         "bacc": ev.bacc, "mcc": ev.mcc, "logloss": ev.logloss, "brier": ev.brier,
                         "best_fitness": res["best_fitness"], "output_fitness": out_fit, "phase_b_seed": pb_seed})
             rows["history"].extend({**key, "k": k, **h} for h in res["history"])
-            if method in M.MPQDA_FAMILY:
+            if method in M.TWO_OUTPUTS:
                 in_c, in_b = set(cons.tolist()), set(best.tolist())
                 rows["consensus"].extend({**key, "k": k, "gene": genes[j], "pi": pi, "in_consensus": j in in_c,
                                           "in_best": j in in_b} for j, pi in sorted(res["pi"].items()))
@@ -204,6 +217,13 @@ def aggregate(out: Path, parts) -> dict[str, pd.DataFrame]:
 def main(argv=None, script=__file__) -> int:
     utf8_console()
     args = parse_args(argv)
+    try:                                                   # cổng đăng ký của v2 (TQĐ24): trước mọi đơn vị, không cờ nào bỏ qua
+        for name in args.datasets:
+            for method in args.methods:
+                check_run(name, method, M.V2_CHOSEN)
+    except RegistrationError as exc:
+        print(f"DỪNG (cổng đăng ký): {exc}", file=sys.stderr)
+        return 2
     prov = start_run(script, params={k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()})
     smoke = smoke_mode()
     parts = dict(PARTS, **(SHUFFLE_PART if args.shuffle_train_labels else {}))
@@ -275,7 +295,9 @@ def main(argv=None, script=__file__) -> int:
                "nan_outer_test": bool(args.nan_outer_test), "smoke": smoke, "workers": args.workers,
                "n_jobs_eval": args.n_jobs_eval, "gene_space": ds.notes, "n_samples": ds.n, "n_genes": ds.p,
                "n_rows_selection_per_fold": int(len(metrics)), "versions": all_versions(),
-               "choices_to_confirm": list(M.CHOICES_TO_CONFIRM)}
+               "choices_to_confirm": list(M.CHOICES_TO_CONFIRM), "v2_chosen": M.V2_CHOSEN,
+               "v2_config": {m: M.v2_config(m) for m in args.methods if m in M.V2_FAMILY},
+               "head_tags": head_tags()}
         write_config(out, prov, cfg, data_files=[ds.data_dir / "expression.h5", ds.data_dir / "metadata.csv", path])
         print(f"[{name}] {len(metrics)} dòng selection_per_fold.csv -> {out}", flush=True)
     return 0

@@ -35,7 +35,7 @@ from mpqda.runlog import DATA_ROOT, head_commit, utf8_console  # noqa: E402
 FS = "vendor/scripts/run_e1_feature_selection.py"
 CLF = "vendor/scripts/run_e1_classification.py"
 CLF_LL = "scripts/run_taimma_phase_b.py"
-PHASE_B = {"ll": "T5LL", "auc": "T5"}          # pha B -> thư mục kết quả dưới taimma/
+PHASE_B = {"ll": "T5LL", "auc": "T5", "c1": "T5C1"}   # pha B -> thư mục kết quả dưới taimma/ (c1: B-C1, v2)
 GPL570 = list(C.GPL570_COHORTS)
 REPEATS = ["0", "1", "2"]
 T4_METHODS = ["l1_lr", "stability_selection", "f_test", "mrmr", "svm_rfe", "abess"]
@@ -46,6 +46,7 @@ SCENARIOS = {
     "T1b": ("T1b", GPL570, (5, 10, 50), False),
     "T2": ("T2", GPL570, (2, 5, 10), False),
     **{f"T3_s{s}": (f"T3_s{s}", ["gse37745"], (5, 10), False) for s in (1, 2, 3, 4)},
+    "DEV": ("DEV", list(M.DEV_DATASETS), (5, 10), False),            # pha phát triển của v2 (TQĐ23); chỉ để mô tả
 }
 
 
@@ -56,7 +57,7 @@ def results_root() -> Path:
 def classify_script(phase_b: str) -> list[str]:
     if phase_b not in PHASE_B:
         raise ValueError(phase_b)
-    return [CLF_LL, "--criterion", "logloss"] if phase_b == "ll" else [CLF]
+    return {"ll": [CLF_LL, "--criterion", "logloss"], "c1": [CLF_LL, "--criterion", "c1"], "auc": [CLF]}[phase_b]
 
 
 def phase_b_command(scenario: str, datasets=None, phase_b: str = "ll") -> tuple[list[str], str]:
@@ -107,6 +108,8 @@ def check_configs(out: str, datasets, commit: str | None) -> list[str]:
         criterion = (cfg.get("c_selection") or {}).get("criterion")
         if f"/{PHASE_B['ll']}/" in f"/{out}/" and criterion != "logloss":
             problems.append(f"{out}/{name}: c_selection.criterion = {criterion}, chờ logloss (TQĐ11)")
+        if f"/{PHASE_B['c1']}/" in f"/{out}/" and criterion != "c1":
+            problems.append(f"{out}/{name}: c_selection.criterion = {criterion}, chờ c1")
         if f"/{PHASE_B['auc']}/" in f"/{out}/" and criterion is not None:
             problems.append(f"{out}/{name}: có c_selection = {criterion} trong thư mục của pha B survey")
     return problems
@@ -117,7 +120,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--scenario", required=True, choices=["T4", *SCENARIOS])
     ap.add_argument("--datasets", nargs="+", default=None, help="mặc định theo kịch bản")
-    ap.add_argument("--phase-b", choices=sorted(PHASE_B), default="ll", help="ll: B-LL (chính); auc: pha B của survey")
+    ap.add_argument("--phase-b", choices=sorted(PHASE_B), default="ll", help="ll: B-LL (chính); auc: pha B của survey; c1: C = 1")
     ap.add_argument("--no-phase-a", dest="phase_a", action="store_false", help="T4: bỏ bước pha A đã chạy")
     ap.add_argument("--dry-run", action="store_true", help="chỉ in lệnh")
     args = ap.parse_args(argv)
