@@ -99,3 +99,11 @@ def test_card_records_split_sha(built):
     for name in B.SUBSETS:
         path = root / C.dataset_dir(name) / "repeated_splits.csv"
         assert card["subsets"][name]["sha256"]["repeated_splits.csv"] == sha256(path)
+
+
+def test_csv_files_use_lf_line_endings(built):
+    """Thêm khi tích hợp: SHA-256 bản chia phải giống nhau trên Windows và Kaggle."""
+    root, _, _ = built
+    for name in B.SUBSETS:
+        for f in ("metadata.csv", "repeated_splits.csv"):
+            assert b"\r\n" not in (root / C.dataset_dir(name) / f).read_bytes()

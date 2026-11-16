@@ -47,11 +47,11 @@ EXPECTED_SPLIT_SHA256 = {   # runner dừng nếu repeated_splits.csv khác (ngu
     "tcga_luad_egfr": "6302d7f2e752fc80e7fa2b6675ed5451efddf53b82ba35323fa12c0475d6a7f6",
     "gse31210_egfr": "91ff5e92e75eff26159bcba1310abb787b4b2c536e460c0faac4913ddc5dfa05",
     # Dữ liệu phát triển của v2 (TQĐ23). Ba tập TCGA: scripts/build_dev_datasets.py, docs/taimma/dev_datasets_card.json
-    # (dựng ngày 16/11/2026 từ experiment-data-v3; dựng lại cho cùng values_sha256 và cùng bản chia). gse42127: bản chia
+    # (dựng ngày 16/11/2026 từ experiment-data-v3, CSV ghi LF; SHA-256 trùng bản dựng trên Kaggle). gse42127: bản chia
     # của survey trong experiment-data-v3.
-    "tcga_dev_a": "52fce717b3fa574777af2090b3f21635d6f5328da7787644f75ef799bf1e950e",
-    "tcga_dev_b": "9617e2c75abcdd9068f0d046c6b3e5b5b3839512420411f7bbb17c544569e9c0",
-    "tcga_dev_c": "4470d75fece1acefc9a1f9b4b1a5b4a422d711235647af2f99061854f66ef08d",
+    "tcga_dev_a": "4b551e87837ef251172594f719534adc6c7c3f46632ad1d8d410f8e5485cc4bd",
+    "tcga_dev_b": "7c3c4db3830de08be96536f3589f6d040fb2b645acb13a631a22044850046494",
+    "tcga_dev_c": "34f6f2146f6692eab183e2d6a61e8239fed93af6432c3a5fea1e34da7eb7e2b4",
     "gse42127": "6a0f194aa586b94f3836019b273d12ac2bc8abbdfe0151e612c876be073fd959",
 }
 

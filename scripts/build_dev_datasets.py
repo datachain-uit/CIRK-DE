@@ -14,6 +14,7 @@ Quy tắc (đặt trước, không chỉnh sau khi xem kết quả):
      tìm kiếm của ba tập trùng nhau.
   4. Ghi dev_datasets_card.json: SHA-256 của các tệp, SHA-256 của ma trận giá trị, số mẫu mỗi lớp, mẫu bị bỏ do trùng
      bệnh nhân. SHA-256 của ba repeated_splits.csv chép vào mpqda.config.EXPECTED_SPLIT_SHA256 trước khi chạy DEV.
+CSV ghi với dòng kết thúc LF (thêm khi tích hợp: pandas trên Windows mặc định ghi CRLF, làm SHA-256 khác bản dựng trên Kaggle).
 Không đọc ba cohort GPL570 hay hai bộ B7. Mẫu của tcga_luad_egfr là tập con của cohort này (cùng biểu hiện, khác nhãn).
 """
 from __future__ import annotations
@@ -85,10 +86,10 @@ def write_subset(ds, rows: pd.DataFrame, name: str, split_seed: int, out_root: P
     y = rows["label"].to_numpy(dtype=int)
     meta = pd.DataFrame({"sample_id": rows["sample_id"], "patient_id": rows["patient_id"],
                          "class": [CLASS_NAME[v] for v in y], "label": y, "source_dataset": SOURCE})
-    meta.to_csv(d / "metadata.csv", index=False)
+    meta.to_csv(d / "metadata.csv", index=False, lineterminator="\n")   # LF: cùng byte trên Windows và Linux
     manifest = build_repeated_split_manifest(rows["sample_id"], rows["patient_id"], y, seeds=(split_seed,),
                                              n_folds=C.N_FOLDS)
-    manifest.to_csv(d / "repeated_splits.csv", index=False)
+    manifest.to_csv(d / "repeated_splits.csv", index=False, lineterminator="\n")
     return {"dir": str(Path(C.dataset_dir(name))), "split_seed": split_seed, "n": int(len(y)),
             "n_per_class": [int((y == 0).sum()), int((y == 1).sum())],
             "sha256": {f: sha256(d / f) for f in ("expression.h5", "metadata.csv", "repeated_splits.csv")},
