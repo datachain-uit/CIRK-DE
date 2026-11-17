@@ -2,12 +2,12 @@
 
 | Field | Value |
 |---|---|
-| Status | DRAFT for supervisor review. Binding from the annotated tag `taimma-2027-prereg-v2` |
+| Status | Registered. Binding from the annotated tag `taimma-2027-prereg-v2` |
 | Repository | `datachain-uit/MPQDA-DE`, branch `taimma-2027` |
 | Registration commit | The commit carrying the annotated tag `taimma-2027-prereg-v2`; the tag message gives its hash with the SHA-256 of this file and of `DEV_results.zip` |
-| Registered on | [TO FILL: date and time, ICT] |
+| Registered on | 2026-11-17 12:10 ICT |
 | Author | LuanNT (student ID 23520899), 23520899@gm.uit.edu.vn |
-| Reviewed by | [TO FILL: supervisor], on [TO FILL: date of approval] |
+| Reviewed by | Supervisor (GVHD), approval received on 2026-11-17 (decision TQĐ28 of Review-2026-11-17 and approval of the draft at `e4f2722`) |
 | Vendored survey code | `RNA-Seq-FS-Survey`, branch `dmkd-revision`, commit `c1828d2`, unchanged (`vendor/VENDORED.md`) |
 | Basis | Review-2026-11-16 (decisions TQĐ19–TQĐ26) and Review-2026-11-17 (TQĐ27–TQĐ32); results of v1 under tag `taimma-2027-v1-results` |
 
@@ -254,4 +254,4 @@ low power for a difference of that size; it is kept unchanged (TQĐ29).
 
 | Date | Section | Change | Reason | Outputs of C1–C3 seen before the change? |
 |---|---|---|---|---|
-| [TO FILL] | – | Registration | – | No |
+| 2026-11-17 | – | Registration: `V2_CHOSEN = mpqda_v2_m1` in `mpqda/config.py`; tag `taimma-2027-prereg-v2` on this commit | – | No |

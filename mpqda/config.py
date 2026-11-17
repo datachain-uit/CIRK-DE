@@ -113,7 +113,7 @@ V2_ABLATIONS = {"mpqda_v2_no_gap": {"eps": 0.5},
                 "mpqda_v2_no_new": {"rate_new": 0.0},
                 "mpqda_v2_no_tour": {"tour": 1, "r1_from": "population"},
                 "mpqda_v2_no_adapt": {"adapt": False}}   # chỉ khi chốt M2
-V2_CHOSEN = None        # điền tên ứng viên trong commit đăng ký (PREREG-v2)
+V2_CHOSEN = "mpqda_v2_m1"   # chốt trong commit đăng ký (PREREG-v2; DEV: hạng nhỏ nhất, G-DEV đạt; TQĐ28)
 V2_FAMILY = ("mpqda_v2", *V2_CANDIDATES, *V2_ABLATIONS)
 TWO_OUTPUTS = (*MPQDA_FAMILY, *V2_FAMILY)   # đồng thuận và <tên>_best
 ALL_METHODS = (*ALL_METHODS, *V2_FAMILY, "de_g")

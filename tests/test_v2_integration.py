@@ -81,21 +81,22 @@ def test_runner_smoke_v2_on_development_name(smoke_run):
     assert v2.mean_CR.notna().all() and v2[v2.t > 0].n_new_genes.notna().all()
     assert hist[hist.method == "de_g"].mean_CR.isna().all()
     cfg = json.loads((out / "config.json").read_text(encoding="utf-8"))
-    assert cfg["v2_chosen"] is None and cfg["v2_config"]["mpqda_v2_m3"] == {"tour": 2} and "head_tags" in cfg
+    assert cfg["v2_chosen"] == M.V2_CHOSEN and cfg["v2_config"]["mpqda_v2_m3"] == {"tour": 2} and "head_tags" in cfg
 
 
 @pytest.mark.slow
 def test_runner_registration_gate_blocks_confirmatory_names(smoke_run):
     """Tên bộ GPL570 (SMOKE_COHORT) là dữ liệu xác nhận: ứng viên bị chặn (mã 2) kể cả ở chế độ smoke; mpqda_v2 khi chưa
-    chốt V2_CHOSEN bị từ chối ngay ở dòng lệnh; v1 không bị chặn."""
+    chốt V2_CHOSEN bị từ chối ngay ở dòng lệnh; sau khi chốt, bị chặn vì bản sao kho trong test không mang tag đăng ký."""
+    reason = "V2_CHOSEN" if M.V2_CHOSEN is None else "taimma-2027-prereg-v2"
     base = ["--scenario", "SMOKE_gate", "--metric", "logloss", "--datasets", SMOKE_COHORT, "--k", "5", "--repeats", "0",
             "--folds", "0", "--pop", "6", "--generations", "2"]
     res = run_script(smoke_run["repo"], "run_taimma.py", [*base, "--methods", "mpqda_v2_m1"], smoke_run["env"], check=False)
     assert res.returncode == 2 and "cổng đăng ký" in res.stderr
     res = run_script(smoke_run["repo"], "run_taimma.py", [*base, "--methods", "de_g"], smoke_run["env"], check=False)
-    assert res.returncode == 2 and "V2_CHOSEN" in res.stderr
+    assert res.returncode == 2 and reason in res.stderr
     res = run_script(smoke_run["repo"], "run_taimma.py", [*base, "--methods", "mpqda_v2"], smoke_run["env"], check=False)
-    assert res.returncode == 2 and "V2_CHOSEN" in res.stderr
+    assert res.returncode == 2 and reason in res.stderr
     assert not (smoke_run["data"] / "results" / "survey_v2" / "taimma" / "SMOKE_gate").exists()
 
 
