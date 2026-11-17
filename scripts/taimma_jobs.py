@@ -7,7 +7,8 @@
     python scripts/taimma_jobs.py status
     python scripts/taimma_jobs.py check-t0             # bốn điều kiện của T0 (Mục 6) trên kết quả S0
     python scripts/taimma_jobs.py build-dev            # dựng ba tập DEV của v2 nếu chưa có, rồi kiểm SHA-256 (TQĐ23)
-    python scripts/taimma_jobs.py check-registered     # HEAD mang tag taimma-2027-prereg-v2 và cây sạch (việc v1b)
+    python scripts/taimma_jobs.py check-registered     # HEAD mang tag đăng ký (gốc hoặc sửa đổi) và cây sạch (việc v1b)
+    python scripts/taimma_jobs.py check-t0 --v2 --waiver docs/taimma/T0v2_waiver.json   # T0-v2 với bản miễn đã duyệt
 
 Mỗi việc là một chuỗi lệnh chạy lần lượt; lệnh pha A tự chạy song song theo --workers. Mỗi `run` ghi `pip freeze`.
 S1, S2, S3 chỉ mở sau khi mọi việc của S0 đạt. Thứ tự ưu tiên khi chậm: T0 → T1 → T1b → T3 → T2.
@@ -15,6 +16,7 @@ S1, S2, S3 chỉ mở sau khi mọi việc của S0 đạt. Thứ tự ưu tiên
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -38,9 +40,11 @@ from mpqda import config as M  # noqa: E402
 from mpqda.runlog import head_commit, utf8_console  # noqa: E402
 
 RUN, EVAL, GATE, SELF = "scripts/run_taimma.py", "scripts/run_taimma_eval.py", "scripts/check_gate_gt1.py", "scripts/taimma_jobs.py"
+CALIB = "scripts/t0_calibration.py"
 GPL570 = list(C.GPL570_COHORTS)
 T0_SHUFFLE_RANGE = (0.40, 0.60)
 T0_MIN_LEADER_OVERLAP = 0.2
+T0_WAIVER_TOL = 1e-9                  # bản miễn A1: AUROC từng fold phải trùng bản ghi tới 1e-9
 N_EVAL_MAX = M.P * (M.T + 1) + 1
 
 
@@ -154,6 +158,7 @@ def build_dev_jobs() -> list[Job]:
 
 
 V2_PAIR = ["mpqda_v2", "de_g"]
+T0V2_WAIVER = "docs/taimma/T0v2_waiver.json"                     # sửa đổi A1 của PREREG-v2 (TQĐ33)
 V1_METHODS = ["mpqda_de", *M.TIER1, *M.TIER2]                     # tám phương pháp của v1 dùng lại (G-R)
 PHASE_B_V2 = ("ll", "auc", "c1", "llw")                           # B-LL chính; B-AUC, B-C1, B-LL-wide độ nhạy (TQĐ27)
 PHASE_B_DIRS4 = ("T5LL", "T5", "T5C1", "T5LLW")
@@ -190,7 +195,7 @@ def build_v2_jobs() -> list[Job]:
             + [(f"{M.RESULT_SUBDIR}/T0v2_det_j4/gse10245", _rows(["mpqda_v2"], [5], 3))], "0,05"),
         Job("t0v2_shuffle", "S0v2", "T0-v2 nhãn xáo trộn: GSE37745, 15 fold, k = 5, mpqda_v2 và de_g; rồi check-t0 --v2",
             [_run("T0v2", "logloss", ["gse37745"], V2_PAIR, [5], "--shuffle-train-labels", *W,
-                  out=f"{M.RESULT_SUBDIR}/T0v2_shuffle"), [SELF, "check-t0", "--v2"]],
+                  out=f"{M.RESULT_SUBDIR}/T0v2_shuffle"), [SELF, "check-t0", "--v2", "--waiver", T0V2_WAIVER]],
             _phase_a_outputs("T0v2_shuffle", ["gse37745"], V2_PAIR, [5]), "0,1"),
         Job("gr", "S0v2", "G-R: chạy lại 16 đơn vị của v1 và bảy baseline (gse10245 lần lặp 0 fold 0 k = 5; gse37745 lần lặp 2 "
             "fold 4 k = 10) và so với T1 của S1 (tập gen, N_eval trùng; best_fitness lệch ≤ 1e-12)",
@@ -222,12 +227,16 @@ def build_v2_jobs() -> list[Job]:
             [out for s_ in (1, 2, 3, 4) for out in (
                 (f"{M.RESULT_SUBDIR}/T3v2_s{s_}/gse37745", _rows(["mpqda_v2"], [5, 10])),
                 *_b_outputs4(f"T3v2_s{s_}", ["gse37745"]))], "0,6"),
+        Job("t0v2_calib", "CAL", "Hiệu chuẩn hoán vị của T0-v2 (chỉ mô tả, TQĐ34): GSE37745, 15 fold, k = 5, hoán vị b = 0..10 "
+            "(b = 0 là hoán vị đã đăng ký), mpqda_v2 và GA, 50 panel ngẫu nhiên mỗi (fold, b); song song với C1–C3",
+            [[CALIB, "--workers", "{WORKERS}"]], [], "1,0"),
     ]
 
 
 JOBS = {**build_jobs(), **{j.name: j for j in build_dev_jobs()}, **{j.name: j for j in build_v2_jobs()}}
 SESSIONS = {"S0": ["t0_det", "t0_shuffle", "gt1"], "S1": ["t1", "t1_b7"], "S2": ["t1b", "t4", "t6"], "S3": ["t2", "t3"],
-            "DEV": ["dev"], "S0v2": ["t0v2_det", "t0v2_shuffle", "gr", "v1b"], "C1": ["c1"], "C2": ["c2"], "C3": ["c3"]}
+            "DEV": ["dev"], "S0v2": ["t0v2_det", "t0v2_shuffle", "gr", "v1b"], "C1": ["c1"], "C2": ["c2"], "C3": ["c3"],
+            "CAL": ["t0v2_calib"]}
 
 
 # ------------------------------------------------------------------------------------------------- helpers
@@ -250,7 +259,6 @@ def render(argv, workers: int = 4) -> list[str]:
 
 def pip_freeze_md5() -> str | None:
     """MD5 của `python -m pip freeze`, cùng cách tính với GATE2 của notebook (TQĐ16)."""
-    import hashlib
     try:
         txt = subprocess.run([sys.executable, "-m", "pip", "freeze"], capture_output=True, text=True, timeout=180,
                              check=True).stdout
@@ -318,9 +326,30 @@ def same_values(a: pd.DataFrame, b: pd.DataFrame) -> bool:
     return True
 
 
-def check_t0(root: Path | None = None, prefix: str = "T0", main: str = "mpqda_de") -> tuple[list[str], dict]:
+def waiver_covers(waiver: dict | None, method: str, ev: pd.DataFrame, lo: float, hi: float) -> bool:
+    """Bản miễn (PREREG-v2 Mục 12, A1) chỉ áp cho mục (4), đúng phương pháp, đúng cận bị vượt và đúng AUROC từng fold đã ghi
+    (lệch không quá T0_WAIVER_TOL). Lần chạy cho số khác thì không được miễn."""
+    if not waiver:
+        return False
+    part = ev[ev.method == method]
+    mean = float(part.auroc.mean())
+    side = "lower" if mean < lo else "upper" if mean > hi else None
+    for item in waiver.get("items", []):
+        if item.get("method") != method or item.get("bound") != side:
+            continue
+        if abs(mean - float(item["mean_auroc"])) > T0_WAIVER_TOL:
+            return False
+        want = {(int(r["repeat"]), int(r["fold"])): float(r["auroc"]) for r in item["per_fold_auroc"]}
+        got = {(int(r.repeat), int(r.fold)): float(r.auroc) for r in part.itertuples(index=False)}
+        return set(want) == set(got) and all(abs(got[key] - want[key]) <= T0_WAIVER_TOL for key in want)
+    return False
+
+
+def check_t0(root: Path | None = None, prefix: str = "T0", main: str = "mpqda_de",
+             waiver: dict | None = None) -> tuple[list[str], dict]:
     """Bốn điều kiện của T0 (Mục 6) trên kết quả của t0_det và t0_shuffle (prefix T0, phương pháp chính mpqda_de), hoặc
-    của T0-v2 (prefix T0v2, mpqda_v2; PREREG-v2 Mục 9). Trả về (danh sách không đạt, số liệu ghi lại)."""
+    của T0-v2 (prefix T0v2, mpqda_v2; PREREG-v2 Mục 9). Trả về (danh sách không đạt, số liệu ghi lại). waiver: bản miễn đã
+    duyệt cho mục (4) (waiver_covers); các mục (1)–(3) và số fold của mục (4) không bao giờ được miễn."""
     root = results_root() / M.RESULT_SUBDIR if root is None else Path(root)
     a, b, j4 = (root / f"{prefix}_det_{t}" / "gse10245" for t in ("a", "b", "j4"))
     sh = root / f"{prefix}_shuffle" / "gse37745"
@@ -352,11 +381,17 @@ def check_t0(root: Path | None = None, prefix: str = "T0", main: str = "mpqda_de
     means = ev.groupby("method").auroc.mean()
     info["shuffle_mean_outer_auroc"] = {m: float(v) for m, v in means.items()}
     info["shuffle_mean_inner_fitness"] = {m: float(v) for m, v in ev.groupby("method").output_fitness.mean().items()}
+    info["waived"] = []
     for method, value in means.items():
         if n_folds[method] != M.N_OUTER_FOLDS:
             problems.append(f"(4) {method}: {n_folds[method]} fold, chờ {M.N_OUTER_FOLDS}")
         if not T0_SHUFFLE_RANGE[0] <= value <= T0_SHUFFLE_RANGE[1]:
-            problems.append(f"(4) nhãn xáo trộn: AUROC ngoài trung bình của {method} = {value:.4f}, ngoài {list(T0_SHUFFLE_RANGE)}")
+            if n_folds[method] == M.N_OUTER_FOLDS and waiver_covers(waiver, method, ev, *T0_SHUFFLE_RANGE):
+                info["waived"].append({"item": "(4)", "method": method, "mean_auroc": float(value),
+                                       "decision": waiver.get("decision")})
+            else:
+                problems.append(f"(4) nhãn xáo trộn: AUROC ngoài trung bình của {method} = {value:.4f}, "
+                                f"ngoài {list(T0_SHUFFLE_RANGE)}")
     hist = _frame(a / "history.csv")
     overlap = float(hist[(hist.method == main) & (hist.t == 1)].leader_overlap.mean())
     info["leader_overlap_t1_gse10245"] = overlap
@@ -364,9 +399,16 @@ def check_t0(root: Path | None = None, prefix: str = "T0", main: str = "mpqda_de
     return problems, info
 
 
-def cmd_check_t0(v2: bool = False) -> int:
+def cmd_check_t0(v2: bool = False, waiver_path: Path | None = None) -> int:
     prefix, main = ("T0v2", "mpqda_v2") if v2 else ("T0", "mpqda_de")
-    problems, info = check_t0(prefix=prefix, main=main)
+    waiver = None
+    if waiver_path is not None:
+        path = ROOT / waiver_path if not Path(waiver_path).is_absolute() else Path(waiver_path)
+        waiver = json.loads(path.read_text(encoding="utf-8"))
+    problems, info = check_t0(prefix=prefix, main=main, waiver=waiver)
+    if waiver is not None:
+        info["waiver_file"] = str(waiver_path)
+        info["waiver_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
     info["pip_freeze_md5"] = pip_freeze_md5()
     print(f"PIP_FREEZE_MD5 {info['pip_freeze_md5']}")
     out = results_root() / M.RESULT_SUBDIR / f"{prefix}_report.json"
@@ -376,7 +418,9 @@ def cmd_check_t0(v2: bool = False) -> int:
     print(json.dumps(info, ensure_ascii=False, indent=2))
     if info.get("leader_overlap_report_now"):
         print(f"BÁO NGAY: leader_overlap trung bình ở t = 1 dưới {T0_MIN_LEADER_OVERLAP} (Đ2 không có tác dụng trên dữ liệu thật)")
-    print(f"{prefix} ĐẠT" if not problems else f"{prefix} KHÔNG ĐẠT:\n  " + "\n  ".join(problems))
+    waived = "; ".join(f"{w['item']} {w['method']} {w['mean_auroc']:.4f} ({w['decision']})" for w in info.get("waived", []))
+    print((f"{prefix} ĐẠT" + (f" — miễn theo PREREG-v2 Mục 12: {waived}" if waived else "")) if not problems
+          else f"{prefix} KHÔNG ĐẠT:\n  " + "\n  ".join(problems))
     return 0 if not problems else 3
 
 
@@ -411,11 +455,12 @@ def cmd_check_registered(git=None) -> int:
     from mpqda import registration as R
     git = git or R.git
     problems = []
-    if R.PREREG_V2_TAG not in git("tag", "--points-at", "HEAD").split():
-        problems.append(f"HEAD chưa mang tag {R.PREREG_V2_TAG}")
+    tag = R.registration_tag(git)
+    if tag is None:
+        problems.append(f"HEAD chưa mang tag đăng ký ({', '.join(R.REGISTRATION_TAGS)})")
     if git("status", "--porcelain", "--untracked-files=no").strip():
         problems.append("cây làm việc có thay đổi chưa commit")
-    print("REGISTERED_OK" if not problems else "DỪNG: " + "; ".join(problems), flush=True)
+    print(f"REGISTERED_OK {tag}" if not problems else "DỪNG: " + "; ".join(problems), flush=True)
     return 0 if not problems else 1
 
 
@@ -480,6 +525,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=["plan", "list", "show", "run", "verify", "status", "check-t0", "build-dev",
                                         "check-registered"])
+    ap.add_argument("--waiver", type=Path, default=None, help="check-t0: bản miễn đã duyệt cho mục (4) (PREREG-v2 Mục 12)")
     ap.add_argument("job", nargs="?")
     ap.add_argument("--workers", type=int, default=4, help="số đơn vị pha A chạy song song (Kaggle: 4 CPU)")
     ap.add_argument("--log-dir", type=Path, default=Path(os.environ.get("KLTN_LOG_DIR", "logs")))
@@ -494,7 +540,7 @@ def main(argv=None) -> int:
     if args.command == "build-dev":
         return cmd_build_dev()
     if args.command == "check-t0":
-        return cmd_check_t0(v2=args.v2)
+        return cmd_check_t0(v2=args.v2, waiver_path=args.waiver)
     if args.command == "check-registered":
         return cmd_check_registered()
     if args.job not in JOBS:

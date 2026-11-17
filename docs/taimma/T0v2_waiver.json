@@ -1,0 +1,110 @@
+{
+  "amendment": "A1",
+  "decision": "TQĐ33",
+  "review": "Review-2026-11-17b",
+  "date": "2026-11-17",
+  "registered_tag": "taimma-2027-prereg-v2",
+  "amendment_tag": "taimma-2027-prereg-v2.1",
+  "scope": "PREREG-v2 Section 9, gate T0-v2, item (4) only: mean outer AUROC with shuffled training labels; lower bound only; method mpqda_v2 only; valid only if every fold reproduces the recorded AUROC within 1e-9",
+  "items": [
+    {
+      "method": "mpqda_v2",
+      "bound": "lower",
+      "registered_range": [
+        0.4,
+        0.6
+      ],
+      "mean_auroc": 0.3915384615384615,
+      "per_fold_auroc": [
+        {
+          "repeat": 0,
+          "fold": 0,
+          "auroc": 0.15750915750915753
+        },
+        {
+          "repeat": 0,
+          "fold": 1,
+          "auroc": 0.18681318681318682
+        },
+        {
+          "repeat": 0,
+          "fold": 2,
+          "auroc": 0.3626373626373627
+        },
+        {
+          "repeat": 0,
+          "fold": 3,
+          "auroc": 0.32234432234432236
+        },
+        {
+          "repeat": 0,
+          "fold": 4,
+          "auroc": 0.5923076923076923
+        },
+        {
+          "repeat": 1,
+          "fold": 0,
+          "auroc": 0.32234432234432236
+        },
+        {
+          "repeat": 1,
+          "fold": 1,
+          "auroc": 0.3553113553113553
+        },
+        {
+          "repeat": 1,
+          "fold": 2,
+          "auroc": 0.30402930402930406
+        },
+        {
+          "repeat": 1,
+          "fold": 3,
+          "auroc": 0.5018315018315018
+        },
+        {
+          "repeat": 1,
+          "fold": 4,
+          "auroc": 0.3500000000000001
+        },
+        {
+          "repeat": 2,
+          "fold": 0,
+          "auroc": 0.2710622710622711
+        },
+        {
+          "repeat": 2,
+          "fold": 1,
+          "auroc": 0.5934065934065934
+        },
+        {
+          "repeat": 2,
+          "fold": 2,
+          "auroc": 0.63003663003663
+        },
+        {
+          "repeat": 2,
+          "fold": 3,
+          "auroc": 0.37728937728937734
+        },
+        {
+          "repeat": 2,
+          "fold": 4,
+          "auroc": 0.5461538461538462
+        }
+      ]
+    }
+  ],
+  "source_run": {
+    "session": "S0v2",
+    "commit": "d5e72e4b8df65004062b64d0301ece654038e9cc",
+    "results_zip_sha256": "106181c48d5218d8911926e2bc76fd6bb967a4a7cc2fe065884b493368d1b529",
+    "t0_shuffle_eval_sha256": "4fbe59524bc4cd7d9783860676e4c3c5087d8663b7c5406ab1dff2ae94c2e3d2"
+  },
+  "evidence": [
+    "label flow: in shuffle mode y_tr is permuted before any unit is built; every method receives the same InnerCVFitness object type built from the permuted labels; the v2 search reads only fitness.evaluate_many and fitness.n_eval (tests/test_label_flow.py)",
+    "inner fitness under shuffled labels is at chance level: mean output fitness -0.577 (mpqda_v2), -0.570 (mpqda_v2_best), -0.574 (de_g), against -0.055 to -0.064 with true labels on T1 of v1 (inner log-loss, Review-2026-11-16)",
+    "selection does not read the outer-test labels: replacing y_te by 1 - y_te leaves the panels and the history unchanged and maps every AUROC a to 1 - a (tests/test_label_flow.py)",
+    "the downward shift of the consensus output relative to random panels on the same permutations is reported as an open, exploratory question (Review-2026-11-17b, TQĐ34)"
+  ],
+  "outputs_of_C1_C3_seen": false
+}

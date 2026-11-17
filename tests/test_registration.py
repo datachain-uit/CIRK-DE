@@ -68,3 +68,14 @@ def test_real_git_commands(tmp_path):
     (tmp_path / "a.txt").write_text("b\n")
     with pytest.raises(R.RegistrationError):
         R.check_run("gse10245", "mpqda_v2", "mpqda_v2_m1", git=run)
+
+
+def test_amendment_tag_is_a_registration_tag():
+    """Sửa đổi A1 (Review-2026-11-17b, TQĐ33): HEAD mang tag sửa đổi thì chạy được; tag lạ thì không."""
+    assert R.REGISTRATION_TAGS == ("taimma-2027-prereg-v2", "taimma-2027-prereg-v2.1")
+    R.check_run("gse37745", "mpqda_v2", "mpqda_v2_m1", git=fake_git(tags=("taimma-2027-prereg-v2.1",)))
+    assert R.registration_tag(fake_git(tags=("taimma-2027-prereg-v2", "taimma-2027-prereg-v2.1"))) == "taimma-2027-prereg-v2.1"
+    assert R.registration_tag(fake_git(tags=())) is None
+    for tags in (("taimma-2027-prereg-v2.2",), ("taimma-2027-prereg",), ("taimma-2027-v1-results",)):
+        with pytest.raises(R.RegistrationError):
+            R.check_run("gse37745", "de_g", "mpqda_v2_m1", git=fake_git(tags=tags))
