@@ -47,6 +47,11 @@ SCENARIOS = {
     "T2": ("T2", GPL570, (2, 5, 10), False),
     **{f"T3_s{s}": (f"T3_s{s}", ["gse37745"], (5, 10), False) for s in (1, 2, 3, 4)},
     "DEV": ("DEV", list(M.DEV_DATASETS), (5, 10), False),            # pha phát triển của v2 (TQĐ23); chỉ để mô tả
+    # pha xác nhận của v2 (PREREG-v2 Mục 5): C1 trên GPL570 và B7, C2 ablation, C3 seed
+    "T1v2": ("T1v2", GPL570, (2, 5, 10, 50), True),
+    "T1v2_b7": ("T1v2", list(M.B7_INCLUDED), (5, 10), True),
+    "T2v2": ("T2v2", GPL570, (2, 5, 10), False),
+    **{f"T3v2_s{s}": (f"T3v2_s{s}", ["gse37745"], (5, 10), False) for s in (1, 2, 3, 4)},
 }
 
 

@@ -48,9 +48,10 @@ CONFIG = """
 from pathlib import Path
 import hashlib, json, os, shutil, subprocess, sys, time, zipfile
 
-SESSION = 'S0'                 # S0 | S1 | S2 | S3 | DEV (pha phát triển của v2, không cần S0_RESULTS)
+SESSION = 'S0'                 # S0 | S1 | S2 | S3 | DEV | S0v2 | C1 | C2 | C3 (DEV, S0v2: không cần S0_RESULTS)
 INPUT_V3_DATASET = Path('/kaggle/input/experiment-data-v3')   # sửa theo slug Kaggle Input
-S0_RESULTS = None              # S1–S3: đường dẫn tới S0_results.zip (hoặc thư mục đã giải nén) của phiên S0
+S0_RESULTS = None              # S1–S3: S0_results.zip của S0; C1–C3: S0v2_results.zip của S0v2 (zip hoặc thư mục đã giải nén)
+V1_RESULTS = None              # S0v2: S1_results.zip của v1 (T1 dùng cho cổng G-R; PREREG-v2 Mục 4)
 INPUT_B7_DATASET = None        # Input chứa experiment-data-b7/<bộ>/ khi B7_INCLUDED khác rỗng (T-Y5)
 PIN_SURVEY_ENV = False         # TQĐ16: True = cài đúng vendor/requirements-kaggle.txt; chỉ bật khi G-T1 trượt vì gói
 REPO_URL = 'https://github.com/datachain-uit/MPQDA-DE.git'
@@ -116,15 +117,17 @@ freeze_md5 = hashlib.md5(freeze.encode('utf-8')).hexdigest()
 (LOG_DIR / 'pip_freeze_session.txt').write_text(freeze, encoding='utf-8')
 print('PIP_FREEZE_MD5', freeze_md5)
 s0_dir = None
-if SESSION not in ('S0', 'DEV'):
+NO_REF = ('S0', 'DEV', 'S0v2')                               # phiên không cần kết quả của phiên trước
+REF = 'S0v2' if SESSION in ('C1', 'C2', 'C3') else 'S0'     # phiên tham chiếu của S1–S3 và C1–C3
+if SESSION not in NO_REF:
     assert S0_RESULTS, 'S1–S3 chỉ mở sau khi S0 đạt: đặt S0_RESULTS'
     s0_dir = Path(S0_RESULTS)
     if s0_dir.suffix == '.zip':
         tmp = Path('/kaggle/working/_s0')
         with zipfile.ZipFile(s0_dir) as zf: zf.extractall(tmp)
         s0_dir = tmp
-    s0_freeze = next(iter(s0_dir.rglob('S0/pip_freeze_session.txt')), None)
-    assert s0_freeze is not None, f'Không thấy logs/S0/pip_freeze_session.txt trong {S0_RESULTS}'
+    s0_freeze = next(iter(s0_dir.rglob(f'{REF}/pip_freeze_session.txt')), None)
+    assert s0_freeze is not None, f'Không thấy logs/{REF}/pip_freeze_session.txt trong {S0_RESULTS}'
     s0_md5 = hashlib.md5(s0_freeze.read_text(encoding='utf-8').encode('utf-8')).hexdigest()
     assert s0_md5 == freeze_md5, (f'Môi trường khác S0 (MD5 {freeze_md5} khác {s0_md5}); không chạy tiếp. '
                                   'Dùng cùng ảnh Kaggle và cùng PIN_SURVEY_ENV như S0 (TQĐ16).')
@@ -160,16 +163,28 @@ os.environ.update({'KLTN_DATA_ROOT': str(WORK_ROOT), 'KLTN_STRICT_N': '1', 'KLTN
                    'OMP_NUM_THREADS': '1', 'OPENBLAS_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1'})
 for flag in ('KLTN_ALLOW_UNPUSHED', 'KLTN_ALLOW_UNTRACKED', 'MPQDA_SMOKE'):
     os.environ.pop(flag, None)
-if SESSION not in ('S0', 'DEV'):
+if SESSION == 'S0v2':                                        # T1 của v1 cho cổng G-R
+    assert V1_RESULTS, 'S0v2 cần V1_RESULTS (S1_results.zip của v1)'
+    v1_dir = Path(V1_RESULTS)
+    if v1_dir.suffix == '.zip':
+        tmp = Path('/kaggle/working/_v1')
+        with zipfile.ZipFile(v1_dir) as zf: zf.extractall(tmp)
+        v1_dir = tmp
+    v1_t1 = next((p for p in v1_dir.rglob('T1') if p.is_dir() and p.parent.name == 'taimma'), None)
+    assert v1_t1 is not None and (v1_t1 / 'gse10245' / 'selected_genes.csv').is_file(), f'Không thấy taimma/T1 trong {V1_RESULTS}'
+    os.environ['KLTN_V1_T1'] = str(v1_t1)
+    print('V1_T1', v1_t1)
+if SESSION not in NO_REF:
     taimma = next((p for p in s0_dir.rglob('taimma') if p.is_dir()), None)
     assert taimma is not None, f'Không thấy results/survey_v2/taimma trong {S0_RESULTS}'
-    t0 = json.loads((taimma / 'T0_report.json').read_text(encoding='utf-8'))
-    gate = (taimma / 'GT1_s0' / 'gate_gt1.csv').read_text(encoding='utf-8').strip().splitlines()
-    assert t0['passed'], f"T0 chưa đạt: {t0['problems']}"
-    assert len(gate) <= 1, f'G-T1 chưa đạt: {len(gate) - 1} dòng lệch'
+    report, gate_file = ('T0v2_report.json', ('GR', 'gate_gr.csv')) if REF == 'S0v2' else ('T0_report.json', ('GT1_s0', 'gate_gt1.csv'))
+    t0 = json.loads((taimma / report).read_text(encoding='utf-8'))
+    gate = (taimma / gate_file[0] / gate_file[1]).read_text(encoding='utf-8').strip().splitlines()
+    assert t0['passed'], f"{report} chưa đạt: {t0['problems']}"
+    assert len(gate) <= 1, f'{gate_file[0]} chưa đạt: {len(gate) - 1} dòng lệch'
     assert not t0.get('leader_overlap_report_now'), 'leader_overlap ở t = 1 dưới 0,2: báo GVHD trước khi chạy tiếp'
     assert t0.get('pip_freeze_md5') == freeze_md5, f"MD5 pip freeze của T0_report.json ({t0.get('pip_freeze_md5')}) khác phiên này"
-    print('S0_OK', {k: t0[k] for k in ('shuffle_mean_outer_auroc', 'leader_overlap_t1_gse10245')})
+    print(f'{REF}_OK', {k: t0[k] for k in ('shuffle_mean_outer_auroc', 'leader_overlap_t1_gse10245')})
 subprocess.run([sys.executable, 'scripts/taimma_jobs.py', 'plan'], cwd=REPO_DIR, check=True)
 """
 

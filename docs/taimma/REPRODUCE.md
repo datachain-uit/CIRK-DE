@@ -86,6 +86,19 @@ rule and gate G-DEV (`scripts/dev_select.py`). The build is deterministic in con
 is `docs/taimma/dev_datasets_card.json`. No v2 method runs on the three GPL570 cohorts or the two B7 datasets before the tag
 `taimma-2027-prereg-v2` (`mpqda/registration.py`).
 
+## 3c. Confirmatory phase of MPQDA-DE v2 (PREREG-v2)
+
+All sessions check out the tag `taimma-2027-prereg-v2` (`REPO_COMMIT = 'taimma-2027-prereg-v2'`); before that tag the runner
+refuses every v2 method on the GPL570 and B7 data. Session `S0v2` (jobs `t0v2_det`, `t0v2_shuffle`, `gr`) needs
+`V1_RESULTS` set to `S1_results.zip` of v1, whose `taimma/T1` is the reference of gate G-R. Sessions `C1`, `C2`, `C3`
+(jobs `c1`, `c2`, `c3`) need `S0_RESULTS` set to `S0v2_results.zip`; they stop unless `T0v2_report.json` passed, `GR/gate_gr.csv`
+has no row and the `pip freeze` MD5 equals that of S0v2. Each phase B step runs B-LL (`T5LL/`), B-AUC (`T5/`) and B-C1 (`T5C1/`).
+The tables of v2 come from a separate script that leaves the tables of v1 untouched:
+
+```bash
+python scripts/make_taimma_v2_tables.py --results $KLTN_DATA_ROOT/results/survey_v2/taimma --out tables_v2
+```
+
 ## 4. Tables and figures
 
 ```bash
