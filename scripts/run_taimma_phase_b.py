@@ -4,6 +4,7 @@ chỉ thay hàm đánh giá và ghi thêm c_selection vào config.json. Không t
     python scripts/run_taimma_phase_b.py --criterion logloss <mọi đối số của run_e1_classification.py>
     python scripts/run_taimma_phase_b.py --criterion auroc   <...>      # chỉ để test: trùng hệt pha B của survey
     python scripts/run_taimma_phase_b.py --criterion c1      <...>      # B-C1: C = 1 cố định (độ nhạy, v2)
+    python scripts/run_taimma_phase_b.py --criterion llwide  <...>      # B-LL-wide: log-loss trên lưới rộng (TQĐ27)
 
 Chép từ taimma_ref/run_taimma_phase_b_ref.py; evaluate_panel_ll và make_evaluator nằm ở mpqda/phase_b.py.
 """
@@ -22,7 +23,7 @@ for _p in (ROOT, VENDOR):                       # kết quả: vendor/ đứng t
 
 import scripts.run_e1_classification as E  # noqa: E402
 
-from mpqda.phase_b import make_evaluator  # noqa: E402
+from mpqda.phase_b import C_GRID_WIDE, make_evaluator  # noqa: E402
 
 if Path(E.__file__).resolve().parent != (VENDOR / "scripts").resolve():
     raise SystemExit(f"DỪNG: run_e1_classification nạp từ {E.__file__}, không phải vendor/scripts")
@@ -30,8 +31,11 @@ if Path(E.__file__).resolve().parent != (VENDOR / "scripts").resolve():
 C_GRID = [0.01, 0.1, 1.0, 10.0]
 RULES = {"logloss": "smallest inner 3-fold out-of-fold log-loss (probabilities clipped to [1e-6, 1-1e-6]; ties keep the smaller C)",
          "auroc": "survey rule: largest inner 3-fold out-of-fold AUROC (ties keep the smaller C)",
-         "c1": "C = 1 fixed (the C of the wrapper fitness); no grid; threshold from the inner out-of-fold scores (B-C1)"}
-GRIDS = {"logloss": C_GRID, "auroc": C_GRID, "c1": [1.0]}
+         "c1": "C = 1 fixed (the C of the wrapper fitness); no grid; threshold from the inner out-of-fold scores (B-C1)",
+         "llwide": "smallest inner 3-fold out-of-fold log-loss over the wide grid 1e-4..1e3 (probabilities clipped to "
+                   "[1e-6, 1-1e-6]; ties keep the smaller C; B-LL-wide)"}
+GRIDS = {"logloss": C_GRID, "auroc": C_GRID, "c1": [1.0], "llwide": list(C_GRID_WIDE)}
+DECISIONS = {"llwide": "TQĐ27"}                 # các tiêu chí khác: TQĐ11
 
 
 def use_repo_root_for_tracking() -> None:
@@ -59,7 +63,8 @@ def main(argv=None) -> int:
 
     def write_config_with_rule(out_dir, prov, config, data_files=()):
         config = dict(config, c_selection={"criterion": args.criterion, "grid": GRIDS[args.criterion],
-                                           "rule": RULES[args.criterion], "decision": "TQĐ11"})
+                                           "rule": RULES[args.criterion],
+                                           "decision": DECISIONS.get(args.criterion, "TQĐ11")})
         return write_config(out_dir, prov, config, data_files=data_files)
 
     E.write_config = write_config_with_rule

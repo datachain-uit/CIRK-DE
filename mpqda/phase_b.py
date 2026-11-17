@@ -5,6 +5,8 @@ AUROC OOF nội bộ lớn nhất. Ngưỡng, quy tắc M5 (lớp nhỏ <= SMALL
 criterion = "auroc" tái tạo đúng evaluate_panel của survey; dùng để kiểm đường mã, không dùng cho số liệu của bài.
 criterion = "c1" (B-C1, T-Y9 của Review-2026-11-16): C = 1 cố định như fitness, không dò lưới; ngưỡng, M5, seed, refit
 giữ như B-LL. Chỉ dùng cho phân tích độ nhạy.
+criterion = "llwide" (B-LL-wide, TQĐ27 của Review-2026-11-16): như B-LL nhưng dò trên lưới rộng C_GRID_WIDE, bỏ qua c_grid
+của nơi gọi; kiểm xem C chọn có chạm biên lưới 0,01..10 hay không (bài học B4 của survey). Chỉ dùng cho phân tích độ nhạy.
 """
 from __future__ import annotations
 
@@ -16,9 +18,19 @@ import mpqda  # noqa: F401  (đặt vendor/ vào sys.path)
 from survey_v2 import config as C
 from survey_v2.classify import EvalResult, _best_threshold, _fit_predict, evaluate_panel, probability_metrics
 
-CRITERIA = ("logloss", "auroc", "c1")
+CRITERIA = ("logloss", "auroc", "c1", "llwide")
 C_FIXED = 1.0                                  # B-C1: bằng C của fitness (mpqda.config.FITNESS_C)
+C_GRID_WIDE = (1e-4, 1e-3, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0)   # B-LL-wide: hai bậc mỗi phía quanh lưới 0,01..10
 PROB_CLIP = 1e-6          # cùng mức cắt với probability_metrics của survey
+
+
+def grid_for(criterion: str, c_grid=C.C_GRID) -> tuple:
+    """Lưới C mà tiêu chí thực sự dò: c1 một giá trị, llwide lưới rộng (không phụ thuộc c_grid), còn lại c_grid."""
+    if criterion == "c1":
+        return (C_FIXED,)
+    if criterion == "llwide":
+        return C_GRID_WIDE
+    return tuple(c_grid)
 
 
 def evaluate_panel_ll(Xtr, ytr, Xte, yte, seed: int = 0, c_grid=C.C_GRID, inner_folds: int = C.INNER_CV_FOLDS,
@@ -33,7 +45,7 @@ def evaluate_panel_ll(Xtr, ytr, Xte, yte, seed: int = 0, c_grid=C.C_GRID, inner_
                               inner_folds=inner_folds, n_jobs=n_jobs, small_n=small_n)
     inner = list(StratifiedKFold(n_splits=inner_folds, shuffle=True, random_state=seed).split(np.zeros(len(ytr)), ytr))
     best_c, best_score, best_oof = None, -np.inf, None
-    for c in ((C_FIXED,) if criterion == "c1" else c_grid):                                          # lưới tăng dần; hoà giữ C nhỏ hơn, như survey
+    for c in grid_for(criterion, c_grid):                    # lưới tăng dần; hoà giữ C nhỏ hơn, như survey
         oof = np.zeros(len(ytr))
         for tr, va in inner:
             oof[va] = _fit_predict("lr_l2", c, seed, n_jobs, Xtr[tr], ytr[tr], Xtr[va])
@@ -41,7 +53,7 @@ def evaluate_panel_ll(Xtr, ytr, Xte, yte, seed: int = 0, c_grid=C.C_GRID, inner_
             score = 0.0                                       # một giá trị C duy nhất, không chọn
         elif criterion == "auroc":
             score = roc_auc_score(ytr, oof)
-        else:
+        else:                                                 # logloss và llwide
             score = -log_loss(ytr, np.clip(oof, PROB_CLIP, 1 - PROB_CLIP), labels=[0, 1])
         if score > best_score:
             best_c, best_score, best_oof = c, score, oof

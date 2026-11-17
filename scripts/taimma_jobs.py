@@ -7,6 +7,7 @@
     python scripts/taimma_jobs.py status
     python scripts/taimma_jobs.py check-t0             # bốn điều kiện của T0 (Mục 6) trên kết quả S0
     python scripts/taimma_jobs.py build-dev            # dựng ba tập DEV của v2 nếu chưa có, rồi kiểm SHA-256 (TQĐ23)
+    python scripts/taimma_jobs.py check-registered     # HEAD mang tag taimma-2027-prereg-v2 và cây sạch (việc v1b)
 
 Mỗi việc là một chuỗi lệnh chạy lần lượt; lệnh pha A tự chạy song song theo --workers. Mỗi `run` ghi `pip freeze`.
 S1, S2, S3 chỉ mở sau khi mọi việc của S0 đạt. Thứ tự ưu tiên khi chậm: T0 → T1 → T1b → T3 → T2.
@@ -154,16 +155,17 @@ def build_dev_jobs() -> list[Job]:
 
 V2_PAIR = ["mpqda_v2", "de_g"]
 V1_METHODS = ["mpqda_de", *M.TIER1, *M.TIER2]                     # tám phương pháp của v1 dùng lại (G-R)
-PHASE_B_DIRS3 = ("T5LL", "T5", "T5C1")
+PHASE_B_V2 = ("ll", "auc", "c1", "llw")                           # B-LL chính; B-AUC, B-C1, B-LL-wide độ nhạy (TQĐ27)
+PHASE_B_DIRS4 = ("T5LL", "T5", "T5C1", "T5LLW")
 
 
-def _eval3(scenario):
-    """Pha B của v2: B-LL (chính), B-AUC và B-C1 (độ nhạy), theo thứ tự đó (PREREG-v2 Mục 5)."""
-    return [[EVAL, "--scenario", scenario, "--phase-b", pb] for pb in ("ll", "auc", "c1")]
+def _eval4(scenario):
+    """Pha B của v2: B-LL (chính), rồi B-AUC, B-C1 và B-LL-wide (độ nhạy), theo thứ tự đó (PREREG-v2 Mục 5)."""
+    return [[EVAL, "--scenario", scenario, "--phase-b", pb] for pb in PHASE_B_V2]
 
 
-def _b_outputs3(sub, datasets):
-    return [(f"{M.RESULT_SUBDIR}/{pb}/{sub}/{d}", None) for pb in PHASE_B_DIRS3 for d in datasets]
+def _b_outputs4(sub, datasets):
+    return [(f"{M.RESULT_SUBDIR}/{pb}/{sub}/{d}", None) for pb in PHASE_B_DIRS4 for d in datasets]
 
 
 def v2_ablations() -> list[str]:
@@ -197,29 +199,35 @@ def build_v2_jobs() -> list[Job]:
              [GATE, "--run-root", "{RESULTS}/" + gr_out, "--reference", "{V1_T1}", "--datasets", "gse10245", "gse37745",
               "--methods", *v1_outputs, "--report", "{RESULTS}/" + gr_out + "/gate_gr.csv"]],
             [(f"{gr_out}/gse10245", _rows(V1_METHODS, [5], 1)), (f"{gr_out}/gse37745", _rows(V1_METHODS, [10], 1))], "0,15"),
-        Job("c1", "C1", "C1: mpqda_v2 và de_g trên ba cohort GPL570 (k ∈ {2, 5, 10, 50}) và hai bộ B7 (k ∈ {5, 10}); pha B ba "
+        Job("v1b", "S0v2", "B-C1 và B-LL-wide cho T1 của v1 và bảy baseline (panel của S1, đọc từ {V1_T1}) trên ba cohort GPL570 "
+            "và B7, để HV2 có tham chiếu dưới mỗi tiêu chí (TQĐ30); chỉ chạy ở commit mang tag đăng ký",
+            [[SELF, "check-registered"]]
+            + [[EVAL, "--scenario", sc, "--phase-b", pb, "--selection-root", "{V1_T1}"]
+               for sc in ("T1", *(("T1_b7",) if b7 else ())) for pb in ("c1", "llw")],
+            [(f"{M.RESULT_SUBDIR}/{pb}/T1/{d}", None) for pb in ("T5C1", "T5LLW") for d in [*GPL570, *b7]], "0,3"),
+        Job("c1", "C1", "C1: mpqda_v2 và de_g trên ba cohort GPL570 (k ∈ {2, 5, 10, 50}) và hai bộ B7 (k ∈ {5, 10}); pha B bốn "
             "tiêu chí",
             [_run("T1v2", "logloss", GPL570, V2_PAIR, [2, 5, 10, 50], *W),
              *([_run("T1v2", "logloss", b7, V2_PAIR, [5, 10], *W)] if b7 else []),
-             *_eval3("T1v2"), *(_eval3("T1v2_b7") if b7 else [])],
+             *_eval4("T1v2"), *(_eval4("T1v2_b7") if b7 else [])],
             _phase_a_outputs("T1v2", GPL570, V2_PAIR, [2, 5, 10, 50]) + _phase_a_outputs("T1v2", b7, V2_PAIR, [5, 10])
-            + _b_outputs3("T1v2", [*GPL570, *b7]), "2,0"),
-        Job("c2", "C2", "C2: ablation của v2 (" + ", ".join(abl) + "), k ∈ {2, 5, 10}, ba cohort GPL570; pha B ba tiêu chí",
-            [_run("T2v2", "logloss", GPL570, abl, [2, 5, 10], *W), *_eval3("T2v2")],
-            _phase_a_outputs("T2v2", GPL570, abl, [2, 5, 10]) + _b_outputs3("T2v2", GPL570), "1,5"),
-        Job("c3", "C3", "C3: mpqda_v2 với seed 1–4 trên GSE37745, k ∈ {5, 10}; pha B ba tiêu chí",
+            + _b_outputs4("T1v2", [*GPL570, *b7]), "2,0"),
+        Job("c2", "C2", "C2: ablation của v2 (" + ", ".join(abl) + "), k ∈ {2, 5, 10}, ba cohort GPL570; pha B bốn tiêu chí",
+            [_run("T2v2", "logloss", GPL570, abl, [2, 5, 10], *W), *_eval4("T2v2")],
+            _phase_a_outputs("T2v2", GPL570, abl, [2, 5, 10]) + _b_outputs4("T2v2", GPL570), "1,5"),
+        Job("c3", "C3", "C3: mpqda_v2 với seed 1–4 trên GSE37745, k ∈ {5, 10}; pha B bốn tiêu chí",
             [step for s_ in (1, 2, 3, 4) for step in (
                 _run(f"T3v2_s{s_}", "logloss", ["gse37745"], ["mpqda_v2"], [5, 10], "--seed-index", str(s_), *W),
-                *_eval3(f"T3v2_s{s_}"))],
+                *_eval4(f"T3v2_s{s_}"))],
             [out for s_ in (1, 2, 3, 4) for out in (
                 (f"{M.RESULT_SUBDIR}/T3v2_s{s_}/gse37745", _rows(["mpqda_v2"], [5, 10])),
-                *_b_outputs3(f"T3v2_s{s_}", ["gse37745"]))], "0,6"),
+                *_b_outputs4(f"T3v2_s{s_}", ["gse37745"]))], "0,6"),
     ]
 
 
 JOBS = {**build_jobs(), **{j.name: j for j in build_dev_jobs()}, **{j.name: j for j in build_v2_jobs()}}
 SESSIONS = {"S0": ["t0_det", "t0_shuffle", "gt1"], "S1": ["t1", "t1_b7"], "S2": ["t1b", "t4", "t6"], "S3": ["t2", "t3"],
-            "DEV": ["dev"], "S0v2": ["t0v2_det", "t0v2_shuffle", "gr"], "C1": ["c1"], "C2": ["c2"], "C3": ["c3"]}
+            "DEV": ["dev"], "S0v2": ["t0v2_det", "t0v2_shuffle", "gr", "v1b"], "C1": ["c1"], "C2": ["c2"], "C3": ["c3"]}
 
 
 # ------------------------------------------------------------------------------------------------- helpers
@@ -398,6 +406,19 @@ def cmd_build_dev() -> int:
 
 
 # ------------------------------------------------------------------------------------------------- lệnh
+def cmd_check_registered(git=None) -> int:
+    """0 khi HEAD mang tag taimma-2027-prereg-v2 và cây làm việc không có thay đổi chưa commit ở tệp được theo dõi; 1 nếu không."""
+    from mpqda import registration as R
+    git = git or R.git
+    problems = []
+    if R.PREREG_V2_TAG not in git("tag", "--points-at", "HEAD").split():
+        problems.append(f"HEAD chưa mang tag {R.PREREG_V2_TAG}")
+    if git("status", "--porcelain", "--untracked-files=no").strip():
+        problems.append("cây làm việc có thay đổi chưa commit")
+    print("REGISTERED_OK" if not problems else "DỪNG: " + "; ".join(problems), flush=True)
+    return 0 if not problems else 1
+
+
 def cmd_plan():
     for session, names in SESSIONS.items():
         for name in names:
@@ -457,7 +478,8 @@ def cmd_status():
 def main(argv=None) -> int:
     utf8_console()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=["plan", "list", "show", "run", "verify", "status", "check-t0", "build-dev"])
+    ap.add_argument("command", choices=["plan", "list", "show", "run", "verify", "status", "check-t0", "build-dev",
+                                        "check-registered"])
     ap.add_argument("job", nargs="?")
     ap.add_argument("--workers", type=int, default=4, help="số đơn vị pha A chạy song song (Kaggle: 4 CPU)")
     ap.add_argument("--log-dir", type=Path, default=Path(os.environ.get("KLTN_LOG_DIR", "logs")))
@@ -473,6 +495,8 @@ def main(argv=None) -> int:
         return cmd_build_dev()
     if args.command == "check-t0":
         return cmd_check_t0(v2=args.v2)
+    if args.command == "check-registered":
+        return cmd_check_registered()
     if args.job not in JOBS:
         ap.error(f"việc phải là một trong: {', '.join(JOBS)}")
     job = JOBS[args.job]

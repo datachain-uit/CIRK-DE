@@ -1,13 +1,20 @@
 """Bảng và kiểm định của pha xác nhận MPQDA-DE v2 (PREREG-v2 Mục 6–7). Không sửa make_taimma_tables.py (TQĐ19): chỉ dùng
 lại các hàm thống kê và đọc tệp của nó, nên bảng của v1 không đổi.
 
-    python scripts/make_taimma_v2_tables.py --results <thư mục chứa T1, T1v2, T2v2, T3_s*, T3v2_s*, T5LL, T5, T5C1> --out tables_v2
+    python scripts/make_taimma_v2_tables.py --results <thư mục chứa T1, T1v2, T2v2, T3_s*, T3v2_s*, T5LL, T5, T5C1, T5LLW> --out tables_v2
 
-Đầu vào: kết quả v1 (S1–S3, tag taimma-2027-v1-results) và kết quả C1–C3 của v2, giải nén cùng một thư mục.
+Đầu vào: kết quả v1 (S1–S3, tag taimma-2027-v1-results), kết quả S0v2 (việc v1b: T5C1/T1, T5LLW/T1) và C1–C3 của v2,
+giải nén cùng một thư mục.
   table_v2_main         log-loss, AUROC ngoài (B-LL) theo cohort, k, phương pháp: tám phương pháp của v1, v2 (hai đầu ra), DE-G
   stats_hv1_search      HV1: best_fitness(v2) − best_fitness(m), m ∈ {v1, GA}, k ∈ {5, 10}; Wilcoxon một phía, Holm trên 4;
                         CI bootstrap 95 % phân tầng theo cohort; tỉ lệ fold v2 tốt hơn
-  stats_hv2_generalization[_bauc|_bc1]  HV2: log-loss, AUROC ngoài của v2 so với BPSO và v1; Nadeau–Bengio gộp, Holm trên 4
+  stats_hv2_generalization[_bauc|_bc1|_bllw]  HV2: log-loss, AUROC ngoài của v2 so với BPSO và v1; Nadeau–Bengio gộp, Holm
+                        trên 4 trong từng tiêu chí pha B; _bc1, _bllw cần việc v1b (không có thì chỉ ghi table_v2_main_bc1|_bllw)
+  stats_hv5_b7          HV5: AUROC ngoài (B-LL) của v1 − v2 trên gse31210_egfr, k ∈ {5, 10}; Wilcoxon một phía trên 15 fold,
+                        Holm trên 2; kèm best_fitness v2 − v1 trên chính bộ này, log-loss v2 − v1 (CI Nadeau–Bengio một bộ) và
+                        AUROC GA − v1, chỉ mô tả
+  diagnostics_v2_c_choice  tỉ lệ panel có C ở biên lưới theo tiêu chí pha B, phương pháp, k (T-Y9)
+  Mọi bảng HV có cột holm_family và family_size: Holm chạy trên cả họ, không theo cohort hay k (TQĐ27, bài học O49).
   stats_hv3_stability   HV3: Φ(v2 đồng thuận) − Φ(m), m ∈ {v1 đồng thuận, GA}, GSE37745, k ∈ {5, 10}; Wilcoxon một phía, Holm 4
   table_v2_ablation     HV4: best_fitness(v2) − best_fitness(ablation), k ∈ {2, 5, 10}; Wilcoxon một phía, Holm trên mọi phép thử;
                         ghi nhận khi đạt ở ít nhất hai trong ba k; log-loss ngoài của ablation chỉ mô tả
@@ -47,7 +54,11 @@ HV2_REF = ("bpso", V1)
 ABLATIONS = ("mpqda_v2_no_gap", "mpqda_v2_no_new", "mpqda_v2_no_tour", "mpqda_v2_no_adapt")
 NEMENYI_Q05_10 = 3.164
 BOOT_REPS, BOOT_SEED = 2000, 20261118
-PHASE_B = {"B-LL": "T5LL", "B-AUC": "T5", "B-C1": "T5C1"}
+PHASE_B = {"B-LL": "T5LL", "B-AUC": "T5", "B-C1": "T5C1", "B-LL-wide": "T5LLW"}
+SFX = {"B-LL": "", "B-AUC": "_bauc", "B-C1": "_bc1", "B-LL-wide": "_bllw"}
+GRID_EDGES = {"B-LL": (0.01, 10.0), "B-AUC": (0.01, 10.0), "B-LL-wide": (1e-4, 1000.0)}   # B-C1: C = 1, không có lưới
+HV5_COHORT = "gse31210_egfr"             # B7 độc lập với dữ liệu phát triển (TQĐ23); tcga_luad_egfr cùng nguồn với TCGA DEV
+FAMILY_SIZE = {"HV1": 4, "HV2": 4, "HV3": 4, "HV4": 9, "HV5": 2}   # PREREG-v2; HV4 là 12 nếu bản chốt là M2
 
 
 def bootstrap_ci(diffs_by_cohort, reps: int = BOOT_REPS, seed: int = BOOT_SEED) -> tuple[float, float]:
@@ -62,6 +73,14 @@ def bootstrap_ci(diffs_by_cohort, reps: int = BOOT_REPS, seed: int = BOOT_SEED) 
     return float(lo), float(hi)
 
 
+def with_holm(out: pd.DataFrame, p_col: str, family: str) -> pd.DataFrame:
+    """Holm trên mọi dòng của bảng (một họ), ghi tên họ và cỡ họ cạnh p_holm (TQĐ27)."""
+    out["p_holm"] = holm(out[p_col].to_numpy())
+    out["holm_family"] = family
+    out["family_size"] = len(out)
+    return out
+
+
 def hv1(sel: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for k in T.PRIMARY_K:
@@ -71,26 +90,26 @@ def hv1(sel: pd.DataFrame) -> pd.DataFrame:
             lo, hi = bootstrap_ci(by_c)
             rows.append({"k": k, "reference": ref, "n": len(d), "mean_diff": float(d.mean()), "ci_low": lo, "ci_high": hi,
                          "share_v2_better": float(np.mean(d > 0)), "p": T.wilcoxon_p(d, "greater")})
-    out = pd.DataFrame(rows)
-    out["p_holm"] = holm(out.p.to_numpy())
+    out = with_holm(pd.DataFrame(rows), "p", "HV1")
     out["significant"] = out.p_holm < T.ALPHA
     return out
 
 
-def hv2(ev: pd.DataFrame) -> pd.DataFrame:
+def hv2(ev: pd.DataFrame, family: str = "HV2") -> pd.DataFrame:
     rows = []
     for k in T.PRIMARY_K:
         for ref in HV2_REF:
-            ll = T.pooled_nb([T.paired(ev, V2, ref, "logloss", k, c) for c in COHORTS])
+            d_ll = [T.paired(ev, V2, ref, "logloss", k, c) for c in COHORTS]
+            ll = T.pooled_nb(d_ll)
             au = T.pooled_nb([T.paired(ev, V2, ref, "auroc", k, c) for c in COHORTS])
             p_two = 1.0 if ll["se"] == 0 else float(2 * st.t.sf(abs(ll["mean"]) / ll["se"], ll["df"]))
             p_worse = (float(au["mean"] < -T.ROPE_AUROC) if au["se"] == 0
                        else float(st.t.cdf((-T.ROPE_AUROC - au["mean"]) / au["se"], au["df"])))
-            rows.append({"k": k, "reference": ref, "logloss_diff": ll["mean"], "logloss_se": ll["se"], "logloss_ci_low": ll["ci_low"],
+            rows.append({"k": k, "reference": ref, "n": int(sum(len(d) for d in d_ll)), "logloss_diff": ll["mean"],
+                         "logloss_se": ll["se"], "logloss_ci_low": ll["ci_low"],
                          "logloss_ci_high": ll["ci_high"], "logloss_half_width": (ll["ci_high"] - ll["ci_low"]) / 2,
                          "p_two_sided": p_two, "auroc_diff": au["mean"], "auroc_se": au["se"], "p_auroc_below_minus_rope": p_worse})
-    out = pd.DataFrame(rows)
-    out["p_holm"] = holm(out.p_two_sided.to_numpy())
+    out = with_holm(pd.DataFrame(rows), "p_two_sided", family)
     out["different"] = out.p_holm < T.ALPHA
     return out
 
@@ -128,8 +147,7 @@ def hv3(phi: pd.DataFrame) -> pd.DataFrame:
             d = (pa.loc[idx] - pb.loc[idx]).to_numpy(dtype=float)
             rows.append({"k": k, "reference": ref, "n": len(d), "phi_v2": float(pa.loc[idx].mean()), "phi_reference": float(pb.loc[idx].mean()),
                          "mean_diff": float(d.mean()), "p": T.wilcoxon_p(d, "greater")})
-    out = pd.DataFrame(rows)
-    out["p_holm"] = holm(out.p.to_numpy())
+    out = with_holm(pd.DataFrame(rows), "p", "HV3")
     out["significant"] = out.p_holm < T.ALPHA
     return out
 
@@ -146,12 +164,51 @@ def hv4(sel: pd.DataFrame, ev: pd.DataFrame | None) -> pd.DataFrame:
                 ll = T.pooled_nb([T.paired(ev, a, V2, "logloss", k, c) for c in COHORTS])
                 row.update({"outer_logloss_ablation_minus_v2": ll["mean"], "outer_ci_low": ll["ci_low"], "outer_ci_high": ll["ci_high"]})
             rows.append(row)
-    out = pd.DataFrame(rows)
-    out["p_holm"] = holm(out.p.to_numpy())
+    out = with_holm(pd.DataFrame(rows), "p", "HV4")
     out["significant"] = out.p_holm < T.ALPHA
     n_sig = out.groupby("ablation").significant.sum()
     out["component_credited"] = out.ablation.map(lambda a: bool(n_sig[a] >= 2))
     return out
+
+
+def hv5(ev: pd.DataFrame, sel: pd.DataFrame | None = None, cohort: str = HV5_COHORT) -> pd.DataFrame:
+    """HV5 (TQĐ29): AUROC ngoài (B-LL) của v2 thấp hơn v1 trên một bộ B7. d = AUROC(v1) − AUROC(v2) theo (lần lặp, fold);
+    Wilcoxon một phía (d > 0), Holm trên k ∈ {5, 10}. best_fitness v2 − v1 trên chính bộ đó (khi có sel), log-loss v2 − v1
+    (CI Nadeau–Bengio của một bộ) và AUROC GA − v1 chỉ để mô tả, không vào họ Holm."""
+    rows = []
+    for k in T.PRIMARY_K:
+        d = T.paired(ev, V1, V2, "auroc", k, cohort)
+        if not len(d):
+            raise ValueError(f"HV5: không có cặp v1, v2 nào trên {cohort}, k = {k}")
+        ll = T.pooled_nb([T.paired(ev, V2, V1, "logloss", k, cohort)])
+        ga = T.paired(ev, "ga", V1, "auroc", k, cohort)
+        rows.append({"cohort": cohort, "k": k, "n": len(d), "auroc_v1": float(ev[(ev.cohort == cohort) & (ev.k == k) & (ev.method == V1)].auroc.mean()),
+                     "auroc_v2": float(ev[(ev.cohort == cohort) & (ev.k == k) & (ev.method == V2)].auroc.mean()),
+                     "auroc_v1_minus_v2": float(d.mean()), "share_v2_lower": float(np.mean(d > 0)), "p": T.wilcoxon_p(d, "greater"),
+                     "logloss_v2_minus_v1": ll["mean"], "logloss_ci_low": ll["ci_low"], "logloss_ci_high": ll["ci_high"],
+                     "auroc_ga_minus_v1": float(ga.mean()) if len(ga) else np.nan})
+        inner = T.paired(sel, V2, V1, "best_fitness", k, cohort) if sel is not None else np.array([])
+        rows[-1].update({"inner_fitness_v2_minus_v1": float(inner.mean()) if len(inner) else np.nan,
+                         "share_v2_inner_better": float(np.mean(inner > 0)) if len(inner) else np.nan})
+    out = with_holm(pd.DataFrame(rows), "p", "HV5")
+    out["significant"] = out.p_holm < T.ALPHA
+    return out
+
+
+def c_choice(evs: dict) -> pd.DataFrame:
+    """Phân bố C được chọn (cột C của classification_per_fold) theo tiêu chí pha B, phương pháp, k: tỉ lệ ở cận dưới, cận trên
+    của lưới, trung vị (T-Y9). B-C1 không có lưới nên không vào bảng."""
+    rows = []
+    for pb, ev in evs.items():
+        if pb not in GRID_EDGES:
+            continue
+        lo, hi = GRID_EDGES[pb]
+        part = ev[ev.cohort.isin(COHORTS) & ev.C.notna()]
+        for (method, k), g in part.groupby(["method", "k"], sort=True):
+            c = g.C.astype(float)
+            rows.append({"phase_b": pb, "method": method, "k": int(k), "n": len(c), "share_at_lower": float(np.isclose(c, lo).mean()),
+                         "share_at_upper": float(np.isclose(c, hi).mean()), "median_C": float(c.median())})
+    return pd.DataFrame(rows, columns=["phase_b", "method", "k", "n", "share_at_lower", "share_at_upper", "median_C"])
 
 
 def behaviour(h1: pd.DataFrame, h2: pd.DataFrame) -> pd.DataFrame:
@@ -192,30 +249,36 @@ def build(results: Path, out: Path) -> dict:
         emit("stats_hv1_search", hv1(sel), tag="HV1", keys=["k", "reference"],
              columns=["mean_diff", "ci_low", "ci_high", "share_v2_better", "p", "p_holm", "significant"])
     evs: dict[str, pd.DataFrame] = {}
+    all_methods = [*[n for m in V1_METHODS for n in M.output_names(m)], V2, V2 + M.BEST_SUFFIX, DEG]
     for pb, sub in PHASE_B.items():
-        v1_ev = inp.scenario(f"{sub}/T1", "classification_per_fold.csv", encoding="utf-8-sig") if sub != "T5C1" else None
+        v1_ev = inp.scenario(f"{sub}/T1", "classification_per_fold.csv", encoding="utf-8-sig")
         v2_ev = inp.scenario(f"{sub}/T1v2", "classification_per_fold.csv", encoding="utf-8-sig")
-        if v2_ev is None or (pb != "B-C1" and v1_ev is None):
+        if v2_ev is None or (pb in ("B-LL", "B-AUC") and v1_ev is None):
             continue
         ev = pd.concat([f for f in (v1_ev, v2_ev) if f is not None], ignore_index=True)
         ev = ev[ev.model == "lr_l2"].reset_index(drop=True)
         evs[pb] = ev
-        if pb == "B-C1":                          # v1 và baseline không có B-C1 (TQĐ24: chỉ thêm cho v2); chỉ mô tả v2, DE-G
-            emit("table_v2_main_bc1", T.summary_table(ev, [V2, V2 + M.BEST_SUFFIX, DEG], (2, 5, 10, 50)), tag="V2T_BC1",
+        sfx = SFX[pb]
+        if v1_ev is None:                         # B-C1, B-LL-wide khi chưa chạy việc v1b: chỉ mô tả v2, DE-G
+            emit(f"table_v2_main{sfx}", T.summary_table(ev, [V2, V2 + M.BEST_SUFFIX, DEG], (2, 5, 10, 50)), tag=f"V2T{sfx.upper()}",
                  columns=["n", "logloss_mean", "auroc_mean"], keys=["cohort", "k", "method"], phase_b=pb)
             continue
-        sfx = "" if pb == "B-LL" else "_bauc"
+        if pb in ("B-C1", "B-LL-wide"):
+            emit(f"table_v2_main{sfx}", T.summary_table(ev, all_methods, (2, 5, 10, 50)), tag=f"V2T{sfx.upper()}",
+                 columns=["n", "logloss_mean", "auroc_mean"], keys=["cohort", "k", "method"], phase_b=pb)
         if pb == "B-LL":
-            methods = [*[n for m in V1_METHODS for n in M.output_names(m)], V2, V2 + M.BEST_SUFFIX, DEG]
+            methods = all_methods
             emit("table_v2_main", T.summary_table(ev, methods, (2, 5, 10, 50)),
                  "Outer log-loss and AUROC (B-LL), v1, the seven baselines, v2 and DE-G (mean and SD over the outer folds).", "V2T",
                  ["n", "logloss_mean", "logloss_sd", "auroc_mean", "auroc_sd"], ["cohort", "k", "method"], pb)
             ranks, info = friedman10(ev, (2, 5, 10, 50))
             emit("stats_v2_friedman_ranks", ranks.assign(**info), tag="V2FRIEDMAN", columns=["mean_rank", "chi2", "p", "cd"],
                  keys=["method"], phase_b=pb)
-        emit(f"stats_hv2_generalization{sfx}", hv2(ev), tag=f"HV2{sfx.upper()}", keys=["k", "reference"], phase_b=pb,
-             columns=["logloss_diff", "logloss_ci_low", "logloss_ci_high", "logloss_half_width", "p_holm", "different", "auroc_diff",
-                      "p_auroc_below_minus_rope"])
+        emit(f"stats_hv2_generalization{sfx}", hv2(ev, f"HV2{sfx.upper()}"), tag=f"HV2{sfx.upper()}", keys=["k", "reference"],
+             phase_b=pb, columns=["logloss_diff", "logloss_ci_low", "logloss_ci_high", "logloss_half_width", "p_holm", "different",
+                                  "auroc_diff", "p_auroc_below_minus_rope"])
+    if evs:
+        emit("diagnostics_v2_c_choice", c_choice(evs))
     phi = stability(inp)
     if phi is not None and len(phi):
         emit("stats_hv3_stability", hv3(phi), tag="HV3", keys=["k", "reference"],
@@ -242,6 +305,14 @@ def build(results: Path, out: Path) -> dict:
         emit("table_b7_v2", T.b7_summary(ev_b7[ev_b7.model == "lr_l2"], sc, methods),
              "B7 with v2: outer log-loss, AUROC and AUPRC (B-LL); separate from the GPL570 cohorts.", "B7V2",
              ["n", "logloss_mean", "auroc_mean", "auprc_mean"], ["cohort", "k", "method"], "B-LL")
+        if HV5_COHORT in b7:
+            sel_b7 = [inp.scenario(s, "selection_per_fold.csv", [HV5_COHORT]) for s in ("T1", "T1v2")]
+            sel_b7 = pd.concat(sel_b7, ignore_index=True) if all(f is not None for f in sel_b7) else None
+            emit("stats_hv5_b7", hv5(ev_b7[ev_b7.model == "lr_l2"].reset_index(drop=True), sel_b7),
+                 "HV5: outer AUROC (B-LL) of v1 minus v2 on GSE31210 (EGFR), one-sided Wilcoxon over 15 folds, Holm over k.",
+                 "HV5", ["auroc_v1", "auroc_v2", "auroc_v1_minus_v2", "share_v2_lower", "p", "p_holm", "significant",
+                         "inner_fitness_v2_minus_v1", "share_v2_inner_better", "logloss_v2_minus_v1", "logloss_ci_low",
+                         "logloss_ci_high", "auroc_ga_minus_v1"], ["cohort", "k"], "B-LL")
     T.write_csv(pd.DataFrame(sorted(inp.used.items()), columns=["file", "sha256"]), out / "inputs_sha256_v2.csv")
     T.write_csv(pd.DataFrame(claims, columns=T.CLAIM_COLUMNS), out / "claims_v2.csv")
     (out / "missing_inputs_v2.txt").write_text("".join(m + "\n" for m in sorted(set(inp.missing))), encoding="utf-8", newline="\n")

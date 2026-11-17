@@ -7,7 +7,10 @@
 
 --phase-b ll (mặc định, TQĐ11): scripts/run_taimma_phase_b.py --criterion logloss, ghi vào taimma/T5LL/<kịch bản>.
 --phase-b auc: script pha B của survey nguyên trạng, ghi vào taimma/T5/<kịch bản> (phân tích độ nhạy).
+--phase-b c1: C = 1 cố định, ghi vào taimma/T5C1/<kịch bản>; --phase-b llw: log-loss trên lưới rộng 1e-4..1e3, ghi vào
+taimma/T5LLW/<kịch bản> (TQĐ27). Cả hai chỉ để phân tích độ nhạy.
 --no-phase-a (chỉ T4): bỏ bước pha A, dùng khi pha A của T4 đã chạy cùng pha B kia.
+--selection-root DIR: đọc panel pha A từ DIR thay cho taimma/<thư mục pha A>; dùng cho B-C1, B-LL-wide của T1 v1 (panel S1).
 
 Sau khi chạy, kiểm config.json của từng thư mục kết quả: traceable = true và commit_hash = HEAD. Trả 0 khi đạt, 1 khi một
 lệnh lỗi, 3 khi config không đạt.
@@ -35,7 +38,8 @@ from mpqda.runlog import DATA_ROOT, head_commit, utf8_console  # noqa: E402
 FS = "vendor/scripts/run_e1_feature_selection.py"
 CLF = "vendor/scripts/run_e1_classification.py"
 CLF_LL = "scripts/run_taimma_phase_b.py"
-PHASE_B = {"ll": "T5LL", "auc": "T5", "c1": "T5C1"}   # pha B -> thư mục kết quả dưới taimma/ (c1: B-C1, v2)
+PHASE_B = {"ll": "T5LL", "auc": "T5", "c1": "T5C1", "llw": "T5LLW"}   # pha B -> thư mục dưới taimma/ (c1: B-C1; llw: B-LL-wide)
+CRITERION = {"ll": "logloss", "c1": "c1", "llw": "llwide"}           # c_selection.criterion chờ trong config.json; auc: không có
 GPL570 = list(C.GPL570_COHORTS)
 REPEATS = ["0", "1", "2"]
 T4_METHODS = ["l1_lr", "stability_selection", "f_test", "mrmr", "svm_rfe", "abess"]
@@ -62,15 +66,16 @@ def results_root() -> Path:
 def classify_script(phase_b: str) -> list[str]:
     if phase_b not in PHASE_B:
         raise ValueError(phase_b)
-    return {"ll": [CLF_LL, "--criterion", "logloss"], "c1": [CLF_LL, "--criterion", "c1"], "auc": [CLF]}[phase_b]
+    return [CLF] if phase_b == "auc" else [CLF_LL, "--criterion", CRITERION[phase_b]]
 
 
-def phase_b_command(scenario: str, datasets=None, phase_b: str = "ll") -> tuple[list[str], str]:
+def phase_b_command(scenario: str, datasets=None, phase_b: str = "ll", selection_root=None) -> tuple[list[str], str]:
     """Lệnh pha B của một kịch bản wrapper (không tính lại B0, random-k) và thư mục kết quả tương đối."""
     sel, default_ds, k, save = SCENARIOS[scenario]
     datasets = list(datasets or default_ds)
     out = f"{M.RESULT_SUBDIR}/{PHASE_B[phase_b]}/{sel}"
-    cmd = [*classify_script(phase_b), "--datasets", *datasets, "--selection-roots", str(results_root() / M.RESULT_SUBDIR / sel), "--out", out,
+    root = str(selection_root) if selection_root is not None else str(results_root() / M.RESULT_SUBDIR / sel)
+    cmd = [*classify_script(phase_b), "--datasets", *datasets, "--selection-roots", root, "--out", out,
            "--repeats", *REPEATS, "--k", *map(str, k), "--no-references"]
     return cmd + (["--save-scores"] if save else []), out
 
@@ -86,7 +91,8 @@ def t4_commands(datasets=None, phase_b: str = "ll", phase_a: bool = True) -> lis
               "--repeats", *REPEATS, "--k", *k], clf_out)]
 
 
-def commands(scenario: str, datasets=None, phase_b: str = "ll", phase_a: bool = True) -> list[tuple[list[str], str, list[str]]]:
+def commands(scenario: str, datasets=None, phase_b: str = "ll", phase_a: bool = True,
+             selection_root=None) -> list[tuple[list[str], str, list[str]]]:
     """Danh sách (lệnh, thư mục kết quả tương đối, bộ dữ liệu) theo thứ tự chạy."""
     if scenario == "T4":
         ds = list(datasets or [*GPL570, *M.B7_INCLUDED])
@@ -94,7 +100,7 @@ def commands(scenario: str, datasets=None, phase_b: str = "ll", phase_a: bool = 
     ds = list(datasets or SCENARIOS[scenario][1])
     if not ds:
         raise SystemExit(f"{scenario}: không có bộ dữ liệu nào (mpqda.config.B7_INCLUDED đang rỗng)")
-    cmd, out = phase_b_command(scenario, ds, phase_b)
+    cmd, out = phase_b_command(scenario, ds, phase_b, selection_root)
     return [(cmd, out, ds)]
 
 
@@ -111,10 +117,9 @@ def check_configs(out: str, datasets, commit: str | None) -> list[str]:
         if cfg.get("commit_hash") != commit:
             problems.append(f"{out}/{name}: commit_hash {cfg.get('commit_hash')} khác HEAD {commit}")
         criterion = (cfg.get("c_selection") or {}).get("criterion")
-        if f"/{PHASE_B['ll']}/" in f"/{out}/" and criterion != "logloss":
-            problems.append(f"{out}/{name}: c_selection.criterion = {criterion}, chờ logloss (TQĐ11)")
-        if f"/{PHASE_B['c1']}/" in f"/{out}/" and criterion != "c1":
-            problems.append(f"{out}/{name}: c_selection.criterion = {criterion}, chờ c1")
+        for pb, want in CRITERION.items():
+            if f"/{PHASE_B[pb]}/" in f"/{out}/" and criterion != want:
+                problems.append(f"{out}/{name}: c_selection.criterion = {criterion}, chờ {want}")
         if f"/{PHASE_B['auc']}/" in f"/{out}/" and criterion is not None:
             problems.append(f"{out}/{name}: có c_selection = {criterion} trong thư mục của pha B survey")
     return problems
@@ -125,13 +130,18 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--scenario", required=True, choices=["T4", *SCENARIOS])
     ap.add_argument("--datasets", nargs="+", default=None, help="mặc định theo kịch bản")
-    ap.add_argument("--phase-b", choices=sorted(PHASE_B), default="ll", help="ll: B-LL (chính); auc: pha B của survey; c1: C = 1")
+    ap.add_argument("--phase-b", choices=sorted(PHASE_B), default="ll", help="ll: B-LL (chính); auc: pha B của survey; c1: C = 1; llw: B-LL-wide")
     ap.add_argument("--no-phase-a", dest="phase_a", action="store_false", help="T4: bỏ bước pha A đã chạy")
+    ap.add_argument("--selection-root", type=Path, default=None, help="thư mục panel pha A thay cho taimma/<kịch bản>")
     ap.add_argument("--dry-run", action="store_true", help="chỉ in lệnh")
     args = ap.parse_args(argv)
     if not args.phase_a and args.scenario != "T4":
         ap.error("--no-phase-a chỉ dùng với --scenario T4")
-    plan = commands(args.scenario, args.datasets, args.phase_b, args.phase_a)
+    if args.selection_root is not None and args.scenario == "T4":
+        ap.error("--selection-root không dùng với T4")
+    if args.selection_root is not None and not args.selection_root.is_dir():
+        ap.error(f"--selection-root {args.selection_root} không phải thư mục")
+    plan = commands(args.scenario, args.datasets, args.phase_b, args.phase_a, args.selection_root)
     for cmd, _, _ in plan:
         print("python " + " ".join(cmd), flush=True)
     if args.dry_run:

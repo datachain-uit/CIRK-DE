@@ -67,7 +67,7 @@ def test_evaluator_delegates_other_classifiers():
     b = ev(Xtr, ytr, Xte, yte, classifier="svm_linear", seed=5)
     assert a.hyperparam == b.hyperparam and a.auroc == b.auroc and np.array_equal(a.scores_test, b.scores_test)
     assert same(ev(Xtr, ytr, Xte, yte, seed=5), evaluate_panel_ll(Xtr, ytr, Xte, yte, seed=5))
-    assert ev.criterion == "logloss" and CRITERIA == ("logloss", "auroc", "c1")
+    assert ev.criterion == "logloss" and CRITERIA == ("logloss", "auroc", "c1", "llwide")
     with pytest.raises(ValueError):
         make_evaluator("brier")
 

@@ -4,10 +4,10 @@
 |---|---|
 | Status | Executed before supervisor approval (Section 12); not a pre-registration |
 | Repository | `datachain-uit/MPQDA-DE`, branch `taimma-2027` |
-| Registration commit | [TO FILL: 7-character hash of the tagged commit; the tag message repeats it with the SHA-256 of this file] |
-| Registered on | [TO FILL: date and time, ICT] |
+| Registration commit | Not applicable: no registration (TQĐ19). Protocol commit `35331ed` (tag `taimma-2027-v1-protocol`); results commit `4fea32f` (tag `taimma-2027-v1-results`) |
+| Registered on | Not applicable (TQĐ19) |
 | Author | LuanNT (student ID 23520899), 23520899@gm.uit.edu.vn |
-| Reviewed by | [TO FILL: supervisor], on [TO FILL: date of approval] |
+| Reviewed by | Supervisor decision TQĐ19, Review-2026-11-16 (16 November 2026): the runs are accepted and not called a pre-registration |
 | Vendored survey code | `RNA-Seq-FS-Survey`, branch `dmkd-revision`, commit `c1828d2`, unchanged until submission (TQĐ16; file list and SHA-256 in `vendor/VENDORED.md`) |
 | Basis | Review-2026-11-14 (decisions TQĐ1–TQĐ10); code request YEU-CAU-DOI-CODE-2026-11-14-TAIMMA (adjustments Đ1–Đ7); Review-2026-11-14b (decisions TQĐ11–TQĐ18) |
 
@@ -364,7 +364,7 @@ that improves a quantity is visible.
 | Same environment in every session | S1–S3 start only if the MD5 of their `pip freeze` equals that of S0 (GATE2). If G-T1 fails because of package versions, `PIN_SURVEY_ENV = True` installs `vendor/requirements-kaggle.txt`, S0 is re-run, and every later session uses the same flag |
 | Machine | Kaggle CPU sessions, 4 vCPU; BLAS limited to one thread |
 | Parallel sessions | 3 concurrent Kaggle CPU sessions were used: S1 (12:18–15:51 ICT) and S3 (12:19–16:15 ICT) ran together on 15 November 2026, and the re-run of S2 (15:10–19:48 ICT) overlapped them; `PIN_SURVEY_ENV` stayed False |
-| Tags | `taimma-2027-prereg` (this registration); `taimma-2027-submission` (code and results cited in the paper) |
+| Tags | `taimma-2027-v1-protocol` (35331ed), `taimma-2027-v1-results` (4fea32f); `taimma-2027-submission` (code and results cited in the paper) |
 
 ## 12. Change log
 
@@ -374,3 +374,4 @@ that improves a quantity is visible.
 | 2026-11-15 | 9 | Before registration: G-T1 on all of T1b (session S2, commit `35331ed`) matched the survey in gene sets and N_eval for all 270 units and in best fitness for 268; the two others (gse37745, repeat 1, fold 3, BPSO, k = 5 and repeat 2, fold 1, GA, k = 5) differed only in the last bit (0.9993141289437585 against 0.9993141289437584), the only two units with that value in the survey reference. The exact-equality rule for best fitness was replaced by a tolerance of 1e−12 (`check_gate_gt1.FITNESS_TOL`); gene sets and N_eval must still be identical. Session S2 is re-run at the commit with this change; sessions S1 and S3 stay at `35331ed`, since the change touches only `scripts/check_gate_gt1.py`, which they do not run. All sessions S1–S3 ran before registration | floating-point rounding between machines, not a difference of panels | No (only T1b phase A was complete; its outer test was not evaluated) |
 | 2026-11-15 | 5, 9 | Before registration: sessions S1 (commit `35331ed`; `S1_results.zip` SHA-256 `8d5a21d3356aaa86be1f221ed78fb3acd87fea705bcb2805892954b8f2ff424c`), S2 (commit `99e099b`; `65b2c9d7ff15679e413dfee04ec8f3d1ad8d12ff45434764659aa1ed2409dccc`) and S3 (commit `35331ed`; `3fc35a7202297f4c56e7356873690410a89c03e539f6d9e33d18ea7626028117`) completed every job with exit code 0, the same `pip freeze` MD5 as S0 and `taimma_jobs.py verify` passing for all 62 result folders; G-T1 on all of T1b passed (270 units; the two last-bit units listed in `gate_gt1_within_tol.csv`). Tables were built from these outputs on 15 November 2026, so every result of T1–T5 was seen before registration | the student ran S1–S3 before supervisor approval | Yes |
 | 2026-11-16 | header, 11, 12 | Supervisor decision TQĐ19 (Review-2026-11-16): S0–S3 are accepted as the results of v1 and are not re-run; the study is not called pre-registered. Hypotheses, tests and decision rules were fixed in commit `35331ed` (tag `taimma-2027-v1-protocol`) before S1–S3 ran; the only later change is the tolerance of gate G-T1 (TQĐ20). Results are tagged `taimma-2027-v1-results` (commit `4fea32f`). No other change to this file, to the table code or to the v1 tables | TQĐ19 | Yes |
+| 2026-11-17 | header, 11 | Header rows and Section 11 tags corrected (T-Y13 of Review-2026-11-17); no result changed | T-Y13 | Yes |

@@ -4,12 +4,12 @@
 |---|---|
 | Status | DRAFT for supervisor review. Binding from the annotated tag `taimma-2027-prereg-v2` |
 | Repository | `datachain-uit/MPQDA-DE`, branch `taimma-2027` |
-| Registration commit | [TO FILL at registration: 7-character hash; the tag message repeats it with the SHA-256 of this file and of `DEV_results.zip`] |
+| Registration commit | The commit carrying the annotated tag `taimma-2027-prereg-v2`; the tag message gives its hash with the SHA-256 of this file and of `DEV_results.zip` |
 | Registered on | [TO FILL: date and time, ICT] |
 | Author | LuanNT (student ID 23520899), 23520899@gm.uit.edu.vn |
 | Reviewed by | [TO FILL: supervisor], on [TO FILL: date of approval] |
 | Vendored survey code | `RNA-Seq-FS-Survey`, branch `dmkd-revision`, commit `c1828d2`, unchanged (`vendor/VENDORED.md`) |
-| Basis | Review-2026-11-16 (decisions TQĐ19–TQĐ26); results of v1 under tag `taimma-2027-v1-results` |
+| Basis | Review-2026-11-16 (decisions TQĐ19–TQĐ26) and Review-2026-11-17 (TQĐ27–TQĐ32); results of v1 under tag `taimma-2027-v1-results` |
 
 Sections 1–11 do not change after registration. Any later change is logged in Section 12 with its date, the reason, and
 whether any output of the confirmatory phase (C1–C3) had been seen.
@@ -29,6 +29,10 @@ Three statements hold for every claim about v2 (TQĐ26):
 2. The configuration of v2 was chosen on separate development data (Section 2.2) by a rule written before those runs.
 3. The GPL570 results of v2 confirm the chosen configuration; they are not an independent confirmation of the redesign idea.
    `gse31210_egfr` is the only dataset that took part in neither the diagnosis, the design nor the development phase.
+4. HV5 and the sensitivity criterion B-LL-wide were added on 17 November 2026, after the development results of Section 2.2
+   had been seen (outer log-loss and AUROC ordered almost opposite to inner fitness) and while the results of v1 and of the
+   baselines on `gse31210_egfr` from S1 were known (B7 table of v1, k = 10: outer log-loss 0.554 for v1 and 0.665 for GA). No
+   run of v2 or DE-G on any confirmatory dataset existed at that time.
 
 Research questions:
 
@@ -38,6 +42,8 @@ Research questions:
   and between v2 and v1, and with what precision is it estimated?
 - RQV3 (stability). Is the consensus panel of v2 more stable across seeds than that of v1 and than GA?
 - RQV4 (components). Which of the gap, the new-gene step and the tournament contribute to the inner fitness of v2?
+- RQV5 (transfer). Does the inner-fitness gain of v2 over v1 come with a lower outer discrimination on `gse31210_egfr`, as on
+  the development data?
 
 ## 2. Data
 
@@ -131,39 +137,60 @@ best fitness within 1e−12 (TQĐ20). A failure stops the confirmatory phase and
 | C1-B7 | 2 B7 × 15 folds | 5, 10 | `mpqda_v2`, `de_g` | 0 |
 | C2 | 3 GPL570 × 15 folds | 2, 5, 10 | three ablations | 0 (seed of `mpqda_v2`) |
 | C3 | GSE37745 × 15 folds | 5, 10 | `mpqda_v2` | 1–4 (0 from C1) |
-| Phase B | every panel of C1–C3 | – | LR-L2: B-LL (primary), B-AUC and B-C1 (C = 1 fixed; sensitivity) | – |
+| Phase B | every panel of C1–C3; the T1 panels of v1 and the seven baselines (S1) for B-C1 and B-LL-wide (job `v1b`) | – | LR-L2: B-LL (primary; C grid {0.01, 0.1, 1, 10}); sensitivity: B-AUC (survey rule), B-C1 (C = 1 fixed), B-LL-wide (log-loss over {1e−4, 1e−3, 0.01, 0.1, 1, 10, 100, 1000}) | – |
 
-Commands: `python scripts/taimma_jobs.py show <job>` for the jobs `t0v2_det`, `t0v2_shuffle`, `gr`, `c1`, `c2`, `c3`.
+Commands: `python scripts/taimma_jobs.py show <job>` for the jobs `t0v2_det`, `t0v2_shuffle`, `gr`, `v1b`, `c1`, `c2`, `c3`.
+The phase B of v1 under B-C1 and B-LL-wide is computed at the registration commit (session S0-v2, job `v1b`, which first runs
+`taimma_jobs.py check-registered`). For v1 these two criteria are post hoc with respect to its panels, which were known; their
+outer metrics had not been computed before registration.
 
 ## 6. Endpoints
 
 - Primary: best inner fitness at T = 50 (HV1).
-- Secondary: outer log-loss and AUROC under B-LL, estimated with precision (HV2); seed stability of the consensus panel (HV3);
-  component contributions (HV4); outer metrics under B-AUC and B-C1; B7.
+- Secondary: outer log-loss and AUROC under B-LL, estimated with precision (HV2); outer AUROC of v1 minus v2 on
+  `gse31210_egfr` (HV5); seed stability of the consensus panel (HV3); component contributions (HV4); outer metrics under B-AUC,
+  B-C1 and B-LL-wide; B7.
 - Descriptive: leader overlap, success rate and new genes per generation (v1 against v2, C1); Friedman ranks and critical
-  difference over ten methods (q(0.05) = 3.164); N_eval; time.
+  difference over ten methods (q(0.05) = 3.164); N_eval; time; the selected C under B-LL and B-LL-wide (share at the grid
+  edges); the B7 confounder check (Section 8); the development diagnostics (Section 8).
 
 ## 7. Hypotheses, tests and decision rules
 
-Conventions: paired unit = outer fold; Holm within each hypothesis; α = 0.05; Wilcoxon signed-rank with
-`zero_method="wilcox"`; pooled Nadeau–Bengio as PREREG v1, Section 7.
+Conventions: paired unit = outer fold; α = 0.05; Wilcoxon signed-rank with `zero_method="wilcox"` and `method="auto"` of SciPy
+(exact distribution when n ≤ 50 without ties or zero differences, normal approximation otherwise); pooled Nadeau–Bengio as
+PREREG v1, Section 7. Holm families and their sizes: HV1 4; HV2 4 within each phase-B criterion (B-LL confirmatory; B-AUC,
+B-C1 and B-LL-wide sensitivity); HV3 4; HV4 9; HV5 2. Holm is applied over the whole family, never within a cohort or a value
+of k; every table of Section 7 carries the columns `holm_family` and `family_size`, and a test checks the sizes.
 
 Expected precision (from v1, TQĐ24): the SD of paired best-fitness differences over 45 folds is 0.015 (k = 5) and 0.010
 (k = 10) (GA − v1), so the smallest difference detectable with 80 % power in HV1 at level 0.05/4 is about 0.007 (k = 5) and
 0.005 (k = 10). The SD of fold-wise Φ differences (consensus v1 − GA) is 0.030, so the smallest detectable difference in HV3 is
 about 0.025. For HV2 the half-width of the pooled 95 % CI is about 0.13 and the smallest detectable difference about 0.19.
+For HV5, the SD of the fold-wise differences in outer AUROC (B-LL) between GA and v1 on `gse31210_egfr` in S1 is 0.068
+(k = 5) and 0.074 (k = 10). The smallest difference detectable with 80 % power at level 0.05/2 over 15 folds is about
+0.72 × SD, that is 0.049 and 0.053. On the development data the difference v1 − M1 in outer AUROC (B-LL) was 0.009, so HV5 has
+low power for a difference of that size; it is kept unchanged (TQĐ29).
 
 - **HV1 (primary).** For k ∈ {5, 10}: d = best fitness(v2) − best fitness(m), m ∈ {v1, GA} (GA has the highest mean best
   fitness among the baselines of T1 at both values of k). One-sided Wilcoxon (greater) over the 45 folds; Holm over 4 tests.
   Report the mean difference, a 95 % bootstrap CI stratified by cohort, and the share of folds where v2 is better.
 - **HV2 (estimation).** Outer log-loss and AUROC (B-LL) of the v2 consensus panel against BPSO and against v1, k ∈ {5, 10}; pooled
   Nadeau–Bengio CIs as H3 of v1, Holm over the 4 log-loss comparisons; ROPE probability for AUROC as v1. "Different" only if the
-  Holm-adjusted CI excludes 0. No margin; neither "equivalent" nor "non-inferior" is used. Repeated under B-AUC and B-C1.
+  Holm-adjusted CI excludes 0. No margin; neither "equivalent" nor "non-inferior" is used. Repeated under B-AUC, B-C1 and B-LL-wide, with v1 and BPSO
+  evaluated under the same criterion (job `v1b` for B-C1 and B-LL-wide); each repetition is a sensitivity analysis and its own
+  Holm family of 4.
 - **HV3 (stability).** Φ (Nogueira, seed indices 0–4, GSE37745) of the v2 consensus panel minus that of the v1 consensus panel
   and minus that of GA, k ∈ {5, 10}; one-sided Wilcoxon over 15 folds; Holm over 4 tests; no margin.
 - **HV4 (components).** Best fitness of v2 minus that of each ablation, k ∈ {2, 5, 10}; one-sided Wilcoxon over 45 folds; Holm over
   9 tests. A component is credited if its test is significant at two of the three values of k. Outer log-loss of the ablations is
   descriptive.
+- **HV5 (transfer, `gse31210_egfr`).** For k ∈ {5, 10}: d = outer AUROC (B-LL) of the v1 consensus panel minus that of the v2
+  consensus panel, paired over the 15 outer folds of `gse31210_egfr`. One-sided Wilcoxon (d > 0, that is v2 lower); Holm over
+  the 2 tests. Report the mean of d, the share of folds with d > 0, p and p_Holm. Descriptive, outside the Holm family: the
+  best inner fitness of v2 minus v1 on `gse31210_egfr` (mean and share of folds), outer log-loss of v2 minus v1 with the
+  single-dataset Nadeau–Bengio 95 % CI, and outer AUROC of GA minus v1. The direction is the one seen on the development
+  data; a difference in the other direction is reported but not tested. AUROC is used because it does not depend on
+  calibration or on the edge of the C grid.
 
 ## 8. Reading rules
 
@@ -173,7 +200,22 @@ about 0.025. For HV2 the half-width of the pooled 95 % CI is about 0.13 and the 
   baseline; "competitive" is not used without a number.
 - Only credited components (HV4) are described as effective. The development results of Section 2.2, including the outer
   log-loss order on the development data, are reported.
-- B7 is reported in a separate table; on `tcga_luad_egfr` the dependence on the development profiles is stated.
+- If HV1 against GA is not significant: the paper reports the mean difference with its bootstrap CI and states that v2 did
+  not exceed GA in inner fitness; equivalence is not claimed.
+- A trade-off between search and generalisation is stated only for a value of k at which HV1 against v1 and HV5 both hold
+  and the mean inner fitness of v2 on `gse31210_egfr` exceeds that of v1. The paper then gives the inner gain and
+  the outer loss side by side, cites Reunanen (2003) and Cawley and Talbot (2010), and limits the statement to
+  `gse31210_egfr` and the development data.
+- If HV5 holds at neither value of k: the paper states that the inversion seen on the development data was not confirmed on
+  `gse31210_egfr`, reports the estimate, and makes no trade-off claim.
+- B7 is descriptive except HV5. The paper does not state that small panels are worse than, or not inferior to, B0, and does
+  not call any panel a biological signature of EGFR. On `tcga_luad_egfr` the dependence on the development profiles is
+  stated (Section 2.1). The B7 table reports, per method and k, the share of panels that contain a sex-marker gene or EGFR
+  (`scripts/b7_confounder_check.py`), with the AUROC of sex alone on both datasets and of the tissue source site alone on
+  `tcga_luad_egfr`. The check is not used to select, exclude or rank methods.
+- The development diagnostics (`scripts/dev_diagnostic.py`: outer metrics of the development panels under B-C1 and
+  B-LL-wide, optimism, rank correlations between inner and outer log-loss) are run after registration, are exploratory and
+  are reported as such; none of their p-values is used as evidence.
 
 ## 9. Gates
 
@@ -184,6 +226,12 @@ about 0.025. For HV2 the half-width of the pooled 95 % CI is about 0.13 and the 
   values; every output has |S| = k and N_eval ≤ 1,531; with shuffled training labels the mean outer AUROC of each method lies in
   [0.40, 0.60].
 - G-R as Section 4. C1–C3 start only after T0-v2 and G-R pass and the `pip freeze` MD5 equals that of S0-v2.
+- G-T4 (run before registration): the T4 panels of the six non-wrapper selectors and the B-AUC metrics of these panels, of
+  B0 and of random-k (repeats 0–2; three GPL570 cohorts and two B7 datasets) equal the E1 results of the survey at tag
+  `survey-v3-dmkd.2`: identical panels, metrics within 1e−12 (`scripts/check_gate_t4.py`). Result: pass on 17 November 2026
+  (all five datasets: 360 panels and 435 metric rows each, no cell different, largest absolute difference 0); SHA-256 of
+  `gate_t4.csv` `474bca651ed4c1c0b9b55f622172a4e397a0870d0d9e73605ebc4230a25af817`. A failure stops the B7 part of the paper and is reported to the supervisor.
+- Job `v1b` starts with `python scripts/taimma_jobs.py check-registered` (HEAD carries `taimma-2027-prereg-v2`; clean tree).
 
 ## 10. What will not be done
 
@@ -198,7 +246,7 @@ about 0.025. For HV2 the half-width of the pooled 95 % CI is about 0.13 and the 
 |---|---|
 | Environment | Kaggle CPU image of S0–S3 and DEV: Python 3.13.18; `pip freeze` MD5 `6af55eea01de6bb6b9b41ece2d33e480`; threadpoolctl 3.7.0 differs from the survey (3.6.0) |
 | Measured cost (DEV) | about 26 s per run of v2 or DE-G, 38 s for GA (n = 170, p0 = 5,000, P = 30, T = 50); DEV took 0.75 h with 4 workers |
-| Expected cost | S0-v2 about 0.3 h; C1 about 1.5 h; C2 about 1.5 h; C3 about 0.5 h; phase B with three criteria about 1 h |
+| Expected cost | S0-v2 about 0.6 h (including `v1b`, about 0.3 h); C1 about 2 h; C2 about 1.5 h; C3 about 0.6 h; phase B with four criteria included in each job |
 | Parallel sessions | 3 |
 | Tags | `taimma-2027-prereg-v2` (this registration); `taimma-2027-submission` (code and results cited in the paper) |
 

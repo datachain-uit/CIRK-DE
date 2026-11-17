@@ -14,7 +14,7 @@ B7 = list(M.B7_INCLUDED)
 def write_v2(root, seed=7):
     rng = np.random.default_rng(seed)
 
-    def scen(name, cohorts, methods, ks, phase_dirs=("T5LL", "T5", "T5C1"), history=False):
+    def scen(name, cohorts, methods, ks, phase_dirs=("T5LL", "T5", "T5C1", "T5LLW"), history=False):
         for c in cohorts:
             sel, genes, ev, hist, sc = [], [], [], [], []
             for repeat in range(3):
@@ -76,7 +76,8 @@ def test_v2_tables_complete_and_reproducible(tmp_path):
     assert all((a / n).read_bytes() == (b / n).read_bytes() for n in names)
     assert {"stats_hv1_search", "stats_hv2_generalization", "stats_hv2_generalization_bauc", "stats_hv3_stability",
             "table_v2_ablation", "table_v2_main", "table_v2_main_bc1", "stats_v2_friedman_ranks", "diagnostics_v2_behaviour",
-            "table_b7_v2"} <= set(info["written"])
+            "table_b7_v2", "table_v2_main_bllw", "stats_hv5_b7", "diagnostics_v2_c_choice"} <= set(info["written"])
+    assert not {"stats_hv2_generalization_bc1", "stats_hv2_generalization_bllw"} & set(info["written"])   # chưa có việc v1b
     hv1 = pd.read_csv(a / "stats_hv1_search.csv")
     assert len(hv1) == 4 and set(hv1.reference) == {"mpqda_de", "ga"} and hv1.n.eq(45).all() and (hv1.p_holm >= hv1.p).all()
     assert (hv1.ci_low <= hv1.mean_diff).all() and (hv1.mean_diff <= hv1.ci_high).all()
