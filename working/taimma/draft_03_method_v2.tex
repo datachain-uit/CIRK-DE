@@ -1,0 +1,113 @@
+% Nháp Mục 3 (Method) theo trọng tâm mới (Review-2026-11-17, TQĐ28; Bảng 7 của review). Mẫu LNCS, không dùng "we".
+% Không chứa kết quả của pha xác nhận. Số của cơ chế lấy từ docs/taimma/disruption.csv (mô phỏng của GVHD, 200 lần lặp mỗi ô,
+% p0 = 5000, k = 10) và T1/history.csv của S1 (tag taimma-2027-v1-results). Bản cũ draft_03_method.tex (v1) giữ để đối chiếu.
+% Cần trong preamble: \usepackage{amsmath,amssymb} \usepackage{algorithm} \usepackage[noend]{algpseudocode}
+
+\section{Method}\label{sec:method}
+
+\subsection{Problem and fitness}\label{sec:problem}
+
+Let $X\in\mathbb{R}^{n\times p_0}$ and $y\in\{0,1\}^n$ be the training part of one outer fold after a label-free variance
+prefilter that keeps $p_0=5{,}000$ genes. Given a budget $k$, a wrapper searches a panel $S\subset\{1,\dots,p_0\}$ with
+$|S|=k$ that maximises
+\begin{equation}\label{eq:fitness}
+  f(S) = -\frac{1}{3}\sum_{q=1}^{3}\mathrm{LL}_q(S),
+\end{equation}
+where $\mathrm{LL}_q$ is the log-loss on the validation part of inner fold $q$ of an $L_2$-regularised logistic regression
+($C=1$, balanced class weights) fitted on the standardised genes of $S$; probabilities are clipped to $[10^{-6},1-10^{-6}]$.
+The three inner folds are fixed and shared by all methods on the same outer fold. The outer test part is never read during
+the search. Every method receives the same budget of $P=30$ individuals and $T=50$ generations, so at most
+$P(T+1)+1=1{,}531$ distinct panels are evaluated.
+
+\subsection{Random keys and band re-encoding (v1)}\label{sec:v1}
+
+An individual is a key vector $x\in(0,1)^{p_0}$ and its panel is $S(x)=\mathrm{top}_k(x)$, the indices of the $k$ largest
+keys~\cite{bean1994}. Every individual is feasible. The first version of the method, MPQDA-DE v1, re-encodes every vector
+that enters the population into two bands while keeping its panel and the order of keys within each group:
+\begin{equation}\label{eq:band}
+  \mathrm{band}_\varepsilon(x)_j=
+  \begin{cases}
+    \tfrac12+\tfrac12\,\dfrac{r_j+1/2}{k}, & j\in S(x),\\[4pt]
+    \varepsilon\,\dfrac{r_j+1/2}{p_0-k}, & j\notin S(x),
+  \end{cases}
+\end{equation}
+with $\varepsilon=1/2$ and $r_j$ the stable rank of $x_j$ within its group. v1 draws the leader of each mutation from an archive
+of near-optimal panels by a roulette on novelty and fitness, controls the scale factor $F$ of each individual by Q-learning,
+initialises the keys with the logistic map and returns a consensus panel computed from the archive. Its evaluation did not
+support the expected advantages: the search did not reach a better inner fitness than DE/rand/1/bin, and neither the
+Q-learning control nor the chaotic initialisation had a measurable effect (Section~\ref{sec:results-v1}).
+
+\subsection{Panel disruption}\label{sec:disruption}
+
+Genes outside the panel are under no selection pressure, so their keys keep a random order inside the lower band
+$(0,\varepsilon)$. For a gene $j$ outside the panels of the base vector and of both difference vectors, the mutant key is
+\begin{equation}\label{eq:mutant}
+  v_j = x_{Lj} + F\,(x_{r_1 j}-x_{r_2 j}) \in \big(-F\varepsilon,\ \varepsilon(1+F)\big).
+\end{equation}
+With $\varepsilon=1/2$ this interval overlaps the panel band $(1/2,1)$, so the difference vector lifts out-of-panel genes above
+the low-ranked genes of the panel. A trial panel then carries genes that belong to no parent. A simulation of the mutation and
+binomial crossover operators alone ($p_0=5{,}000$, $k=10$, $CR=0.9$, 200 repetitions per setting) quantifies the effect: at
+$F=0.5$, 34--36\,\% of the genes of a trial panel are random genes and the trial keeps 47--49\,\% of the genes of its leader;
+the share of random genes grows from 18--22\,\% at $F=0.3$ to 68--69\,\% at $F=0.9$.
+% source: docs/taimma/disruption.csv, CR = 0.9, eps = 0.5, share ∈ {0, 0.5}
+On the three GPL570 cohorts, the trial panels of v1 kept on average 44\,\% of the genes of their leader in the first
+generation and 53\,\% in the last one.
+% source: T1/<cohort>/history.csv (S1), method = mpqda_de, leader_overlap, t = 1 and t = 50
+The scale factor therefore sets the amount of random perturbation rather than the direction of the move, which is consistent
+with the absence of an effect of the Q-learning control of $F$.
+
+\subsection{MPQDA-DE v2}\label{sec:v2}
+
+MPQDA-DE v2 keeps the representation, the fitness, the archive, the consensus output and the budget of v1, and changes three
+parts. The constants below were fixed from the argument of Section~\ref{sec:disruption}, not tuned on data.
+
+\paragraph{Gapped re-encoding.} The lower band of~\eqref{eq:band} is compressed to $\varepsilon=0.01$. The bound
+in~\eqref{eq:mutant} becomes $\varepsilon(1+F)\le 0.02$, far below the panel band, so mutation and crossover only exchange genes
+between the panels of the leader, of the added vector and of the target. In the simulation above the share of random genes in
+a trial panel falls to 0 and the trial keeps 84--87\,\% of the genes of its leader at $F=0.5$.
+% source: docs/taimma/disruption.csv, CR = 0.9, eps = 0.01, F = 0.5
+
+\paragraph{New genes.} New genes enter only through an explicit step: after crossover, each gene of $S(u_i)$ is replaced
+independently with probability $1/k$ by a gene drawn uniformly outside the panel, by swapping the two keys. A trial thus
+receives one new gene on average, as in the mutation of a genetic algorithm.
+
+\paragraph{Archive tournament.} The leader $L_i$ is the best of three archive members drawn uniformly with replacement, ranked
+by fitness; the vector $x_{r_1}$ of the difference is replaced by another archive member chosen in the same way. $F=0.5$ and
+$CR=0.9$ are fixed, and the keys are initialised uniformly; the Q-learning control and the chaotic initialisation of v1 are
+removed.
+
+\begin{algorithm}[t]
+\caption{MPQDA-DE v2 for one outer fold and one budget $k$}\label{alg:v2}
+\begin{algorithmic}[1]
+\Require training part $(X,y)$ after the prefilter, budget $k$, seed; $P=30$, $T=50$, $\varepsilon=0.01$, $F=0.5$, $CR=0.9$
+\State $x_i\sim U(0,1)^{p_0}$; $S_i\gets\mathrm{top}_k(x_i)$; $x_i\gets\mathrm{band}_\varepsilon(x_i)$; $f_i\gets f(S_i)$; offer $(S_i,f_i,x_i)$ to the archive $A$
+\For{$t=1,\dots,T$}
+  \State for each $i$: $L_i\gets$ best of 3 members of $A$; $a_i\gets$ best of 3 members of $A$; $r_2\neq i$ uniform in the population
+  \State for each $i$: $v_i\gets\mathrm{repair}\big(x_{L_i}+F(x_{a_i}-x_{r_2}),\,x_i\big)$; $u_i\gets$ binomial crossover of $x_i$ and $v_i$
+  \State for each $i$: replace each gene of $\mathrm{top}_k(u_i)$ with probability $1/k$ by a gene outside the panel (swap keys)
+  \State evaluate $f(\mathrm{top}_k(u_i))$ for all $i$ in one batch
+  \State for each $i$ with $f(u_i)\ge f(x_i)$: $x_i\gets\mathrm{band}_\varepsilon(u_i)$; $f_i\gets f(u_i)$; offer $(\mathrm{top}_k(u_i),f_i,x_i)$ to $A$
+\EndFor
+\State $S_c\gets$ consensus of $A$; evaluate $f(S_c)$
+\State \Return $S_c$ (primary output) and the best individual
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Consensus output.} The archive keeps at most 15 panels that differ by a Jaccard distance of at least $0.2$, as in v1.
+At termination, members are weighted by fitness rank, $w_a=|A|-\mathrm{rank}(a)+1$, each gene receives
+$\pi_j=\sum_a w_a\mathbb{1}[j\in S_a]/\sum_a w_a$, and the consensus panel $S_c$ holds the $k$ genes with the largest $\pi_j$.
+Aggregating several near-optimal panels addresses the non-uniqueness of gene signatures~\cite{einDor2005}; the best
+individual of the same run is reported for comparison.
+
+\paragraph{Internal control.} DE-G is DE/rand/1/bin with the gapped re-encoding and the new-gene step but without the archive
+and the tournament. Comparing DE-G with DE/rand/1/bin isolates the effect of the representation, and comparing v2 with DE-G
+isolates the effect of the archive tournament.
+
+\paragraph{Selection of the configuration.} Three candidates were compared on separate development data (three
+patient-disjoint subsets of the TCGA LUAD/LUSC cohort and GSE42127) by a rule written before the runs: the configuration
+above (fixed $F$ and $CR$, tournament of size 3), a variant with SHADE-type adaptation of $F$ and $CR$, and a variant with a
+tournament of size 2. The first one had the smallest mean rank of inner fitness and was retained
+(Section~\ref{sec:protocol}).
+
+% Khoá BibTeX: bean1994, einDor2005 (doi:10.1093/bioinformatics/bth469); Reunanen 2003 và Cawley, Talbot 2010 dùng ở Mục 4–6.
+% Viết ở thể bị động hoặc lấy phương pháp làm chủ ngữ; không có số của pha xác nhận trong mục này.

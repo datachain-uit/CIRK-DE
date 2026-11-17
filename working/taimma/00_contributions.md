@@ -1,31 +1,25 @@
-# Hợp đồng đóng góp — bài TAIMMA 2027
+# Hợp đồng đóng góp — bài TAIMMA 2027, vòng 3 (Review-2026-11-17, TQĐ28)
 
-Nguồn: Review-2026-11-14 Mục 6.6, Review-2026-11-14b TQĐ14 và PREREG Mục 1. Mỗi Ci có một tiểu mục phương pháp, một tiểu mục kết
-quả, một gạch đầu dòng ở Mục 1 và một mệnh đề ở tóm tắt. Cột "Trạng thái" cập nhật khi có kết quả; chưa có số nào tại 14/11/2026.
-Mọi số từ pha B lấy theo B-LL (TQĐ11); B-AUC chỉ ở phụ lục độ nhạy.
+Trọng tâm mới: bài không còn hứa "phương pháp mới tốt hơn baseline". Bài là một nghiên cứu chẩn đoán và sửa lỗi: chỉ ra cơ chế
+làm v1 tìm kiếm kém, sửa cơ chế đó bằng v2 và kiểm từng thành phần, đo xem lợi ích tìm kiếm có chuyển thành hiệu năng ngoài hay
+không, và đánh giá độ ổn định của panel đồng thuận. Mọi khẳng định đi qua quy tắc đọc của PREREG-v2 Mục 8.
 
-| Mã | Đóng góp | RQ | Kịch bản | Giả thuyết | Mục phương pháp | Mục kết quả | Tệp số liệu | Trạng thái |
-|---|---|---|---|---|---|---|---|---|
-| C1 | Bài toán wrapper dưới ngân sách đúng k với fitness log-loss, kèm bằng chứng fitness AUROC bão hoà | RQ1 | T1, T1b | H1 | 3 (fitness) | 5.1 | `stats_h1_saturation.csv` | chưa chạy |
-| C2 | Mã hoá lại theo dải cho random key, giữ panel của vector cơ sở khi đột biến DE với giải mã đúng k; và MPQDA-DE, kết hợp nó với leader lấy từ archive theo Jaccard và Q-learning điều khiển F theo trạng thái từng cá thể, hai thành phần điều chỉnh từ các thiết kế DE đã có cho panel đúng k | RQ2, RQ3 | T1, T2 | H2, H3, H5 (A0, A1, A2a, A2b, A3, A5_A1) | 3 | 5.2, 5.3 | `stats_h2_inner_fitness.csv`, `stats_h3_noninferiority.csv`, `table4_ablation.csv` | chưa chạy |
-| C3 | Panel đồng thuận từ archive trong một lần chạy | RQ4 | T1, T3 | H3, H4, H5 (A4) | 3 | 5.4 | `table5_seed_stability.csv`, `stats_h4_stability.csv` | chưa chạy |
-| C4 | Đánh giá không rò rỉ, cùng ngân sách, có đăng ký trước, kèm mã và tệp kết quả | – | mọi kịch bản | – | 4 | – | tag `taimma-2027-submission` | mã xong; chờ duyệt PREREG |
+Thiết kế tách pha phát triển và pha xác nhận, cổng đăng ký và độ chính xác dự kiến được trình bày ở mục Thực nghiệm như nguyên
+tắc thiết kế, không thành một đóng góp đánh số.
 
-## Thành phần: mới hay điều chỉnh (TQĐ14)
+Cột "Kết quả" và "Mệnh đề được viết" chỉ điền sau khi có bảng của pha xác nhận (19/11), đúng theo cột "Khẳng định được phép".
+Mỗi số ghi nguồn trong `claims_v2.csv` (v2) hoặc `claims.csv` (v1) và vào `03_claims.md`.
 
-| Thành phần | Mới hay điều chỉnh | Trích dẫn bắt buộc | Ghi nhận qua |
-|---|---|---|---|
-| Mã hoá lại theo dải (Đ2) | mới: dạng mã hoá lại cho DE random key giải mã đúng k; tiền lệ mã hoá lại random key không đổi lời giải là Bosman et al. (2016), với mục đích khác (đa dạng) | Bosman et al. (2016); Bean (1994) | A0 (H5) |
-| Panel đồng thuận từ archive trong một lần chạy | mới: gộp các nghiệm trong archive của chính lần chạy, trọng số theo hạng, không tốn thêm lần chạy | Li et al. (2001) GA/KNN; Abeel et al. (2010); Meinshausen và Bühlmann (2010) | A4 (H5), H4 (i) |
-| Leader lấy từ archive theo novelty và fitness | điều chỉnh cho bài toán đúng k | Wang et al. (2023, IEEE TCYB 53(7)); JADE, SHADE | A2a, A2b, A5_A1 |
-| Q-learning điều khiển F theo trạng thái từng cá thể | điều chỉnh: điều khiển F theo bước ±0,05 | qlDE (2021); DE-RLFR (2019); QDEHHO (2025) | A3 |
-| Khởi tạo bằng bản đồ logistic | đã biết | – | A1 |
-| DE đúng k với random key và giải mã top-k | đã biết | Khushaba et al. (2011) DEFS; Bean (1994) | – |
+| Mã | Thành phần và vấn đề | Thí nghiệm, bảng | Khẳng định được phép | Kết quả | Mệnh đề được viết |
+|---|---|---|---|---|---|
+| C1 | Chẩn đoán toán tử của v1: mã hoá lại theo dải với dải dưới rộng 1/2 cho vector hiệu đẩy gen ngẫu nhiên vào panel thử | Mô phỏng `docs/taimma/disruption.csv` (Bảng 5 của Review-2026-11-16); leader overlap của S1; `diagnostics_v2_behaviour` | Mô tả cơ chế bằng số đo; không cần kiểm định | Đã có: ở F = 0,5, CR = 0,9, khoảng 34–36 % gen của panel thử là gen ngẫu nhiên và panel thử giữ 47–49 % gen của leader; trên S1, leader overlap của v1 là 0,44 (t = 1) và 0,53 (t = 50) | [sau 19/11] |
+| C2 | MPQDA-DE v2: khe (eps = 0,01), gen mới với xác suất 1/k, tournament 3 trên archive cho leader và r1 | HV1 (so với v1 và GA), HV4 (ablation), hành vi theo thế hệ; DE-G là đối chứng nội bộ | "v2 tìm kiếm tốt hơn v1" chỉ ở k mà HV1 so với v1 đạt; một thành phần "có tác dụng" chỉ khi HV4 ghi nhận nó; nếu HV1 so với GA không đạt, báo hiệu và CI bootstrap, không nói tương đương | [sau 19/11] | [sau 19/11] |
+| C3 | Quan hệ giữa tìm kiếm và khái quát hoá: lợi ích nội bộ có chuyển ra ngoài không | HV2 trên GPL570 dưới bốn tiêu chí pha B; HV5 trên `gse31210_egfr`; chẩn đoán DEV (mô tả, nhãn "development data, exploratory") | "Đánh đổi" chỉ ở k mà HV1 so với v1, HV5 đều đạt và fitness nội bộ trung bình của v2 trên `gse31210_egfr` cao hơn v1; nếu không thì chỉ báo ước lượng và CI. HV5 có độ mạnh thấp (MDD 0,049 và 0,053 so với hiệu 0,009 trên DEV) | [sau 19/11] | [sau 19/11] |
+| C4 | Độ ổn định của panel đồng thuận theo seed | HV3 (GSE37745, seed 0–4) | "Ổn định hơn" chỉ khi HV3 đạt | [sau 19/11] | [sau 19/11] |
 
-Mọi baseline DE cũng dùng mã hoá lại theo dải và sửa biên trung điểm, nên so sánh với baseline không cho biết tác dụng của mã hoá lại;
-tác dụng đó chỉ được ghi nhận qua A0.
+Giữ từ v1 (báo cáo trong mục Thực nghiệm, không đánh số lại): bão hoà của fitness AUROC (H1 của v1: 360/360, 360/360, 322/360);
+H2–H4 của v1 không đạt; không cặp phương pháp nào khác nhau vượt CD; độ chính xác của thiết kế (nửa độ rộng CI của H3 khoảng
+0,13); sai lệch khi pha B chọn C theo AUROC.
 
-Quy tắc đọc (PREREG Mục 8): một thành phần chỉ được viết là có đóng góp khi ít nhất một phép thử của nó có ý nghĩa sau Holm (họ 39
-phép thử); không đạt thì bài viết "không có hiệu ứng đo được". Nếu H3 không đạt, bài nói rõ và không mô tả MPQDA-DE là cạnh tranh
-hay tương đương. Đánh giá song song chỉ là cài đặt, không là đóng góp và không là câu hỏi nghiên cứu (TQĐ5). Bài không viết rằng
-B-LL cải thiện kết quả.
+Không dùng: "competitive", "superior", "state-of-the-art" nếu không có số liệu và phép thử đã đăng ký đi kèm; không đặt số của
+DEV cạnh số xác nhận trong cùng một bảng; không dùng số, bảng hay hình nào của bản ICAART.
