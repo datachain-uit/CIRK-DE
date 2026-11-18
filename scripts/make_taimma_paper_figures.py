@@ -61,7 +61,7 @@ def optimism(csv: Path, out: Path) -> None:
     # độ dài đoạn nối là optimism. Thứ tự hàng cố định theo NAMES để hai ô so được với nhau.
     order = [m for m in NAMES if m in set(d.method)]
     ypos = {m: len(order) - 1 - i for i, m in enumerate(order)}
-    fig, axes = plt.subplots(1, 2, figsize=(W, W * 0.40), constrained_layout=True, sharex=True, sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(W, W * 0.36), constrained_layout=True, sharex=True, sharey=True)
     for ax, k in zip(axes, (5, 10)):
         g = d[d.k == k].set_index("method")
         for m in order:
@@ -76,7 +76,7 @@ def optimism(csv: Path, out: Path) -> None:
         ax.set_xlim(0, 0.21)
         ax.grid(True, axis="x", lw=0.3, color="0.85")
     axes[0].set_yticks([ypos[m] for m in order])
-    axes[0].set_yticklabels([NAMES[m] for m in order])
+    axes[0].set_yticklabels([NAMES[m] for m in order], fontsize=6)
     axes[0].set_ylim(-0.7, len(order) - 0.3)
     h = [plt.Line2D([], [], ls="", marker="o", mfc="white", mec="0.0", ms=3.2, mew=0.8),
          plt.Line2D([], [], ls="", marker="o", color="0.0", ms=3.2)]
