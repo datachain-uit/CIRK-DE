@@ -38,7 +38,7 @@ def disruption(csv: Path, out: Path) -> None:
               (0.01, 0.0): ("-^", "v2 gap, $\\varepsilon=0.01$, disjoint panels"),
               (0.01, 0.5): ("--v", "v2 gap, $\\varepsilon=0.01$, shared genes")}
     for ax, col, lab in ((axes[0], "random_genes", "random genes (%)"),
-                         (axes[1], "leader_kept", "leader genes kept (%)")):
+                         (axes[1], "leader_kept", "leader kept (%)")):
         for (eps, share), (st, name) in styles.items():
             g = d[(d.eps == eps) & (d.share == share)].sort_values("F")
             color = "0.0" if eps == 0.5 else "0.55"
