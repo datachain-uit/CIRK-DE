@@ -100,8 +100,10 @@ Aggregating several near-optimal panels addresses the non-uniqueness of gene sig
 individual of the same run is reported for comparison.
 
 \paragraph{Internal control.} DE-G is DE/rand/1/bin with the gapped re-encoding and the new-gene step but without the archive
-and the tournament. Comparing DE-G with DE/rand/1/bin isolates the effect of the representation, and comparing v2 with DE-G
-isolates the effect of the archive tournament.
+and the tournament. Comparing DE-G with DE/rand/1/bin isolates the effect of the representation. Comparing the best
+individual of v2 with DE-G isolates the archive tournament, and comparing the consensus panel of v2 with its best individual
+isolates the consensus output.
+% T-Y17 (Review-2026-11-17b): DE-G chỉ có cá thể tốt nhất, nên so v2 đồng thuận với DE-G gộp hai tác dụng.
 
 \paragraph{Selection of the configuration.} Three candidates were compared on separate development data (three
 patient-disjoint subsets of the TCGA LUAD/LUSC cohort and GSE42127) by a rule written before the runs: the configuration
