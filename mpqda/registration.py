@@ -17,7 +17,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PREREG_V2_TAG = "taimma-2027-prereg-v2"                    # đăng ký gốc, 17/11/2026, commit d5e72e4
-PREREG_V2_AMENDMENTS = ("taimma-2027-prereg-v2.1",)        # A1: miễn mục (4) của T0-v2 cho mpqda_v2 (TQĐ33)
+PREREG_V2_AMENDMENTS = ("taimma-2027-prereg-v2.1",         # A1: miễn mục (4) của T0-v2 cho mpqda_v2 (TQĐ33)
+                        "taimma-2027-prereg-v2.2")         # A2: HV6, đóng góp của khe theo k (Review-2026-11-20, TQĐ51)
 REGISTRATION_TAGS = (PREREG_V2_TAG, *PREREG_V2_AMENDMENTS)
 CONFIRMATORY_DATASETS = ("gse10245", "gse30219", "gse37745", "tcga_luad_egfr", "gse31210_egfr")
 CANDIDATES = ("mpqda_v2_m1", "mpqda_v2_m2", "mpqda_v2_m3")

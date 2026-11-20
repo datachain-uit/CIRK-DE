@@ -8,6 +8,7 @@
     python scripts/taimma_jobs.py check-t0             # bốn điều kiện của T0 (Mục 6) trên kết quả S0
     python scripts/taimma_jobs.py build-dev            # dựng ba tập DEV của v2 nếu chưa có, rồi kiểm SHA-256 (TQĐ23)
     python scripts/taimma_jobs.py check-registered     # HEAD mang tag đăng ký (gốc hoặc sửa đổi) và cây sạch (việc v1b)
+    python scripts/taimma_jobs.py check-registered --require-tag taimma-2027-prereg-v2.2   # HEAD mang đúng tag này (việc c4)
     python scripts/taimma_jobs.py check-t0 --v2 --waiver docs/taimma/T0v2_waiver.json   # T0-v2 với bản miễn đã duyệt
 
 Mỗi việc là một chuỗi lệnh chạy lần lượt; lệnh pha A tự chạy song song theo --workers. Mỗi `run` ghi `pip freeze`.
@@ -158,6 +159,9 @@ def build_dev_jobs() -> list[Job]:
 
 
 V2_PAIR = ["mpqda_v2", "de_g"]
+A2_TAG = "taimma-2027-prereg-v2.2"                                # sửa đổi A2 của PREREG-v2: HV6 (Review-2026-11-20, TQĐ51)
+A2_METHODS = ["mpqda_v2", "mpqda_v2_no_gap"]
+A2_K = [20, 50]
 T0V2_WAIVER = "docs/taimma/T0v2_waiver.json"                     # sửa đổi A1 của PREREG-v2 (TQĐ33)
 V1_METHODS = ["mpqda_de", *M.TIER1, *M.TIER2]                     # tám phương pháp của v1 dùng lại (G-R)
 PHASE_B_V2 = ("ll", "auc", "c1", "llw")                           # B-LL chính; B-AUC, B-C1, B-LL-wide độ nhạy (TQĐ27)
@@ -227,6 +231,10 @@ def build_v2_jobs() -> list[Job]:
             [out for s_ in (1, 2, 3, 4) for out in (
                 (f"{M.RESULT_SUBDIR}/T3v2_s{s_}/gse37745", _rows(["mpqda_v2"], [5, 10])),
                 *_b_outputs4(f"T3v2_s{s_}", ["gse37745"]))], "0,6"),
+        Job("c4", "C4", "C4 (sửa đổi A2, HV6): mpqda_v2 và mpqda_v2_no_gap trên ba cohort GPL570, k ∈ {20, 50}, seed 0; "
+            "chỉ pha A. mpqda_v2 ở k = 50 lặp lại C1 để kiểm tái lập (cổng R50, scripts/make_taimma_corrected.py)",
+            [[SELF, "check-registered", "--require-tag", A2_TAG], _run("T4v2", "logloss", GPL570, A2_METHODS, A2_K, *W)],
+            _phase_a_outputs("T4v2", GPL570, A2_METHODS, A2_K), "0,6"),
         Job("t0v2_calib", "CAL", "Hiệu chuẩn hoán vị của T0-v2 (chỉ mô tả, TQĐ34): GSE37745, 15 fold, k = 5, hoán vị b = 0..10 "
             "(b = 0 là hoán vị đã đăng ký), mpqda_v2 và GA, 50 panel ngẫu nhiên mỗi (fold, b); song song với C1–C3",
             [[CALIB, "--workers", "{WORKERS}"]], [], "1,0"),
@@ -236,7 +244,7 @@ def build_v2_jobs() -> list[Job]:
 JOBS = {**build_jobs(), **{j.name: j for j in build_dev_jobs()}, **{j.name: j for j in build_v2_jobs()}}
 SESSIONS = {"S0": ["t0_det", "t0_shuffle", "gt1"], "S1": ["t1", "t1_b7"], "S2": ["t1b", "t4", "t6"], "S3": ["t2", "t3"],
             "DEV": ["dev"], "S0v2": ["t0v2_det", "t0v2_shuffle", "gr", "v1b"], "C1": ["c1"], "C2": ["c2"], "C3": ["c3"],
-            "CAL": ["t0v2_calib"]}
+            "CAL": ["t0v2_calib"], "C4": ["c4"]}
 
 
 # ------------------------------------------------------------------------------------------------- helpers
@@ -450,14 +458,22 @@ def cmd_build_dev() -> int:
 
 
 # ------------------------------------------------------------------------------------------------- lệnh
-def cmd_check_registered(git=None) -> int:
-    """0 khi HEAD mang tag taimma-2027-prereg-v2 và cây làm việc không có thay đổi chưa commit ở tệp được theo dõi; 1 nếu không."""
+def cmd_check_registered(git=None, require: str | None = None) -> int:
+    """0 khi HEAD mang tag đăng ký (gốc hoặc sửa đổi; với require: đúng tag đó) và cây làm việc không có thay đổi chưa commit ở
+    tệp được theo dõi; 1 nếu không."""
     from mpqda import registration as R
     git = git or R.git
     problems = []
     tag = R.registration_tag(git)
     if tag is None:
         problems.append(f"HEAD chưa mang tag đăng ký ({', '.join(R.REGISTRATION_TAGS)})")
+    if require is not None:
+        if require not in R.REGISTRATION_TAGS:
+            problems.append(f"{require} không phải tag đăng ký")
+        elif require not in set(git("tag", "--points-at", "HEAD").split()):
+            problems.append(f"HEAD chưa mang tag {require}")
+        else:
+            tag = require
     if git("status", "--porcelain", "--untracked-files=no").strip():
         problems.append("cây làm việc có thay đổi chưa commit")
     print(f"REGISTERED_OK {tag}" if not problems else "DỪNG: " + "; ".join(problems), flush=True)
@@ -530,6 +546,7 @@ def main(argv=None) -> int:
     ap.add_argument("--workers", type=int, default=4, help="số đơn vị pha A chạy song song (Kaggle: 4 CPU)")
     ap.add_argument("--log-dir", type=Path, default=Path(os.environ.get("KLTN_LOG_DIR", "logs")))
     ap.add_argument("--v2", action="store_true", help="check-t0: kiểm T0-v2 (T0v2_det_*, T0v2_shuffle, mpqda_v2)")
+    ap.add_argument("--require-tag", default=None, help="check-registered: HEAD phải mang đúng tag này (việc c4: sửa đổi A2)")
     args = ap.parse_args(argv)
     if args.command in ("plan", "list"):
         cmd_plan()
@@ -542,7 +559,7 @@ def main(argv=None) -> int:
     if args.command == "check-t0":
         return cmd_check_t0(v2=args.v2, waiver_path=args.waiver)
     if args.command == "check-registered":
-        return cmd_check_registered()
+        return cmd_check_registered(require=args.require_tag)
     if args.job not in JOBS:
         ap.error(f"việc phải là một trong: {', '.join(JOBS)}")
     job = JOBS[args.job]

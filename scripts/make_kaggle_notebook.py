@@ -48,9 +48,9 @@ CONFIG = """
 from pathlib import Path
 import hashlib, json, os, shutil, subprocess, sys, time, zipfile
 
-SESSION = 'S0'                 # S0 | S1 | S2 | S3 | DEV | S0v2 | C1 | C2 | C3 | CAL (DEV, S0v2: không cần S0_RESULTS)
+SESSION = 'S0'                 # S0 | S1 | S2 | S3 | DEV | S0v2 | C1 | C2 | C3 | CAL | C4 (DEV, S0v2: không cần S0_RESULTS)
 INPUT_V3_DATASET = Path('/kaggle/input/experiment-data-v3')   # sửa theo slug Kaggle Input
-S0_RESULTS = None              # S1–S3: S0_results.zip của S0; C1–C3, CAL: S0v2_results.zip của S0v2 (zip hoặc thư mục)
+S0_RESULTS = None              # S1–S3: S0_results.zip của S0; C1–C3, CAL, C4: S0v2_results.zip của S0v2 (zip hoặc thư mục)
 V1_RESULTS = None              # S0v2: S1_results.zip của v1 (T1 dùng cho cổng G-R và việc v1b; PREREG-v2 Mục 4–5)
 INPUT_B7_DATASET = None        # Input chứa experiment-data-b7/<bộ>/ khi B7_INCLUDED khác rỗng (T-Y5)
 PIN_SURVEY_ENV = False         # TQĐ16: True = cài đúng vendor/requirements-kaggle.txt; chỉ bật khi G-T1 trượt vì gói
@@ -118,7 +118,7 @@ freeze_md5 = hashlib.md5(freeze.encode('utf-8')).hexdigest()
 print('PIP_FREEZE_MD5', freeze_md5)
 s0_dir = None
 NO_REF = ('S0', 'DEV', 'S0v2')                               # phiên không cần kết quả của phiên trước
-REF = 'S0v2' if SESSION in ('C1', 'C2', 'C3', 'CAL') else 'S0'   # phiên tham chiếu của S1–S3, C1–C3 và CAL
+REF = 'S0v2' if SESSION in ('C1', 'C2', 'C3', 'CAL', 'C4') else 'S0'   # phiên tham chiếu của S1–S3, C1–C4 và CAL
 if SESSION not in NO_REF:
     assert S0_RESULTS, 'S1–S3 chỉ mở sau khi S0 đạt: đặt S0_RESULTS'
     s0_dir = Path(S0_RESULTS)

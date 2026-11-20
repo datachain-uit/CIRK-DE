@@ -71,11 +71,30 @@ def test_real_git_commands(tmp_path):
 
 
 def test_amendment_tag_is_a_registration_tag():
-    """Sửa đổi A1 (Review-2026-11-17b, TQĐ33): HEAD mang tag sửa đổi thì chạy được; tag lạ thì không."""
-    assert R.REGISTRATION_TAGS == ("taimma-2027-prereg-v2", "taimma-2027-prereg-v2.1")
-    R.check_run("gse37745", "mpqda_v2", "mpqda_v2_m1", git=fake_git(tags=("taimma-2027-prereg-v2.1",)))
+    """Sửa đổi A1 (Review-2026-11-17b, TQĐ33) và A2 (Review-2026-11-20, TQĐ51): HEAD mang tag sửa đổi thì chạy được; tag lạ thì
+    không."""
+    assert R.REGISTRATION_TAGS == ("taimma-2027-prereg-v2", "taimma-2027-prereg-v2.1", "taimma-2027-prereg-v2.2")
+    for t in ("taimma-2027-prereg-v2.1", "taimma-2027-prereg-v2.2"):
+        R.check_run("gse37745", "mpqda_v2", "mpqda_v2_m1", git=fake_git(tags=(t,)))
     assert R.registration_tag(fake_git(tags=("taimma-2027-prereg-v2", "taimma-2027-prereg-v2.1"))) == "taimma-2027-prereg-v2.1"
+    assert R.registration_tag(fake_git(tags=("taimma-2027-prereg-v2.1", "taimma-2027-prereg-v2.2"))) == "taimma-2027-prereg-v2.2"
     assert R.registration_tag(fake_git(tags=())) is None
-    for tags in (("taimma-2027-prereg-v2.2",), ("taimma-2027-prereg",), ("taimma-2027-v1-results",)):
+    for tags in (("taimma-2027-prereg-v2.3",), ("taimma-2027-prereg",), ("taimma-2027-v1-results",)):
         with pytest.raises(R.RegistrationError):
             R.check_run("gse37745", "de_g", "mpqda_v2_m1", git=fake_git(tags=tags))
+
+
+def test_job_c4_needs_the_a2_tag():
+    """Việc c4 (HV6) mở bằng check-registered --require-tag taimma-2027-prereg-v2.2, chỉ chạy v2 và v2 không khe ở k ∈ {20, 50}."""
+    from scripts import taimma_jobs as J
+    job = J.JOBS["c4"]
+    assert job.session == "C4" and J.SESSIONS["C4"] == ["c4"]
+    assert job.steps[0] == [J.SELF, "check-registered", "--require-tag", "taimma-2027-prereg-v2.2"]
+    run = job.steps[1]
+    assert run[run.index("--methods") + 1: run.index("--k")] == ["mpqda_v2", "mpqda_v2_no_gap"]
+    assert run[run.index("--k") + 1: run.index("--repeats")] == ["20", "50"]
+    assert all(rows == 120 for _, rows in job.outputs)
+    assert J.cmd_check_registered(git=fake_git(tags=("taimma-2027-prereg-v2.2",)), require="taimma-2027-prereg-v2.2") == 0
+    assert J.cmd_check_registered(git=fake_git(tags=("taimma-2027-prereg-v2.1",)), require="taimma-2027-prereg-v2.2") == 1
+    assert J.cmd_check_registered(git=fake_git(tags=("taimma-2027-prereg-v2.2",), dirty=" M x\n"),
+                                  require="taimma-2027-prereg-v2.2") == 1

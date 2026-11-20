@@ -4,7 +4,7 @@
         --optimism <tables_v2>/optimism_v2.csv --out <source LaTeX>/figures
 
 fig_disruption.pdf (Fig. 1): tỉ lệ gen ngẫu nhiên trong panel thử và tỉ lệ gen của leader được giữ, theo F (CR = 0,9), hai
-độ rộng dải dưới ε = 0,5 (v1) và ε = 0,01 (v2), hai mức chung gen của quần thể (share 0 và 0,5). Nguồn: disruption.csv.
+độ rộng dải dưới ε = 0,5 (v1 và các baseline DE) và ε = 0,01 (v2, DE-G); nhãn "band", "gap" không gắn tên phương pháp, chú thích hình nêu phương pháp dùng mỗi loại (T-Y36, Review-2026-11-20), hai mức chung gen của quần thể (share 0 và 0,5). Nguồn: disruption.csv.
 fig_optimism.pdf (Fig. 2): log-loss nội bộ và log-loss ngoài (B-C1) theo phương pháp, k = 5 và 10; khoảng cách tới đường
 chéo là optimism. Nguồn: optimism_v2.csv (scripts/make_taimma_optimism.py, TQĐ38). Chưa có tệp thì không vẽ; khi đó PDF
 của bài hiện một khung TODO ở chỗ của hình.
@@ -25,7 +25,7 @@ plt.rcParams.update({"font.family": "serif", "font.size": 8, "axes.labelsize": 8
                      "xtick.labelsize": 7, "ytick.labelsize": 7, "pdf.fonttype": 42, "axes.linewidth": 0.6})
 W = 12.2 / 2.54                      # bề rộng chữ LNCS, inch
 META = {"CreationDate": None, "ModDate": None, "Producer": None}
-NAMES = {"mpqda_de": "v1", "mpqda_de_best": "v1 best", "ga": "GA", "bpso": "BPSO", "de_rand1": "DE/rand/1", "shade": "SHADE",
+NAMES = {"mpqda_de": "v1", "mpqda_de_best": "v1 best", "ga": "GA", "bpso": "BPSO", "de_rand1": "DE/rand/1/bin", "shade": "SHADE",
          "qlde": "qlDE", "jde": "jDE", "jade": "JADE", "mpqda_v2": "v2", "mpqda_v2_best": "v2 best", "de_g": "DE-G"}
 
 
@@ -33,10 +33,10 @@ def disruption(csv: Path, out: Path) -> None:
     d = pd.read_csv(csv)
     d = d[d.CR == 0.9]
     fig, axes = plt.subplots(1, 2, figsize=(W, W * 0.40), constrained_layout=True)
-    styles = {(0.5, 0.0): ("k-o", "v1 band, $\\varepsilon=0.5$, disjoint panels"),
-              (0.5, 0.5): ("k--s", "v1 band, $\\varepsilon=0.5$, shared genes"),
-              (0.01, 0.0): ("-^", "v2 gap, $\\varepsilon=0.01$, disjoint panels"),
-              (0.01, 0.5): ("--v", "v2 gap, $\\varepsilon=0.01$, shared genes")}
+    styles = {(0.5, 0.0): ("k-o", "band $\\varepsilon=0.5$, disjoint panels"),
+              (0.5, 0.5): ("k--s", "band $\\varepsilon=0.5$, shared genes"),
+              (0.01, 0.0): ("-^", "gap $\\varepsilon=0.01$, disjoint panels"),
+              (0.01, 0.5): ("--v", "gap $\\varepsilon=0.01$, shared genes")}
     for ax, col, lab in ((axes[0], "random_genes", "random genes (%)"),
                          (axes[1], "leader_kept", "leader kept (%)")):
         for (eps, share), (st, name) in styles.items():
