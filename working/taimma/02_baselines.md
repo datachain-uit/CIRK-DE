@@ -27,6 +27,9 @@ Công trình liên quan, chỉ vào Table 1 và Mục 2, không chạy (TQĐ14):
 | GA/KNN (Li, Weinberg, Darden và Pedersen, 2001) | tập con kích thước cố định | – | – | xếp hạng gen theo tần suất qua nhiều nghiệm GA gần tối ưu từ nhiều lần chạy | panel đồng thuận |
 | Peng, Li, Yu, Heidari, Chen và Liang (2024), tuỳ chọn | nhị phân | Q-learning điều khiển đột biến của Harris hawk | – | cá thể tốt nhất | Q-learning điều khiển metaheuristic chọn gen |
 
+Bảng nháp trên viết trước khi đối chiếu toàn văn; mô tả đúng của DEFS, QDEHHO và GA/KNN nằm ở mục "Related, not run: đối chiếu
+toàn văn (T-Y42)" cuối tệp (DEFS dùng F ngẫu nhiên, không cố định).
+
 Fitness: mọi dòng của bảng đầu dùng log-loss CV nội bộ của LR-L2 (chính) và AUROC (T1b). Bài gốc của các baseline dùng hàm mục
 tiêu khác; bài này chỉ giữ cơ chế tìm kiếm của chúng. Mục 4 của bài nêu hai chỗ bài gốc qlDE để ngỏ: trạng thái (dùng một trạng
 thái) và cách phá hoà (chỉ số nhỏ nhất).
@@ -87,3 +90,22 @@ Tóm tắt khẳng định: DE-RLFR coi mỗi cá thể là một agent chọn m
 đặc trưng tối ưu bằng DE đa mục tiêu; GA/KNN xếp hạng gen theo tần suất được chọn qua nhiều lần chạy GA độc lập. Ý "subarchive với
 crowding distance" của bài TCYB chưa được kiểm trên toàn văn. Cần tải toàn văn qua quyền truy cập của trường (IEEE Xplore,
 ScienceDirect, Oxford Academic).
+
+## Related, not run: đối chiếu toàn văn (T-Y42)
+
+Nguồn: Review-2026-11-22b, Bảng 2 (TQĐ67, TQĐ68). Ba bài đầu do LuanNT đối chiếu, giảng viên đọc lại; số trang là trang của tệp
+PDF toàn văn (GA/KNN: trang 2 và 3 của tệp là trang 1132 và 1133 của tạp chí). Bốn bài tiếp theo giảng viên đọc trên
+ScienceDirect. Quy tắc (TQĐ68): trong Table 1, "--" chỉ dùng cho cơ chế mà bài gốc không mô tả, không dùng cho ô chưa đối chiếu;
+mọi ô và câu mô tả công trình khác thêm vào bài sau này phải được đối chiếu với toàn văn trước khi vào source, kết luận và trang
+ghi ở mục này.
+
+| Bài (khoá ref.bib) | Vị trí trong bài | Kết luận | Trang | Xử lý |
+|---|---|---|---|---|
+| QDEHHO (`huang2025qdehho`) | Table 1; Mục 2, đoạn 2 | Encoding "binary, free size" đúng: vector thực đổi sang nhị phân qua hàm sigmoid, fitness phạt tỉ lệ đặc trưng được chọn. "bit flips" sai: mỗi bit được lấy mẫu lại theo xác suất sigmoid sau đột biến và lai ghép DE có mặt nạ HHO. Q-learning chọn chiến lược đột biến và cặp (F, CR) cho từng cá thể. Dữ liệu chia train/test 8:2 | tr. 8 (Eq. 26–27), tr. 9, tr. 6, tr. 12 | New genes enter by: "sigmoid sampling" |
+| GA/KNN (`li2001gaknn`) | Table 1; Mục 2, đoạn 2 | Mỗi chromosome gồm d gen phân biệt. Đột biến thay 1 đến 5 gen bằng gen chưa có trong chromosome, xác suất cố định 0,53125; 0,25; 0,125; 0,0625; 0,03125. Gen xếp theo tần suất trong 10 000 chromosome có R² cao | tr. 2, tr. 3 (tạp chí 1132–1133) | Parameter control: "--" thành "fixed" |
+| Cong et al. (`cong2026`) | Mục 1; Mục 2, đoạn 3; Mục 6 | Balanced accuracy trong 1,000 với NSGA-II nhưng balanced accuracy ngoài thấp nhất (0,894); MOEA/D-NRD 0,988 và 0,932. Không thuật toán nào hơn top-DEG sau hiệu chỉnh ở cohort phát hiện, nhưng ở GSE30528 NSGA-II hơn top-DEG với pH = 0,0079. Jaccard 0,013–0,050, so với 0,866 của stability selection | tr. 13–14, tr. 14, tr. 21 | Thêm "in the discovery cohort" |
+| DEFS (`khushaba2011`) | Table 1; Mục 2, đoạn 1 | Quần thể NP × DNF số thực trong [1, NF], làm tròn thành chỉ số đặc trưng; chỉ số trùng thay bằng bánh xe roulette theo hệ số phân bố đặc trưng. F = c1·rand / max(x_r1, x_r2), bài nói rõ khác F hằng của DE gốc | Mục 3, Eq. 3, Eq. 5–7 | Parameter control: "fixed" thành "random F" |
+| DE-FS^PM (`riveralopez2020`) | Mục 2, đoạn 1 | Vector nguyên mã hoá vị trí của mọi đặc trưng, thêm một phần tử định kích thước tập con; đột biến theo ma trận hoán vị; lai ghép có sửa chữa để mọi lời giải khả thi và kiểm soát đa dạng | Tóm tắt, Mục 4 | Đúng, giữ nguyên |
+| RMODE (`li2024rmode`) | Mục 2, đoạn 2 | RMODE-E gộp gen của E cá thể ưu tú, RMODE-P gộp gen của tập Pareto, làm không gian tìm kiếm cho vòng đệ quy sau. Bảng chính báo cáo accuracy 10-fold dùng làm fitness; phụ lục báo cáo kiểm định chéo ngoài 10-fold | Tóm tắt, Mục 3.2 | Đúng, giữ nguyên |
+| Krawczuk và Łukaszuk (`krawczuk2016`) | Mục 1; Mục 2, đoạn 3 | Thiên lệch chọn đặc trưng dương ở cả 28 thí nghiệm (7 bộ dữ liệu × 4 phương pháp), từ 2,6 % đến 41,67 % | Tóm tắt | Đúng, giữ nguyên |
+| Wang et al. (`wang2023mode`) | Table 1; Mục 2, đoạn 2 | Chưa đọc được toàn văn (IEEE Xplore trả HTTP 420 khi mở tự động). Tóm tắt khớp câu ở Mục 2 và ô Output "Pareto"; ba ô Encoding, New genes enter by, Parameter control chưa kiểm | – | Giảng viên giữ, TQĐ68: đối chiếu trước 25/11; nếu đến 20:00 ngày 28/11 chưa được thì bỏ hàng khỏi Table 1, giữ câu ở Mục 2 |
