@@ -73,3 +73,13 @@ hoặc hằng số tương ứng để người đọc đối chiếu.
 | B-LL, B-AUC | pha B chọn C theo log-loss nội bộ (chính) và theo AUROC nội bộ của survey (độ nhạy) | `taimma/T5LL/`, `taimma/T5/` |
 
 Kiểm trùng ký hiệu: C* và C chưa dùng ở các mục trên; CR (lai ghép) và C1–C4 (đóng góp) là ký hiệu khác, không viết tắt thành C.
+
+## Ký hiệu dễ nhầm trong bài (rà soát 18/11; đối chiếu với Mục 3, Table 2 và Algorithm 1 của source 20/11b ngày 22/11, TQĐ59)
+
+| Ký hiệu | Các nghĩa đang dùng | Cách giữ trong bài |
+|---|---|---|
+| P, p, p0 | P cỡ quần thể; p tham số chọn p-best của SHADE, JADE (Table 2); p giá trị p của phép thử; p0 số gen sau lọc | Giá trị p luôn viết kèm chỉ số hoặc ngữ cảnh ("Holm-adjusted $p$", $p_{\mathrm{Holm}}$); p của SHADE, JADE chỉ xuất hiện trong Table 2 |
+| C, C1–C4, B-C1 | C hằng số điều chuẩn LR-L2; C1–C4 đóng góp (chỉ trong tệp theo dõi, source 20/11b không in nhãn C1–C4); B-C1 tiêu chí pha B với C = 1 (Mục 6 viết "B-C1") | Không viết "C1" một mình cho tiêu chí pha B, luôn viết "B-C1"; giảng viên quyết định nếu muốn đổi tên (ví dụ B-Cfix) — cần sửa đồng bộ văn bản, bảng và script |
+| a_i, x_{r1} | Mục 3.4 nói thay x_{r1} bằng một thành viên archive; Algorithm 1 gọi thành viên đó là a_i | Đã thống nhất 18/11: Mục 3.4 ghi "another archive member $a_i$", khớp Algorithm 1 |
+| ρ | tỉ số test/train của Nadeau–Bengio (chỉ trong mã và PREREG-v2) | Source 20/11b không dùng ký hiệu ρ ở mục nào và không còn câu tương quan hạng của DEV; giữ như vậy khi chèn Đoạn 1–11 |
+| HV1–HV6, HV6a | giả thuyết đăng ký của v2: HV1–HV5 của PREREG-v2, HV6 và HV6a của sửa đổi A2 (khác H1–H5 của v1) | HV1–HV5 định nghĩa ở Mục 4.4; HV6, HV6a vào bài qua Đoạn 9–10 (nhánh S). Source 20/11b không in nhãn H1–H5 của v1 |
