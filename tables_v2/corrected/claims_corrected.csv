@@ -1,0 +1,376 @@
+claim_id,value,file,column,filter,phase_b
+CORR:group=HV1;comparison=v2 - v1;k=5:mean_diff,0.005766121467,corrected_inner.csv,mean_diff,group=HV1;comparison=v2 - v1;k=5,phase A
+CORR:group=HV1;comparison=v2 - v1;k=5:boot_ci_low,0.001922180639,corrected_inner.csv,boot_ci_low,group=HV1;comparison=v2 - v1;k=5,phase A
+CORR:group=HV1;comparison=v2 - v1;k=5:boot_ci_high,0.009866426303,corrected_inner.csv,boot_ci_high,group=HV1;comparison=v2 - v1;k=5,phase A
+CORR:group=HV1;comparison=v2 - v1;k=5:nb_ci_low,-0.003806115065,corrected_inner.csv,nb_ci_low,group=HV1;comparison=v2 - v1;k=5,phase A
+CORR:group=HV1;comparison=v2 - v1;k=5:nb_ci_high,0.015338358,corrected_inner.csv,nb_ci_high,group=HV1;comparison=v2 - v1;k=5,phase A
+CORR:group=HV1;comparison=v2 - v1;k=5:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=HV1;comparison=v2 - v1;k=5,phase A
+CORR:group=HV1;comparison=v2 - v1;k=5:p_nb_one_sided,0.108643109,corrected_inner.csv,p_nb_one_sided,group=HV1;comparison=v2 - v1;k=5,phase A
+CORR:group=HV1;comparison=v2 - v1;k=5:share_positive,0.6888888889,corrected_inner.csv,share_positive,group=HV1;comparison=v2 - v1;k=5,phase A
+CORR:group=HV1;comparison=v2 - v1;k=10:mean_diff,0.009627269662,corrected_inner.csv,mean_diff,group=HV1;comparison=v2 - v1;k=10,phase A
+CORR:group=HV1;comparison=v2 - v1;k=10:boot_ci_low,0.007521001618,corrected_inner.csv,boot_ci_low,group=HV1;comparison=v2 - v1;k=10,phase A
+CORR:group=HV1;comparison=v2 - v1;k=10:boot_ci_high,0.01181976319,corrected_inner.csv,boot_ci_high,group=HV1;comparison=v2 - v1;k=10,phase A
+CORR:group=HV1;comparison=v2 - v1;k=10:nb_ci_low,0.004222628865,corrected_inner.csv,nb_ci_low,group=HV1;comparison=v2 - v1;k=10,phase A
+CORR:group=HV1;comparison=v2 - v1;k=10:nb_ci_high,0.01503191046,corrected_inner.csv,nb_ci_high,group=HV1;comparison=v2 - v1;k=10,phase A
+CORR:group=HV1;comparison=v2 - v1;k=10:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=HV1;comparison=v2 - v1;k=10,phase A
+CORR:group=HV1;comparison=v2 - v1;k=10:p_nb_one_sided,0.0009367188504,corrected_inner.csv,p_nb_one_sided,group=HV1;comparison=v2 - v1;k=10,phase A
+CORR:group=HV1;comparison=v2 - v1;k=10:share_positive,0.8666666667,corrected_inner.csv,share_positive,group=HV1;comparison=v2 - v1;k=10,phase A
+CORR:group=HV1;comparison=v2 - GA;k=5:mean_diff,0.001880698768,corrected_inner.csv,mean_diff,group=HV1;comparison=v2 - GA;k=5,phase A
+CORR:group=HV1;comparison=v2 - GA;k=5:boot_ci_low,-0.001276731471,corrected_inner.csv,boot_ci_low,group=HV1;comparison=v2 - GA;k=5,phase A
+CORR:group=HV1;comparison=v2 - GA;k=5:boot_ci_high,0.005333518331,corrected_inner.csv,boot_ci_high,group=HV1;comparison=v2 - GA;k=5,phase A
+CORR:group=HV1;comparison=v2 - GA;k=5:nb_ci_low,-0.006121974746,corrected_inner.csv,nb_ci_low,group=HV1;comparison=v2 - GA;k=5,phase A
+CORR:group=HV1;comparison=v2 - GA;k=5:nb_ci_high,0.009883372282,corrected_inner.csv,nb_ci_high,group=HV1;comparison=v2 - GA;k=5,phase A
+CORR:group=HV1;comparison=v2 - GA;k=5:n_cohorts_positive,2,corrected_inner.csv,n_cohorts_positive,group=HV1;comparison=v2 - GA;k=5,phase A
+CORR:group=HV1;comparison=v2 - GA;k=5:p_nb_one_sided,0.3110347364,corrected_inner.csv,p_nb_one_sided,group=HV1;comparison=v2 - GA;k=5,phase A
+CORR:group=HV1;comparison=v2 - GA;k=5:share_positive,0.5777777778,corrected_inner.csv,share_positive,group=HV1;comparison=v2 - GA;k=5,phase A
+CORR:group=HV1;comparison=v2 - GA;k=10:mean_diff,-0.0004681974231,corrected_inner.csv,mean_diff,group=HV1;comparison=v2 - GA;k=10,phase A
+CORR:group=HV1;comparison=v2 - GA;k=10:boot_ci_low,-0.002909069109,corrected_inner.csv,boot_ci_low,group=HV1;comparison=v2 - GA;k=10,phase A
+CORR:group=HV1;comparison=v2 - GA;k=10:boot_ci_high,0.001806718834,corrected_inner.csv,boot_ci_high,group=HV1;comparison=v2 - GA;k=10,phase A
+CORR:group=HV1;comparison=v2 - GA;k=10:nb_ci_low,-0.006389569666,corrected_inner.csv,nb_ci_low,group=HV1;comparison=v2 - GA;k=10,phase A
+CORR:group=HV1;comparison=v2 - GA;k=10:nb_ci_high,0.00545317482,corrected_inner.csv,nb_ci_high,group=HV1;comparison=v2 - GA;k=10,phase A
+CORR:group=HV1;comparison=v2 - GA;k=10:n_cohorts_positive,1,corrected_inner.csv,n_cohorts_positive,group=HV1;comparison=v2 - GA;k=10,phase A
+CORR:group=HV1;comparison=v2 - GA;k=10:p_nb_one_sided,0.5661192153,corrected_inner.csv,p_nb_one_sided,group=HV1;comparison=v2 - GA;k=10,phase A
+CORR:group=HV1;comparison=v2 - GA;k=10:share_positive,0.5555555556,corrected_inner.csv,share_positive,group=HV1;comparison=v2 - GA;k=10,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=2:mean_diff,-0.001744794474,corrected_inner.csv,mean_diff,group=HV4;comparison=v2 - no gap;k=2,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=2:boot_ci_low,-0.008753690085,corrected_inner.csv,boot_ci_low,group=HV4;comparison=v2 - no gap;k=2,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=2:boot_ci_high,0.004588672757,corrected_inner.csv,boot_ci_high,group=HV4;comparison=v2 - no gap;k=2,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=2:nb_ci_low,-0.01818599259,corrected_inner.csv,nb_ci_low,group=HV4;comparison=v2 - no gap;k=2,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=2:nb_ci_high,0.01469640364,corrected_inner.csv,nb_ci_high,group=HV4;comparison=v2 - no gap;k=2,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=2:n_cohorts_positive,1,corrected_inner.csv,n_cohorts_positive,group=HV4;comparison=v2 - no gap;k=2,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=2:p_nb_one_sided,0.5883807636,corrected_inner.csv,p_nb_one_sided,group=HV4;comparison=v2 - no gap;k=2,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=2:share_positive,0.4888888889,corrected_inner.csv,share_positive,group=HV4;comparison=v2 - no gap;k=2,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=5:mean_diff,0.003555542527,corrected_inner.csv,mean_diff,group=HV4;comparison=v2 - no gap;k=5,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=5:boot_ci_low,-0.0002968382898,corrected_inner.csv,boot_ci_low,group=HV4;comparison=v2 - no gap;k=5,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=5:boot_ci_high,0.00770968693,corrected_inner.csv,boot_ci_high,group=HV4;comparison=v2 - no gap;k=5,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=5:nb_ci_low,-0.006258858283,corrected_inner.csv,nb_ci_low,group=HV4;comparison=v2 - no gap;k=5,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=5:nb_ci_high,0.01336994334,corrected_inner.csv,nb_ci_high,group=HV4;comparison=v2 - no gap;k=5,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=5:n_cohorts_positive,2,corrected_inner.csv,n_cohorts_positive,group=HV4;comparison=v2 - no gap;k=5,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=5:p_nb_one_sided,0.2250417815,corrected_inner.csv,p_nb_one_sided,group=HV4;comparison=v2 - no gap;k=5,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=5:share_positive,0.5555555556,corrected_inner.csv,share_positive,group=HV4;comparison=v2 - no gap;k=5,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=10:mean_diff,0.004521355228,corrected_inner.csv,mean_diff,group=HV4;comparison=v2 - no gap;k=10,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=10:boot_ci_low,0.002846144307,corrected_inner.csv,boot_ci_low,group=HV4;comparison=v2 - no gap;k=10,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=10:boot_ci_high,0.006255717752,corrected_inner.csv,boot_ci_high,group=HV4;comparison=v2 - no gap;k=10,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=10:nb_ci_low,0.0003470329213,corrected_inner.csv,nb_ci_low,group=HV4;comparison=v2 - no gap;k=10,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=10:nb_ci_high,0.008695677534,corrected_inner.csv,nb_ci_high,group=HV4;comparison=v2 - no gap;k=10,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=10:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=HV4;comparison=v2 - no gap;k=10,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=10:p_nb_one_sided,0.01787405881,corrected_inner.csv,p_nb_one_sided,group=HV4;comparison=v2 - no gap;k=10,phase A
+CORR:group=HV4;comparison=v2 - no gap;k=10:share_positive,0.7555555556,corrected_inner.csv,share_positive,group=HV4;comparison=v2 - no gap;k=10,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=2:mean_diff,0.06977761076,corrected_inner.csv,mean_diff,group=HV4;comparison=v2 - no new-gene step;k=2,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=2:boot_ci_low,0.05509996182,corrected_inner.csv,boot_ci_low,group=HV4;comparison=v2 - no new-gene step;k=2,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=2:boot_ci_high,0.08592000107,corrected_inner.csv,boot_ci_high,group=HV4;comparison=v2 - no new-gene step;k=2,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=2:nb_ci_low,0.03194730386,corrected_inner.csv,nb_ci_low,group=HV4;comparison=v2 - no new-gene step;k=2,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=2:nb_ci_high,0.1076079177,corrected_inner.csv,nb_ci_high,group=HV4;comparison=v2 - no new-gene step;k=2,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=2:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=HV4;comparison=v2 - no new-gene step;k=2,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=2:p_nb_one_sided,0.0007173222847,corrected_inner.csv,p_nb_one_sided,group=HV4;comparison=v2 - no new-gene step;k=2,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=2:share_positive,0.9333333333,corrected_inner.csv,share_positive,group=HV4;comparison=v2 - no new-gene step;k=2,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=5:mean_diff,0.03723625318,corrected_inner.csv,mean_diff,group=HV4;comparison=v2 - no new-gene step;k=5,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=5:boot_ci_low,0.03124456877,corrected_inner.csv,boot_ci_low,group=HV4;comparison=v2 - no new-gene step;k=5,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=5:boot_ci_high,0.04424902325,corrected_inner.csv,boot_ci_high,group=HV4;comparison=v2 - no new-gene step;k=5,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=5:nb_ci_low,0.02120915177,corrected_inner.csv,nb_ci_low,group=HV4;comparison=v2 - no new-gene step;k=5,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=5:nb_ci_high,0.0532633546,corrected_inner.csv,nb_ci_high,group=HV4;comparison=v2 - no new-gene step;k=5,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=5:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=HV4;comparison=v2 - no new-gene step;k=5,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=5:p_nb_one_sided,0.0001003654402,corrected_inner.csv,p_nb_one_sided,group=HV4;comparison=v2 - no new-gene step;k=5,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=5:share_positive,1,corrected_inner.csv,share_positive,group=HV4;comparison=v2 - no new-gene step;k=5,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=10:mean_diff,0.01750615757,corrected_inner.csv,mean_diff,group=HV4;comparison=v2 - no new-gene step;k=10,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=10:boot_ci_low,0.01469513261,corrected_inner.csv,boot_ci_low,group=HV4;comparison=v2 - no new-gene step;k=10,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=10:boot_ci_high,0.02062337692,corrected_inner.csv,boot_ci_high,group=HV4;comparison=v2 - no new-gene step;k=10,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=10:nb_ci_low,0.009773364801,corrected_inner.csv,nb_ci_low,group=HV4;comparison=v2 - no new-gene step;k=10,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=10:nb_ci_high,0.02523895033,corrected_inner.csv,nb_ci_high,group=HV4;comparison=v2 - no new-gene step;k=10,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=10:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=HV4;comparison=v2 - no new-gene step;k=10,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=10:p_nb_one_sided,0.0001273003244,corrected_inner.csv,p_nb_one_sided,group=HV4;comparison=v2 - no new-gene step;k=10,phase A
+CORR:group=HV4;comparison=v2 - no new-gene step;k=10:share_positive,0.9777777778,corrected_inner.csv,share_positive,group=HV4;comparison=v2 - no new-gene step;k=10,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=2:mean_diff,-0.0005041169999,corrected_inner.csv,mean_diff,group=HV4;comparison=v2 - no archive tournament;k=2,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=2:boot_ci_low,-0.006487917218,corrected_inner.csv,boot_ci_low,group=HV4;comparison=v2 - no archive tournament;k=2,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=2:boot_ci_high,0.005283764559,corrected_inner.csv,boot_ci_high,group=HV4;comparison=v2 - no archive tournament;k=2,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=2:nb_ci_low,-0.01511042736,corrected_inner.csv,nb_ci_low,group=HV4;comparison=v2 - no archive tournament;k=2,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=2:nb_ci_high,0.01410219336,corrected_inner.csv,nb_ci_high,group=HV4;comparison=v2 - no archive tournament;k=2,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=2:n_cohorts_positive,2,corrected_inner.csv,n_cohorts_positive,group=HV4;comparison=v2 - no archive tournament;k=2,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=2:p_nb_one_sided,0.5289808784,corrected_inner.csv,p_nb_one_sided,group=HV4;comparison=v2 - no archive tournament;k=2,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=2:share_positive,0.4666666667,corrected_inner.csv,share_positive,group=HV4;comparison=v2 - no archive tournament;k=2,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=5:mean_diff,0.0004486593192,corrected_inner.csv,mean_diff,group=HV4;comparison=v2 - no archive tournament;k=5,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=5:boot_ci_low,-0.002440585435,corrected_inner.csv,boot_ci_low,group=HV4;comparison=v2 - no archive tournament;k=5,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=5:boot_ci_high,0.003536726034,corrected_inner.csv,boot_ci_high,group=HV4;comparison=v2 - no archive tournament;k=5,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=5:nb_ci_low,-0.007151866901,corrected_inner.csv,nb_ci_low,group=HV4;comparison=v2 - no archive tournament;k=5,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=5:nb_ci_high,0.00804918554,corrected_inner.csv,nb_ci_high,group=HV4;comparison=v2 - no archive tournament;k=5,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=5:n_cohorts_positive,1,corrected_inner.csv,n_cohorts_positive,group=HV4;comparison=v2 - no archive tournament;k=5,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=5:p_nb_one_sided,0.4505259762,corrected_inner.csv,p_nb_one_sided,group=HV4;comparison=v2 - no archive tournament;k=5,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=5:share_positive,0.5111111111,corrected_inner.csv,share_positive,group=HV4;comparison=v2 - no archive tournament;k=5,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=10:mean_diff,0.004319519692,corrected_inner.csv,mean_diff,group=HV4;comparison=v2 - no archive tournament;k=10,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=10:boot_ci_low,0.00115841039,corrected_inner.csv,boot_ci_low,group=HV4;comparison=v2 - no archive tournament;k=10,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=10:boot_ci_high,0.007506292857,corrected_inner.csv,boot_ci_high,group=HV4;comparison=v2 - no archive tournament;k=10,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=10:nb_ci_low,-0.003467459313,corrected_inner.csv,nb_ci_low,group=HV4;comparison=v2 - no archive tournament;k=10,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=10:nb_ci_high,0.0121064987,corrected_inner.csv,nb_ci_high,group=HV4;comparison=v2 - no archive tournament;k=10,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=10:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=HV4;comparison=v2 - no archive tournament;k=10,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=10:p_nb_one_sided,0.1269680864,corrected_inner.csv,p_nb_one_sided,group=HV4;comparison=v2 - no archive tournament;k=10,phase A
+CORR:group=HV4;comparison=v2 - no archive tournament;k=10:share_positive,0.6888888889,corrected_inner.csv,share_positive,group=HV4;comparison=v2 - no archive tournament;k=10,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=2:mean_diff,0.00228529659,corrected_inner.csv,mean_diff,group=E2;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=2:boot_ci_low,-0.005568084754,corrected_inner.csv,boot_ci_low,group=E2;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=2:boot_ci_high,0.009903584874,corrected_inner.csv,boot_ci_high,group=E2;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=2:nb_ci_low,-0.01693274742,corrected_inner.csv,nb_ci_low,group=E2;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=2:nb_ci_high,0.0215033406,corrected_inner.csv,nb_ci_high,group=E2;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=2:n_cohorts_positive,2,corrected_inner.csv,n_cohorts_positive,group=E2;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=2:p_nb_one_sided,0.4011982781,corrected_inner.csv,p_nb_one_sided,group=E2;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=2:share_positive,0.5111111111,corrected_inner.csv,share_positive,group=E2;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=5:mean_diff,-0.0001727704293,corrected_inner.csv,mean_diff,group=E2;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=5:boot_ci_low,-0.004082640319,corrected_inner.csv,boot_ci_low,group=E2;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=5:boot_ci_high,0.003566176438,corrected_inner.csv,boot_ci_high,group=E2;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=5:nb_ci_low,-0.009829735682,corrected_inner.csv,nb_ci_low,group=E2;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=5:nb_ci_high,0.009484194823,corrected_inner.csv,nb_ci_high,group=E2;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=5:n_cohorts_positive,2,corrected_inner.csv,n_cohorts_positive,group=E2;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=5:p_nb_one_sided,0.5150334978,corrected_inner.csv,p_nb_one_sided,group=E2;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=5:share_positive,0.5111111111,corrected_inner.csv,share_positive,group=E2;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=10:mean_diff,0.006847746356,corrected_inner.csv,mean_diff,group=E2;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=10:boot_ci_low,0.003900397991,corrected_inner.csv,boot_ci_low,group=E2;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=10:boot_ci_high,0.009715647815,corrected_inner.csv,boot_ci_high,group=E2;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=10:nb_ci_low,4.828204576e-06,corrected_inner.csv,nb_ci_low,group=E2;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=10:nb_ci_high,0.01369066451,corrected_inner.csv,nb_ci_high,group=E2;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=10:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=E2;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=10:p_nb_one_sided,0.02492967409,corrected_inner.csv,p_nb_one_sided,group=E2;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=10:share_positive,0.8222222222,corrected_inner.csv,share_positive,group=E2;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=50:mean_diff,0.005470326504,corrected_inner.csv,mean_diff,group=E2;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=50:boot_ci_low,0.004275449591,corrected_inner.csv,boot_ci_low,group=E2;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=50:boot_ci_high,0.006682073432,corrected_inner.csv,boot_ci_high,group=E2;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=50:nb_ci_low,0.00254145571,corrected_inner.csv,nb_ci_low,group=E2;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=50:nb_ci_high,0.008399197298,corrected_inner.csv,nb_ci_high,group=E2;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=50:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=E2;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=50:p_nb_one_sided,0.0006504910443,corrected_inner.csv,p_nb_one_sided,group=E2;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=E2;comparison=DE-G - DE/rand/1/bin;k=50:share_positive,0.8444444444,corrected_inner.csv,share_positive,group=E2;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=D;comparison=v2 - v1;k=2:mean_diff,0.007029481924,corrected_inner.csv,mean_diff,group=D;comparison=v2 - v1;k=2,phase A
+CORR:group=D;comparison=v2 - v1;k=2:boot_ci_low,-0.001842204583,corrected_inner.csv,boot_ci_low,group=D;comparison=v2 - v1;k=2,phase A
+CORR:group=D;comparison=v2 - v1;k=2:boot_ci_high,0.01583549214,corrected_inner.csv,boot_ci_high,group=D;comparison=v2 - v1;k=2,phase A
+CORR:group=D;comparison=v2 - v1;k=2:nb_ci_low,-0.01412558386,corrected_inner.csv,nb_ci_low,group=D;comparison=v2 - v1;k=2,phase A
+CORR:group=D;comparison=v2 - v1;k=2:nb_ci_high,0.02818454771,corrected_inner.csv,nb_ci_high,group=D;comparison=v2 - v1;k=2,phase A
+CORR:group=D;comparison=v2 - v1;k=2:n_cohorts_positive,2,corrected_inner.csv,n_cohorts_positive,group=D;comparison=v2 - v1;k=2,phase A
+CORR:group=D;comparison=v2 - v1;k=2:p_nb_one_sided,0.2438771866,corrected_inner.csv,p_nb_one_sided,group=D;comparison=v2 - v1;k=2,phase A
+CORR:group=D;comparison=v2 - v1;k=2:share_positive,0.5777777778,corrected_inner.csv,share_positive,group=D;comparison=v2 - v1;k=2,phase A
+CORR:group=D;comparison=v2 - v1;k=5:mean_diff,0.005766121467,corrected_inner.csv,mean_diff,group=D;comparison=v2 - v1;k=5,phase A
+CORR:group=D;comparison=v2 - v1;k=5:boot_ci_low,0.001922180639,corrected_inner.csv,boot_ci_low,group=D;comparison=v2 - v1;k=5,phase A
+CORR:group=D;comparison=v2 - v1;k=5:boot_ci_high,0.009866426303,corrected_inner.csv,boot_ci_high,group=D;comparison=v2 - v1;k=5,phase A
+CORR:group=D;comparison=v2 - v1;k=5:nb_ci_low,-0.003806115065,corrected_inner.csv,nb_ci_low,group=D;comparison=v2 - v1;k=5,phase A
+CORR:group=D;comparison=v2 - v1;k=5:nb_ci_high,0.015338358,corrected_inner.csv,nb_ci_high,group=D;comparison=v2 - v1;k=5,phase A
+CORR:group=D;comparison=v2 - v1;k=5:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=D;comparison=v2 - v1;k=5,phase A
+CORR:group=D;comparison=v2 - v1;k=5:p_nb_one_sided,0.108643109,corrected_inner.csv,p_nb_one_sided,group=D;comparison=v2 - v1;k=5,phase A
+CORR:group=D;comparison=v2 - v1;k=5:share_positive,0.6888888889,corrected_inner.csv,share_positive,group=D;comparison=v2 - v1;k=5,phase A
+CORR:group=D;comparison=v2 - v1;k=10:mean_diff,0.009627269662,corrected_inner.csv,mean_diff,group=D;comparison=v2 - v1;k=10,phase A
+CORR:group=D;comparison=v2 - v1;k=10:boot_ci_low,0.007521001618,corrected_inner.csv,boot_ci_low,group=D;comparison=v2 - v1;k=10,phase A
+CORR:group=D;comparison=v2 - v1;k=10:boot_ci_high,0.01181976319,corrected_inner.csv,boot_ci_high,group=D;comparison=v2 - v1;k=10,phase A
+CORR:group=D;comparison=v2 - v1;k=10:nb_ci_low,0.004222628865,corrected_inner.csv,nb_ci_low,group=D;comparison=v2 - v1;k=10,phase A
+CORR:group=D;comparison=v2 - v1;k=10:nb_ci_high,0.01503191046,corrected_inner.csv,nb_ci_high,group=D;comparison=v2 - v1;k=10,phase A
+CORR:group=D;comparison=v2 - v1;k=10:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=D;comparison=v2 - v1;k=10,phase A
+CORR:group=D;comparison=v2 - v1;k=10:p_nb_one_sided,0.0009367188504,corrected_inner.csv,p_nb_one_sided,group=D;comparison=v2 - v1;k=10,phase A
+CORR:group=D;comparison=v2 - v1;k=10:share_positive,0.8666666667,corrected_inner.csv,share_positive,group=D;comparison=v2 - v1;k=10,phase A
+CORR:group=D;comparison=v2 - v1;k=50:mean_diff,0.01217102253,corrected_inner.csv,mean_diff,group=D;comparison=v2 - v1;k=50,phase A
+CORR:group=D;comparison=v2 - v1;k=50:boot_ci_low,0.01071868466,corrected_inner.csv,boot_ci_low,group=D;comparison=v2 - v1;k=50,phase A
+CORR:group=D;comparison=v2 - v1;k=50:boot_ci_high,0.01347146935,corrected_inner.csv,boot_ci_high,group=D;comparison=v2 - v1;k=50,phase A
+CORR:group=D;comparison=v2 - v1;k=50:nb_ci_low,0.008696023725,corrected_inner.csv,nb_ci_low,group=D;comparison=v2 - v1;k=50,phase A
+CORR:group=D;comparison=v2 - v1;k=50:nb_ci_high,0.01564602133,corrected_inner.csv,nb_ci_high,group=D;comparison=v2 - v1;k=50,phase A
+CORR:group=D;comparison=v2 - v1;k=50:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=D;comparison=v2 - v1;k=50,phase A
+CORR:group=D;comparison=v2 - v1;k=50:p_nb_one_sided,1.413436301e-06,corrected_inner.csv,p_nb_one_sided,group=D;comparison=v2 - v1;k=50,phase A
+CORR:group=D;comparison=v2 - v1;k=50:share_positive,1,corrected_inner.csv,share_positive,group=D;comparison=v2 - v1;k=50,phase A
+CORR:group=D;comparison=v2 - DE-G;k=2:mean_diff,0.00136671817,corrected_inner.csv,mean_diff,group=D;comparison=v2 - DE-G;k=2,phase A
+CORR:group=D;comparison=v2 - DE-G;k=2:boot_ci_low,-0.005855754792,corrected_inner.csv,boot_ci_low,group=D;comparison=v2 - DE-G;k=2,phase A
+CORR:group=D;comparison=v2 - DE-G;k=2:boot_ci_high,0.00907939906,corrected_inner.csv,boot_ci_high,group=D;comparison=v2 - DE-G;k=2,phase A
+CORR:group=D;comparison=v2 - DE-G;k=2:nb_ci_low,-0.017391962,corrected_inner.csv,nb_ci_low,group=D;comparison=v2 - DE-G;k=2,phase A
+CORR:group=D;comparison=v2 - DE-G;k=2:nb_ci_high,0.02012539834,corrected_inner.csv,nb_ci_high,group=D;comparison=v2 - DE-G;k=2,phase A
+CORR:group=D;comparison=v2 - DE-G;k=2:n_cohorts_positive,1,corrected_inner.csv,n_cohorts_positive,group=D;comparison=v2 - DE-G;k=2,phase A
+CORR:group=D;comparison=v2 - DE-G;k=2:p_nb_one_sided,0.439027681,corrected_inner.csv,p_nb_one_sided,group=D;comparison=v2 - DE-G;k=2,phase A
+CORR:group=D;comparison=v2 - DE-G;k=2:share_positive,0.4666666667,corrected_inner.csv,share_positive,group=D;comparison=v2 - DE-G;k=2,phase A
+CORR:group=D;comparison=v2 - DE-G;k=5:mean_diff,0.003680369064,corrected_inner.csv,mean_diff,group=D;comparison=v2 - DE-G;k=5,phase A
+CORR:group=D;comparison=v2 - DE-G;k=5:boot_ci_low,1.139801959e-05,corrected_inner.csv,boot_ci_low,group=D;comparison=v2 - DE-G;k=5,phase A
+CORR:group=D;comparison=v2 - DE-G;k=5:boot_ci_high,0.00746817643,corrected_inner.csv,boot_ci_high,group=D;comparison=v2 - DE-G;k=5,phase A
+CORR:group=D;comparison=v2 - DE-G;k=5:nb_ci_low,-0.005428014286,corrected_inner.csv,nb_ci_low,group=D;comparison=v2 - DE-G;k=5,phase A
+CORR:group=D;comparison=v2 - DE-G;k=5:nb_ci_high,0.01278875241,corrected_inner.csv,nb_ci_high,group=D;comparison=v2 - DE-G;k=5,phase A
+CORR:group=D;comparison=v2 - DE-G;k=5:n_cohorts_positive,2,corrected_inner.csv,n_cohorts_positive,group=D;comparison=v2 - DE-G;k=5,phase A
+CORR:group=D;comparison=v2 - DE-G;k=5:p_nb_one_sided,0.2003768315,corrected_inner.csv,p_nb_one_sided,group=D;comparison=v2 - DE-G;k=5,phase A
+CORR:group=D;comparison=v2 - DE-G;k=5:share_positive,0.5333333333,corrected_inner.csv,share_positive,group=D;comparison=v2 - DE-G;k=5,phase A
+CORR:group=D;comparison=v2 - DE-G;k=10:mean_diff,0.002676718416,corrected_inner.csv,mean_diff,group=D;comparison=v2 - DE-G;k=10,phase A
+CORR:group=D;comparison=v2 - DE-G;k=10:boot_ci_low,0.0001614918498,corrected_inner.csv,boot_ci_low,group=D;comparison=v2 - DE-G;k=10,phase A
+CORR:group=D;comparison=v2 - DE-G;k=10:boot_ci_high,0.004946114427,corrected_inner.csv,boot_ci_high,group=D;comparison=v2 - DE-G;k=10,phase A
+CORR:group=D;comparison=v2 - DE-G;k=10:nb_ci_low,-0.00314777699,corrected_inner.csv,nb_ci_low,group=D;comparison=v2 - DE-G;k=10,phase A
+CORR:group=D;comparison=v2 - DE-G;k=10:nb_ci_high,0.008501213822,corrected_inner.csv,nb_ci_high,group=D;comparison=v2 - DE-G;k=10,phase A
+CORR:group=D;comparison=v2 - DE-G;k=10:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=D;comparison=v2 - DE-G;k=10,phase A
+CORR:group=D;comparison=v2 - DE-G;k=10:p_nb_one_sided,0.170513824,corrected_inner.csv,p_nb_one_sided,group=D;comparison=v2 - DE-G;k=10,phase A
+CORR:group=D;comparison=v2 - DE-G;k=10:share_positive,0.6888888889,corrected_inner.csv,share_positive,group=D;comparison=v2 - DE-G;k=10,phase A
+CORR:group=D;comparison=v2 - DE-G;k=50:mean_diff,0.005585937333,corrected_inner.csv,mean_diff,group=D;comparison=v2 - DE-G;k=50,phase A
+CORR:group=D;comparison=v2 - DE-G;k=50:boot_ci_low,0.004776801685,corrected_inner.csv,boot_ci_low,group=D;comparison=v2 - DE-G;k=50,phase A
+CORR:group=D;comparison=v2 - DE-G;k=50:boot_ci_high,0.006420974576,corrected_inner.csv,boot_ci_high,group=D;comparison=v2 - DE-G;k=50,phase A
+CORR:group=D;comparison=v2 - DE-G;k=50:nb_ci_low,0.003567449052,corrected_inner.csv,nb_ci_low,group=D;comparison=v2 - DE-G;k=50,phase A
+CORR:group=D;comparison=v2 - DE-G;k=50:nb_ci_high,0.007604425614,corrected_inner.csv,nb_ci_high,group=D;comparison=v2 - DE-G;k=50,phase A
+CORR:group=D;comparison=v2 - DE-G;k=50:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=D;comparison=v2 - DE-G;k=50,phase A
+CORR:group=D;comparison=v2 - DE-G;k=50:p_nb_one_sided,1.818915359e-05,corrected_inner.csv,p_nb_one_sided,group=D;comparison=v2 - DE-G;k=50,phase A
+CORR:group=D;comparison=v2 - DE-G;k=50:share_positive,1,corrected_inner.csv,share_positive,group=D;comparison=v2 - DE-G;k=50,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=2:mean_diff,0.00228529659,corrected_inner.csv,mean_diff,group=D;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=2:boot_ci_low,-0.005568084754,corrected_inner.csv,boot_ci_low,group=D;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=2:boot_ci_high,0.009903584874,corrected_inner.csv,boot_ci_high,group=D;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=2:nb_ci_low,-0.01693274742,corrected_inner.csv,nb_ci_low,group=D;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=2:nb_ci_high,0.0215033406,corrected_inner.csv,nb_ci_high,group=D;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=2:n_cohorts_positive,2,corrected_inner.csv,n_cohorts_positive,group=D;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=2:p_nb_one_sided,0.4011982781,corrected_inner.csv,p_nb_one_sided,group=D;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=2:share_positive,0.5111111111,corrected_inner.csv,share_positive,group=D;comparison=DE-G - DE/rand/1/bin;k=2,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=5:mean_diff,-0.0001727704293,corrected_inner.csv,mean_diff,group=D;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=5:boot_ci_low,-0.004082640319,corrected_inner.csv,boot_ci_low,group=D;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=5:boot_ci_high,0.003566176438,corrected_inner.csv,boot_ci_high,group=D;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=5:nb_ci_low,-0.009829735682,corrected_inner.csv,nb_ci_low,group=D;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=5:nb_ci_high,0.009484194823,corrected_inner.csv,nb_ci_high,group=D;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=5:n_cohorts_positive,2,corrected_inner.csv,n_cohorts_positive,group=D;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=5:p_nb_one_sided,0.5150334978,corrected_inner.csv,p_nb_one_sided,group=D;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=5:share_positive,0.5111111111,corrected_inner.csv,share_positive,group=D;comparison=DE-G - DE/rand/1/bin;k=5,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=10:mean_diff,0.006847746356,corrected_inner.csv,mean_diff,group=D;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=10:boot_ci_low,0.003900397991,corrected_inner.csv,boot_ci_low,group=D;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=10:boot_ci_high,0.009715647815,corrected_inner.csv,boot_ci_high,group=D;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=10:nb_ci_low,4.828204576e-06,corrected_inner.csv,nb_ci_low,group=D;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=10:nb_ci_high,0.01369066451,corrected_inner.csv,nb_ci_high,group=D;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=10:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=D;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=10:p_nb_one_sided,0.02492967409,corrected_inner.csv,p_nb_one_sided,group=D;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=10:share_positive,0.8222222222,corrected_inner.csv,share_positive,group=D;comparison=DE-G - DE/rand/1/bin;k=10,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=50:mean_diff,0.005470326504,corrected_inner.csv,mean_diff,group=D;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=50:boot_ci_low,0.004275449591,corrected_inner.csv,boot_ci_low,group=D;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=50:boot_ci_high,0.006682073432,corrected_inner.csv,boot_ci_high,group=D;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=50:nb_ci_low,0.00254145571,corrected_inner.csv,nb_ci_low,group=D;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=50:nb_ci_high,0.008399197298,corrected_inner.csv,nb_ci_high,group=D;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=50:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=D;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=50:p_nb_one_sided,0.0006504910443,corrected_inner.csv,p_nb_one_sided,group=D;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=D;comparison=DE-G - DE/rand/1/bin;k=50:share_positive,0.8444444444,corrected_inner.csv,share_positive,group=D;comparison=DE-G - DE/rand/1/bin;k=50,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=2:mean_diff,0.003377467164,corrected_inner.csv,mean_diff,group=D;comparison=DE/rand/1/bin - v1;k=2,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=2:boot_ci_low,-0.00783137014,corrected_inner.csv,boot_ci_low,group=D;comparison=DE/rand/1/bin - v1;k=2,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=2:boot_ci_high,0.01441719355,corrected_inner.csv,boot_ci_high,group=D;comparison=DE/rand/1/bin - v1;k=2,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=2:nb_ci_low,-0.02329447117,corrected_inner.csv,nb_ci_low,group=D;comparison=DE/rand/1/bin - v1;k=2,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=2:nb_ci_high,0.0300494055,corrected_inner.csv,nb_ci_high,group=D;comparison=DE/rand/1/bin - v1;k=2,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=2:n_cohorts_positive,2,corrected_inner.csv,n_cohorts_positive,group=D;comparison=DE/rand/1/bin - v1;k=2,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=2:p_nb_one_sided,0.3949489431,corrected_inner.csv,p_nb_one_sided,group=D;comparison=DE/rand/1/bin - v1;k=2,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=2:share_positive,0.5111111111,corrected_inner.csv,share_positive,group=D;comparison=DE/rand/1/bin - v1;k=2,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=5:mean_diff,0.002258522833,corrected_inner.csv,mean_diff,group=D;comparison=DE/rand/1/bin - v1;k=5,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=5:boot_ci_low,-0.001524555117,corrected_inner.csv,boot_ci_low,group=D;comparison=DE/rand/1/bin - v1;k=5,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=5:boot_ci_high,0.006322834214,corrected_inner.csv,boot_ci_high,group=D;comparison=DE/rand/1/bin - v1;k=5,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=5:nb_ci_low,-0.007411320031,corrected_inner.csv,nb_ci_low,group=D;comparison=DE/rand/1/bin - v1;k=5,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=5:nb_ci_high,0.0119283657,corrected_inner.csv,nb_ci_high,group=D;comparison=DE/rand/1/bin - v1;k=5,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=5:n_cohorts_positive,2,corrected_inner.csv,n_cohorts_positive,group=D;comparison=DE/rand/1/bin - v1;k=5,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=5:p_nb_one_sided,0.3120970876,corrected_inner.csv,p_nb_one_sided,group=D;comparison=DE/rand/1/bin - v1;k=5,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=5:share_positive,0.4666666667,corrected_inner.csv,share_positive,group=D;comparison=DE/rand/1/bin - v1;k=5,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=10:mean_diff,0.0001028048907,corrected_inner.csv,mean_diff,group=D;comparison=DE/rand/1/bin - v1;k=10,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=10:boot_ci_low,-0.002646871694,corrected_inner.csv,boot_ci_low,group=D;comparison=DE/rand/1/bin - v1;k=10,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=10:boot_ci_high,0.002986706644,corrected_inner.csv,boot_ci_high,group=D;comparison=DE/rand/1/bin - v1;k=10,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=10:nb_ci_low,-0.007033025075,corrected_inner.csv,nb_ci_low,group=D;comparison=DE/rand/1/bin - v1;k=10,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=10:nb_ci_high,0.007238634856,corrected_inner.csv,nb_ci_high,group=D;comparison=DE/rand/1/bin - v1;k=10,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=10:n_cohorts_positive,1,corrected_inner.csv,n_cohorts_positive,group=D;comparison=DE/rand/1/bin - v1;k=10,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=10:p_nb_one_sided,0.4878928838,corrected_inner.csv,p_nb_one_sided,group=D;comparison=DE/rand/1/bin - v1;k=10,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=10:share_positive,0.5555555556,corrected_inner.csv,share_positive,group=D;comparison=DE/rand/1/bin - v1;k=10,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=50:mean_diff,0.00111475869,corrected_inner.csv,mean_diff,group=D;comparison=DE/rand/1/bin - v1;k=50,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=50:boot_ci_low,-9.669726154e-05,corrected_inner.csv,boot_ci_low,group=D;comparison=DE/rand/1/bin - v1;k=50,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=50:boot_ci_high,0.002286785545,corrected_inner.csv,boot_ci_high,group=D;comparison=DE/rand/1/bin - v1;k=50,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=50:nb_ci_low,-0.001911668355,corrected_inner.csv,nb_ci_low,group=D;comparison=DE/rand/1/bin - v1;k=50,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=50:nb_ci_high,0.004141185735,corrected_inner.csv,nb_ci_high,group=D;comparison=DE/rand/1/bin - v1;k=50,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=50:n_cohorts_positive,3,corrected_inner.csv,n_cohorts_positive,group=D;comparison=DE/rand/1/bin - v1;k=50,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=50:p_nb_one_sided,0.2213479494,corrected_inner.csv,p_nb_one_sided,group=D;comparison=DE/rand/1/bin - v1;k=50,phase A
+CORR:group=D;comparison=DE/rand/1/bin - v1;k=50:share_positive,0.5777777778,corrected_inner.csv,share_positive,group=D;comparison=DE/rand/1/bin - v1;k=50,phase A
+RUNTIME:method=bpso;k=5:mean_s,33.89380926,runtime.csv,mean_s,method=bpso;k=5,phase A
+RUNTIME:method=bpso;k=5:median_s,33.97957948,runtime.csv,median_s,method=bpso;k=5,phase A
+RUNTIME:method=bpso;k=10:mean_s,44.45387425,runtime.csv,mean_s,method=bpso;k=10,phase A
+RUNTIME:method=bpso;k=10:median_s,44.76459533,runtime.csv,median_s,method=bpso;k=10,phase A
+RUNTIME:method=de_g;k=5:mean_s,25.34000393,runtime.csv,mean_s,method=de_g;k=5,phase A
+RUNTIME:method=de_g;k=5:median_s,25.72819017,runtime.csv,median_s,method=de_g;k=5,phase A
+RUNTIME:method=de_g;k=10:mean_s,28.27588143,runtime.csv,mean_s,method=de_g;k=10,phase A
+RUNTIME:method=de_g;k=10:median_s,28.66148445,runtime.csv,median_s,method=de_g;k=10,phase A
+RUNTIME:method=de_rand1;k=5:mean_s,20.26240576,runtime.csv,mean_s,method=de_rand1;k=5,phase A
+RUNTIME:method=de_rand1;k=5:median_s,20.28869291,runtime.csv,median_s,method=de_rand1;k=5,phase A
+RUNTIME:method=de_rand1;k=10:mean_s,21.10139753,runtime.csv,mean_s,method=de_rand1;k=10,phase A
+RUNTIME:method=de_rand1;k=10:median_s,21.08339716,runtime.csv,median_s,method=de_rand1;k=10,phase A
+RUNTIME:method=ga;k=5:mean_s,33.58226029,runtime.csv,mean_s,method=ga;k=5,phase A
+RUNTIME:method=ga;k=5:median_s,33.76649966,runtime.csv,median_s,method=ga;k=5,phase A
+RUNTIME:method=ga;k=10:mean_s,35.67225691,runtime.csv,mean_s,method=ga;k=10,phase A
+RUNTIME:method=ga;k=10:median_s,35.7063205,runtime.csv,median_s,method=ga;k=10,phase A
+RUNTIME:method=jade;k=5:mean_s,19.8316442,runtime.csv,mean_s,method=jade;k=5,phase A
+RUNTIME:method=jade;k=5:median_s,20.031188,runtime.csv,median_s,method=jade;k=5,phase A
+RUNTIME:method=jade;k=10:mean_s,20.67441169,runtime.csv,mean_s,method=jade;k=10,phase A
+RUNTIME:method=jade;k=10:median_s,21.0627697,runtime.csv,median_s,method=jade;k=10,phase A
+RUNTIME:method=jde;k=5:mean_s,19.84292707,runtime.csv,mean_s,method=jde;k=5,phase A
+RUNTIME:method=jde;k=5:median_s,19.81282799,runtime.csv,median_s,method=jde;k=5,phase A
+RUNTIME:method=jde;k=10:mean_s,20.76617459,runtime.csv,mean_s,method=jde;k=10,phase A
+RUNTIME:method=jde;k=10:median_s,21.02444345,runtime.csv,median_s,method=jde;k=10,phase A
+RUNTIME:method=mpqda_de;k=5:mean_s,22.70996723,runtime.csv,mean_s,method=mpqda_de;k=5,phase A
+RUNTIME:method=mpqda_de;k=5:median_s,22.6557213,runtime.csv,median_s,method=mpqda_de;k=5,phase A
+RUNTIME:method=mpqda_de;k=10:mean_s,23.91118481,runtime.csv,mean_s,method=mpqda_de;k=10,phase A
+RUNTIME:method=mpqda_de;k=10:median_s,23.94207445,runtime.csv,median_s,method=mpqda_de;k=10,phase A
+RUNTIME:method=mpqda_v2;k=5:mean_s,24.93466244,runtime.csv,mean_s,method=mpqda_v2;k=5,phase A
+RUNTIME:method=mpqda_v2;k=5:median_s,25.24727044,runtime.csv,median_s,method=mpqda_v2;k=5,phase A
+RUNTIME:method=mpqda_v2;k=10:mean_s,28.03069506,runtime.csv,mean_s,method=mpqda_v2;k=10,phase A
+RUNTIME:method=mpqda_v2;k=10:median_s,28.45581202,runtime.csv,median_s,method=mpqda_v2;k=10,phase A
+RUNTIME:method=mpqda_v2_no_gap;k=5:mean_s,36.5852815,runtime.csv,mean_s,method=mpqda_v2_no_gap;k=5,phase A
+RUNTIME:method=mpqda_v2_no_gap;k=5:median_s,36.68194601,runtime.csv,median_s,method=mpqda_v2_no_gap;k=5,phase A
+RUNTIME:method=mpqda_v2_no_gap;k=10:mean_s,37.29768838,runtime.csv,mean_s,method=mpqda_v2_no_gap;k=10,phase A
+RUNTIME:method=mpqda_v2_no_gap;k=10:median_s,37.95957206,runtime.csv,median_s,method=mpqda_v2_no_gap;k=10,phase A
+RUNTIME:method=mpqda_v2_no_new;k=5:mean_s,13.07966495,runtime.csv,mean_s,method=mpqda_v2_no_new;k=5,phase A
+RUNTIME:method=mpqda_v2_no_new;k=5:median_s,12.75768147,runtime.csv,median_s,method=mpqda_v2_no_new;k=5,phase A
+RUNTIME:method=mpqda_v2_no_new;k=10:mean_s,22.64989184,runtime.csv,mean_s,method=mpqda_v2_no_new;k=10,phase A
+RUNTIME:method=mpqda_v2_no_new;k=10:median_s,22.43583307,runtime.csv,median_s,method=mpqda_v2_no_new;k=10,phase A
+RUNTIME:method=mpqda_v2_no_tour;k=5:mean_s,33.02168409,runtime.csv,mean_s,method=mpqda_v2_no_tour;k=5,phase A
+RUNTIME:method=mpqda_v2_no_tour;k=5:median_s,33.19994459,runtime.csv,median_s,method=mpqda_v2_no_tour;k=5,phase A
+RUNTIME:method=mpqda_v2_no_tour;k=10:mean_s,35.74185866,runtime.csv,mean_s,method=mpqda_v2_no_tour;k=10,phase A
+RUNTIME:method=mpqda_v2_no_tour;k=10:median_s,36.45619133,runtime.csv,median_s,method=mpqda_v2_no_tour;k=10,phase A
+RUNTIME:method=qlde;k=5:mean_s,20.52990729,runtime.csv,mean_s,method=qlde;k=5,phase A
+RUNTIME:method=qlde;k=5:median_s,20.5419687,runtime.csv,median_s,method=qlde;k=5,phase A
+RUNTIME:method=qlde;k=10:mean_s,21.20171217,runtime.csv,mean_s,method=qlde;k=10,phase A
+RUNTIME:method=qlde;k=10:median_s,21.26640903,runtime.csv,median_s,method=qlde;k=10,phase A
+RUNTIME:method=shade;k=5:mean_s,19.94460864,runtime.csv,mean_s,method=shade;k=5,phase A
+RUNTIME:method=shade;k=5:median_s,19.97650344,runtime.csv,median_s,method=shade;k=5,phase A
+RUNTIME:method=shade;k=10:mean_s,20.85263419,runtime.csv,mean_s,method=shade;k=10,phase A
+RUNTIME:method=shade;k=10:median_s,20.83452234,runtime.csv,median_s,method=shade;k=10,phase A
+CORROUT:k=5;reference=bpso;metric=logloss:diff,0.02073891047,corrected_outer.csv,diff,k=5;reference=bpso;metric=logloss,B-LL
+CORROUT:k=5;reference=bpso;metric=logloss:nb_ci_low,-0.07957062944,corrected_outer.csv,nb_ci_low,k=5;reference=bpso;metric=logloss,B-LL
+CORROUT:k=5;reference=bpso;metric=logloss:nb_ci_high,0.1210484504,corrected_outer.csv,nb_ci_high,k=5;reference=bpso;metric=logloss,B-LL
+CORROUT:k=5;reference=bpso;metric=logloss:half_width,0.1003095399,corrected_outer.csv,half_width,k=5;reference=bpso;metric=logloss,B-LL
+CORROUT:k=5;reference=bpso;metric=auroc:diff,0.003246606335,corrected_outer.csv,diff,k=5;reference=bpso;metric=auroc,B-LL
+CORROUT:k=5;reference=bpso;metric=auroc:nb_ci_low,-0.02216870661,corrected_outer.csv,nb_ci_low,k=5;reference=bpso;metric=auroc,B-LL
+CORROUT:k=5;reference=bpso;metric=auroc:nb_ci_high,0.02866191928,corrected_outer.csv,nb_ci_high,k=5;reference=bpso;metric=auroc,B-LL
+CORROUT:k=5;reference=bpso;metric=auroc:half_width,0.02541531295,corrected_outer.csv,half_width,k=5;reference=bpso;metric=auroc,B-LL
+CORROUT:k=5;reference=mpqda_de;metric=logloss:diff,-0.02801836056,corrected_outer.csv,diff,k=5;reference=mpqda_de;metric=logloss,B-LL
+CORROUT:k=5;reference=mpqda_de;metric=logloss:nb_ci_low,-0.1661453462,corrected_outer.csv,nb_ci_low,k=5;reference=mpqda_de;metric=logloss,B-LL
+CORROUT:k=5;reference=mpqda_de;metric=logloss:nb_ci_high,0.1101086251,corrected_outer.csv,nb_ci_high,k=5;reference=mpqda_de;metric=logloss,B-LL
+CORROUT:k=5;reference=mpqda_de;metric=logloss:half_width,0.1381269856,corrected_outer.csv,half_width,k=5;reference=mpqda_de;metric=logloss,B-LL
+CORROUT:k=5;reference=mpqda_de;metric=auroc:diff,0.008843759726,corrected_outer.csv,diff,k=5;reference=mpqda_de;metric=auroc,B-LL
+CORROUT:k=5;reference=mpqda_de;metric=auroc:nb_ci_low,-0.02331604514,corrected_outer.csv,nb_ci_low,k=5;reference=mpqda_de;metric=auroc,B-LL
+CORROUT:k=5;reference=mpqda_de;metric=auroc:nb_ci_high,0.04100356459,corrected_outer.csv,nb_ci_high,k=5;reference=mpqda_de;metric=auroc,B-LL
+CORROUT:k=5;reference=mpqda_de;metric=auroc:half_width,0.03215980487,corrected_outer.csv,half_width,k=5;reference=mpqda_de;metric=auroc,B-LL
+CORROUT:k=10;reference=bpso;metric=logloss:diff,0.01994655218,corrected_outer.csv,diff,k=10;reference=bpso;metric=logloss,B-LL
+CORROUT:k=10;reference=bpso;metric=logloss:nb_ci_low,-0.08620406451,corrected_outer.csv,nb_ci_low,k=10;reference=bpso;metric=logloss,B-LL
+CORROUT:k=10;reference=bpso;metric=logloss:nb_ci_high,0.1260971689,corrected_outer.csv,nb_ci_high,k=10;reference=bpso;metric=logloss,B-LL
+CORROUT:k=10;reference=bpso;metric=logloss:half_width,0.1061506167,corrected_outer.csv,half_width,k=10;reference=bpso;metric=logloss,B-LL
+CORROUT:k=10;reference=bpso;metric=auroc:diff,-0.001153337403,corrected_outer.csv,diff,k=10;reference=bpso;metric=auroc,B-LL
+CORROUT:k=10;reference=bpso;metric=auroc:nb_ci_low,-0.01691588423,corrected_outer.csv,nb_ci_low,k=10;reference=bpso;metric=auroc,B-LL
+CORROUT:k=10;reference=bpso;metric=auroc:nb_ci_high,0.01460920942,corrected_outer.csv,nb_ci_high,k=10;reference=bpso;metric=auroc,B-LL
+CORROUT:k=10;reference=bpso;metric=auroc:half_width,0.01576254682,corrected_outer.csv,half_width,k=10;reference=bpso;metric=auroc,B-LL
+CORROUT:k=10;reference=mpqda_de;metric=logloss:diff,-0.0149003716,corrected_outer.csv,diff,k=10;reference=mpqda_de;metric=logloss,B-LL
+CORROUT:k=10;reference=mpqda_de;metric=logloss:nb_ci_low,-0.1185778249,corrected_outer.csv,nb_ci_low,k=10;reference=mpqda_de;metric=logloss,B-LL
+CORROUT:k=10;reference=mpqda_de;metric=logloss:nb_ci_high,0.08877708165,corrected_outer.csv,nb_ci_high,k=10;reference=mpqda_de;metric=logloss,B-LL
+CORROUT:k=10;reference=mpqda_de;metric=logloss:half_width,0.1036774533,corrected_outer.csv,half_width,k=10;reference=mpqda_de;metric=logloss,B-LL
+CORROUT:k=10;reference=mpqda_de;metric=auroc:diff,-0.004713064713,corrected_outer.csv,diff,k=10;reference=mpqda_de;metric=auroc,B-LL
+CORROUT:k=10;reference=mpqda_de;metric=auroc:nb_ci_low,-0.0239445801,corrected_outer.csv,nb_ci_low,k=10;reference=mpqda_de;metric=auroc,B-LL
+CORROUT:k=10;reference=mpqda_de;metric=auroc:nb_ci_high,0.01451845068,corrected_outer.csv,nb_ci_high,k=10;reference=mpqda_de;metric=auroc,B-LL
+CORROUT:k=10;reference=mpqda_de;metric=auroc:half_width,0.01923151539,corrected_outer.csv,half_width,k=10;reference=mpqda_de;metric=auroc,B-LL
+CORRHV5:cohort=gse31210_egfr;k=5:auroc_v1_minus_v2,-0.007868825911,corrected_hv5.csv,auroc_v1_minus_v2,cohort=gse31210_egfr;k=5,B-LL
+CORRHV5:cohort=gse31210_egfr;k=5:nb_ci_low,-0.07771261582,corrected_hv5.csv,nb_ci_low,cohort=gse31210_egfr;k=5,B-LL
+CORRHV5:cohort=gse31210_egfr;k=5:nb_ci_high,0.061974964,corrected_hv5.csv,nb_ci_high,cohort=gse31210_egfr;k=5,B-LL
+CORRHV5:cohort=gse31210_egfr;k=10:auroc_v1_minus_v2,0.03666558704,corrected_hv5.csv,auroc_v1_minus_v2,cohort=gse31210_egfr;k=10,B-LL
+CORRHV5:cohort=gse31210_egfr;k=10:nb_ci_low,-0.08713757865,corrected_hv5.csv,nb_ci_low,cohort=gse31210_egfr;k=10,B-LL
+CORRHV5:cohort=gse31210_egfr;k=10:nb_ci_high,0.1604687527,corrected_hv5.csv,nb_ci_high,cohort=gse31210_egfr;k=10,B-LL
+HV6:k=20:mean_diff,0.00683878327,hv6.csv,mean_diff,k=20,phase A
+HV6:k=20:boot_ci_low,0.005157960671,hv6.csv,boot_ci_low,k=20,phase A
+HV6:k=20:boot_ci_high,0.008682626089,hv6.csv,boot_ci_high,k=20,phase A
+HV6:k=20:nb_ci_low,0.002431632179,hv6.csv,nb_ci_low,k=20,phase A
+HV6:k=20:nb_ci_high,0.01124593436,hv6.csv,nb_ci_high,k=20,phase A
+HV6:k=20:share_positive,0.8888888889,hv6.csv,share_positive,k=20,phase A
+HV6:k=20:p_wilcoxon_one_sided,2.165734259e-11,hv6.csv,p_wilcoxon_one_sided,k=20,phase A
+HV6:k=20:p_holm,2.165734259e-11,hv6.csv,p_holm,k=20,phase A
+HV6:k=20:significant,True,hv6.csv,significant,k=20,phase A
+HV6:k=50:mean_diff,0.006559098113,hv6.csv,mean_diff,k=50,phase A
+HV6:k=50:boot_ci_low,0.005391877491,hv6.csv,boot_ci_low,k=50,phase A
+HV6:k=50:boot_ci_high,0.007616792158,hv6.csv,boot_ci_high,k=50,phase A
+HV6:k=50:nb_ci_low,0.003748742037,hv6.csv,nb_ci_low,k=50,phase A
+HV6:k=50:nb_ci_high,0.009369454188,hv6.csv,nb_ci_high,k=50,phase A
+HV6:k=50:share_positive,1,hv6.csv,share_positive,k=50,phase A
+HV6:k=50:p_wilcoxon_one_sided,2.842170943e-14,hv6.csv,p_wilcoxon_one_sided,k=50,phase A
+HV6:k=50:p_holm,5.684341886e-14,hv6.csv,p_holm,k=50,phase A
+HV6:k=50:significant,True,hv6.csv,significant,k=50,phase A
+HV6PAGE:ks=2 5 10 20 50:L,2086,hv6_page.csv,L,ks=2 5 10 20 50,phase A
+HV6PAGE:ks=2 5 10 20 50:p,0.03448100084,hv6_page.csv,p,ks=2 5 10 20 50,phase A
+HV6PAGE:ks=2 5 10 20 50:significant,True,hv6_page.csv,significant,ks=2 5 10 20 50,phase A

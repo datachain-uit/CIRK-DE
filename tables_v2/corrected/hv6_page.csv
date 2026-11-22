@@ -1,0 +1,2 @@
+n_blocks,ks,L,p,method,significant,mean_d_k2,mean_d_k5,mean_d_k10,mean_d_k20,mean_d_k50,reading
+45,2 5 10 20 50,2086,0.03448100084,asymptotic,True,-0.001744794474,0.003555542527,0.004521355228,0.00683878327,0.006559098113,supported
