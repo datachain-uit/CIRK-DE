@@ -14,7 +14,7 @@ def test_notebook_matches_generator_and_parses():
     for src in code:
         ast.parse(src)
     joined = "\n".join(code)
-    assert "datachain-uit/MPQDA-DE" in joined and "'taimma-2027'" in joined
+    assert "datachain-uit/CIRK-DE" in joined and "'taimma-2027'" in joined
     assert "KLTN_ALLOW_UNPUSHED" in joined and "os.environ.pop(flag" in joined          # cờ smoke bị gỡ, không bị đặt
     assert "'KLTN_STRICT_N': '1'" in joined and "branch', '-r', '--contains', 'HEAD'" in joined
 

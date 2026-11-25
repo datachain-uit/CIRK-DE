@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "CIRK-DE: code, pre-registration and results"
+type: software
+authors:
+  - given-names: Luan
+    family-names: Nguyen
+    orcid: "https://orcid.org/0009-0004-8652-6333"
+  - given-names: Thu
+    family-names: Nguyen
+    orcid: "https://orcid.org/0000-0002-0571-2117"
+  - given-names: Khoa Tan
+    family-names: Vo
+    orcid: "https://orcid.org/0000-0002-5343-1686"
+  - given-names: Thu-Thuy
+    family-names: Ta
+    orcid: "https://orcid.org/0000-0003-0346-6714"
+  - given-names: Phuc
+    family-names: Nguyen
+    orcid: "https://orcid.org/0000-0002-6577-0159"
+  - given-names: Tu-Anh
+    family-names: Nguyen-Hoang
+    orcid: "https://orcid.org/0000-0001-9283-769X"
+repository-code: "https://github.com/datachain-uit/CIRK-DE"
+license: MIT
+version: taimma-2027-submission
+date-released: 2026-11-26
+keywords:
+  - gene selection
+  - differential evolution
+  - random keys
+  - pre-registration

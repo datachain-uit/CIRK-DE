@@ -54,7 +54,7 @@ S0_RESULTS = None              # S1–S3: S0_results.zip của S0; C1–C3, CAL,
 V1_RESULTS = None              # S0v2: S1_results.zip của v1 (T1 dùng cho cổng G-R và việc v1b; PREREG-v2 Mục 4–5)
 INPUT_B7_DATASET = None        # Input chứa experiment-data-b7/<bộ>/ khi B7_INCLUDED khác rỗng (T-Y5)
 PIN_SURVEY_ENV = False         # TQĐ16: True = cài đúng vendor/requirements-kaggle.txt; chỉ bật khi G-T1 trượt vì gói
-REPO_URL = 'https://github.com/datachain-uit/MPQDA-DE.git'
+REPO_URL = 'https://github.com/datachain-uit/CIRK-DE.git'
 REPO_BRANCH = 'taimma-2027'
 REPO_COMMIT = None             # vd. 'b446e03' — ghim một commit đã push cho mọi phiên; None = đầu nhánh (chỉ khi thử)
 WORKERS = 4                    # số nhân CPU của phiên Kaggle
