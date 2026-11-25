@@ -1,0 +1,35 @@
+{
+  "dataset": "GSE37745",
+  "task": "LUAD vs LUSC on one GEO target cohort",
+  "platform": "GPL570",
+  "role": "primary",
+  "created_at_utc": "2026-10-16T19:28:20+00:00",
+  "source": "NCBI GEO GSE37745 series matrix",
+  "n_samples": 172,
+  "n_patients": 172,
+  "n_genes": 20848,
+  "label_mapping": {
+    "LUAD": 0,
+    "LUSC": 1
+  },
+  "patient_id_source": "verified one-sample-per-patient: sample_id",
+  "one_sample_per_patient_verified": true,
+  "split_method": "StratifiedGroupKFold with patient_id groups; fold r: test=P_r, val=P_(r+1), train=remaining parts",
+  "seed": 42,
+  "selected_seed": 42,
+  "split_imbalance_score": 3.1999999999999957,
+  "versions": {
+    "python": "3.14.6",
+    "numpy": "2.5.0",
+    "pandas": "3.0.3",
+    "scikit-learn": "1.9.0"
+  },
+  "files": [
+    "expression.h5",
+    "metadata.csv",
+    "fold_assignment.csv",
+    "class_stats.csv",
+    "unresolved_samples.csv",
+    "folds/fold_<1..5>/{train,val,test}.h5"
+  ]
+}

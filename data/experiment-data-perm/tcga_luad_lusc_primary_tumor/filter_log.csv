@@ -1,0 +1,6 @@
+step,buoc,tieu_chi,n_samples,n_patients,n_removed
+0,0_gdc_star_counts,Moi file STAR - Counts cua TCGA-LUAD va TCGA-LUSC,1163,1019,0
+1,1_co_bieu_hien,Chi file da tai duoc ma tran bieu hien,1163,1019,0
+2,2_chi_primary_tumor,"Chi mau Primary Tumor (sample_type = 'Primary Tumor' va ma barcode 01); loai mo thuong, Recurrent, Metastatic, Additional - New Primary",1051,1018,112
+3,3_loai_benh_nhan_2_project,Loai benh nhan co mau o ca TCGA-LUAD va TCGA-LUSC,1051,1018,0
+4,4_mot_mau_moi_benh_nhan,"Giu 1 mau u / benh nhan (uu tien khong FFPE, roi sample_id nho nhat)",1018,1018,33

@@ -23,3 +23,6 @@ venv/
 
 # TAIMMA: bảng và hình sinh bằng script
 tables/
+
+# Files of 50 MB or more (release asset)
+data/experiment-data-perm/tcga_luad_lusc_primary_tumor/expression.h5

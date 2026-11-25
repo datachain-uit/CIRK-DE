@@ -1,0 +1,12 @@
+\begin{table}[t]
+\centering
+\caption{HV5: outer AUROC (B-LL) of v1 minus v2 on GSE31210 (EGFR), one-sided Wilcoxon over 15 folds, Holm over k.}\label{tab:stats_hv5_b7}
+\begin{tabular}{llllllllllllllllll}
+\hline
+cohort & k & n & auroc\_v1 & auroc\_v2 & auroc\_v1\_minus\_v2 & share\_v2\_lower & p & logloss\_v2\_minus\_v1 & logloss\_ci\_low & logloss\_ci\_high & auroc\_ga\_minus\_v1 & inner\_fitness\_v2\_minus\_v1 & share\_v2\_inner\_better & p\_holm & holm\_family & family\_size & significant \\
+\hline
+gse31210\_egfr & 5 & 15 & 0.8070002699 & 0.8148690958 & -0.007868825911 & 0.3333333333 & 0.8052978516 & 0.01723096728 & -0.1058160828 & 0.1402780174 & -0.03399082321 & 0.02079725125 & 0.7333333333 & 0.8052978516 & HV5 & 2 & False \\
+gse31210\_egfr & 10 & 15 & 0.8207012146 & 0.7840356275 & 0.03666558704 & 0.6 & 0.1513977051 & 0.09845457648 & -0.1244684064 & 0.3213775593 & -0.03906558704 & 0.04215275621 & 0.8666666667 & 0.3027954102 & HV5 & 2 & False \\
+\hline
+\end{tabular}
+\end{table}

@@ -1,0 +1,102 @@
+{
+  "script": "scripts/build_perm_test_data.py",
+  "commit_hash": "no-git-repo",
+  "created_at_utc": "2026-10-14T06:31:17+00:00",
+  "versions": {
+    "numpy": "2.5.0",
+    "pandas": "3.0.3"
+  },
+  "branch": "2_luad_vs_lusc",
+  "copied_from": "experiment-data-v2\\datasets\\tcga_luad_lusc_primary_tumor",
+  "copied_files_sha256": {
+    "expression.h5": "3ea78ddf18cb49563f778b8d7d1c52976c11f0fa11c27135d7f461680adf77c7",
+    "metadata.csv": "2ae9063720cf2ad98e96124da07aecd088ac27d58686790817c3a50985a0cf7c",
+    "config.json": "8a0ce158e8c3367eaead81975eae5326862843f9fbaf08a46c2872d047d097e4",
+    "DATA_CARD.md": "b9df8de3de6acc5d41262caee4644ee741f0ba15ea00ca3168d589050a2cca3a",
+    "filter_log.csv": "b5cb557d6f1b3758d0759475f41a656f5778dfc2cf0579f5aff41b617ef2d584",
+    "class_stats.csv": "b6ffd4ac7cfcec249cd29f0ebdab81c0a4ca207a952e8c18ea6b665a2a474a51",
+    "fold_assignment.csv": "330077fa9fc1603e3e3ce717f7d59ead451fe970cf8ea28b769ea7058c243ede",
+    "folds/fold_1/train.h5": "9a3c3e25e6a1d60787fbc891d99f0dbf8b71fc9661abec6d1f0c1f571efa96a7",
+    "folds/fold_1/val.h5": "09e993af19b4955e7cd74198b94d32632f3e08b11b1bd7d52f2ff9d5690e2dcb",
+    "folds/fold_1/test.h5": "4fea3b16d876ae6529b5d0ee7c33ef42571618b87952b19695a4b58de5daf80b",
+    "folds/fold_2/train.h5": "910a653bf93fadbc682203810a49e481412b214c1ebd01f840a9b9a91ed22251",
+    "folds/fold_2/val.h5": "4c49cea8024587977c8c7015ab44ac830b707d6a7ce4ab08644a88bc6f7ad921",
+    "folds/fold_2/test.h5": "09e993af19b4955e7cd74198b94d32632f3e08b11b1bd7d52f2ff9d5690e2dcb",
+    "folds/fold_3/train.h5": "7b25c68c1d436befa091de7cbac6bd9a3f677a3f64e795c7d8a14297327125b1",
+    "folds/fold_3/val.h5": "7f3ab8ae2dbcceca21a41c79790359101277864905c93c70715192153036bd7d",
+    "folds/fold_3/test.h5": "86d985ec708d5572e69a12bd5a46a59e989f07fc094fcbd778475fed30463d82",
+    "folds/fold_4/train.h5": "5aa5fb69c9d88414dc7804d2c4c930c7e01e7a82c2209dead7dc4ff33294b5eb",
+    "folds/fold_4/val.h5": "0e3bd50ab8168d45570506d0046bf430c8df590419752228eecc5100a08a99af",
+    "folds/fold_4/test.h5": "7f3ab8ae2dbcceca21a41c79790359101277864905c93c70715192153036bd7d",
+    "folds/fold_5/train.h5": "e10af4852bac100b8c1259a63b1d6dde53f5e5d2f6573627656aacadbee375ff",
+    "folds/fold_5/val.h5": "457ab53eee0514e6eb8b96fbb38a5486efbdb5eaaaee96345cf16036b8254329",
+    "folds/fold_5/test.h5": "607f4d9ea54071192af17245b1d58be0411425b6a9a5b8e1fc9484216f51238c"
+  },
+  "notes": [
+    "Chep nguyen tu v2, ke ca folds/ train/val/test (fold da dung cho feature selection)."
+  ],
+  "perm_folds": {
+    "method": "Giu nguyen fold v2 (StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=selected_seed), groups=patient_id -> phan P1..P5; fold r: test=P_r, val=P_(r+1), train=con lai; selected_seed=139, stratify_by=lớp (LUAD/LUSC))",
+    "splits": "train/val/test nhu feature selection; fold r: test = P_r, val = P_(r+1), train = 3 phan con lai",
+    "fold_plan": {
+      "fold_1": {
+        "train_parts": [
+          3,
+          4,
+          5
+        ],
+        "val_part": 2,
+        "test_part": 1
+      },
+      "fold_2": {
+        "train_parts": [
+          1,
+          4,
+          5
+        ],
+        "val_part": 3,
+        "test_part": 2
+      },
+      "fold_3": {
+        "train_parts": [
+          1,
+          2,
+          5
+        ],
+        "val_part": 4,
+        "test_part": 3
+      },
+      "fold_4": {
+        "train_parts": [
+          1,
+          2,
+          3
+        ],
+        "val_part": 5,
+        "test_part": 4
+      },
+      "fold_5": {
+        "train_parts": [
+          2,
+          3,
+          4
+        ],
+        "val_part": 1,
+        "test_part": 5
+      }
+    },
+    "files": [
+      "perm_folds.csv",
+      "perm_fold_stats.csv",
+      "folds/fold_<r>/{train,val,test}.h5 (key 'data')"
+    ],
+    "test_sizes": [
+      204,
+      204,
+      203,
+      204,
+      203
+    ],
+    "perm_folds_sha256": "05ab9d08353cf4160e9dbf1468b618f507e140bef91ee6082fd18674869e36f7"
+  }
+}

@@ -1,0 +1,222 @@
+{
+  "dataset": "tcga_luad_lusc_primary_tumor",
+  "task": "Phân loại mô học LUAD vs LUSC trên mẫu u nguyên phát",
+  "notebook": "notebooks/00_data/lung_datasets_v2_patient_folds.ipynb",
+  "created_at_utc": "2026-10-11T13:05:58+00:00",
+  "commit_hash": "no-git-repo",
+  "commit_source": "nhap tay --commit, scripts/patch_v2_tcga_stage.py",
+  "seed": 42,
+  "seed_search": {
+    "start": 42,
+    "stop": 141,
+    "n": 100
+  },
+  "selected_seed": 139,
+  "split_imbalance_score": 4.000000000000014,
+  "split_method": "StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=selected_seed), groups=patient_id -> phan P1..P5; fold r: test=P_r, val=P_(r+1), train=con lai",
+  "group_col": "patient_id",
+  "stratify_by": "lớp (LUAD/LUSC)",
+  "fold_plan": {
+    "fold_1": {
+      "train_parts": [
+        3,
+        4,
+        5
+      ],
+      "val_part": 2,
+      "test_part": 1
+    },
+    "fold_2": {
+      "train_parts": [
+        1,
+        4,
+        5
+      ],
+      "val_part": 3,
+      "test_part": 2
+    },
+    "fold_3": {
+      "train_parts": [
+        1,
+        2,
+        5
+      ],
+      "val_part": 4,
+      "test_part": 3
+    },
+    "fold_4": {
+      "train_parts": [
+        1,
+        2,
+        3
+      ],
+      "val_part": 5,
+      "test_part": 4
+    },
+    "fold_5": {
+      "train_parts": [
+        2,
+        3,
+        4
+      ],
+      "val_part": 1,
+      "test_part": 5
+    }
+  },
+  "label_col": "label",
+  "label_mapping": {
+    "LUAD": 0,
+    "LUSC": 1
+  },
+  "inclusion_criteria": [
+    "Chi file da tai duoc ma tran bieu hien",
+    "Chi mau Primary Tumor (sample_type = 'Primary Tumor' va ma barcode 01); loai mo thuong, Recurrent, Metastatic, Additional - New Primary",
+    "Loai benh nhan co mau o ca TCGA-LUAD va TCGA-LUSC",
+    "Giu 1 mau u / benh nhan (uu tien khong FFPE, roi sample_id nho nhat)"
+  ],
+  "sample_counts": [
+    {
+      "step": 0,
+      "buoc": "0_gdc_star_counts",
+      "tieu_chi": "Moi file STAR - Counts cua TCGA-LUAD va TCGA-LUSC",
+      "n_samples": 1163,
+      "n_patients": 1019,
+      "n_removed": 0
+    },
+    {
+      "step": 1,
+      "buoc": "1_co_bieu_hien",
+      "tieu_chi": "Chi file da tai duoc ma tran bieu hien",
+      "n_samples": 1163,
+      "n_patients": 1019,
+      "n_removed": 0
+    },
+    {
+      "step": 2,
+      "buoc": "2_chi_primary_tumor",
+      "tieu_chi": "Chi mau Primary Tumor (sample_type = 'Primary Tumor' va ma barcode 01); loai mo thuong, Recurrent, Metastatic, Additional - New Primary",
+      "n_samples": 1051,
+      "n_patients": 1018,
+      "n_removed": 112
+    },
+    {
+      "step": 3,
+      "buoc": "3_loai_benh_nhan_2_project",
+      "tieu_chi": "Loai benh nhan co mau o ca TCGA-LUAD va TCGA-LUSC",
+      "n_samples": 1051,
+      "n_patients": 1018,
+      "n_removed": 0
+    },
+    {
+      "step": 4,
+      "buoc": "4_mot_mau_moi_benh_nhan",
+      "tieu_chi": "Giu 1 mau u / benh nhan (uu tien khong FFPE, roi sample_id nho nhat)",
+      "n_samples": 1018,
+      "n_patients": 1018,
+      "n_removed": 33
+    }
+  ],
+  "n_samples": 1018,
+  "n_patients": 1018,
+  "n_genes": 19938,
+  "class_counts": {
+    "LUAD": {
+      "n_samples": 517,
+      "n_patients": 517
+    },
+    "LUSC": {
+      "n_samples": 501,
+      "n_patients": 501
+    }
+  },
+  "expression": {
+    "unit": "log2(TPM + 1)",
+    "workflow": "GDC STAR - Counts, cot tpm_unstranded",
+    "gene_filter": "gene_type == protein_coding",
+    "gene_id": "gene_name (trung ten -> giu gene phuong sai lon nhat)",
+    "scaling": "khong",
+    "description_vi": [
+      "Giá trị `log2(TPM + 1)` từ cột `tpm_unstranded` của GDC STAR - Counts.",
+      "Chỉ gene `protein_coding`; Ensembl ID đổi sang `gene_name`, trùng tên → giữ gene có phương sai lớn nhất (tính trên các mẫu của bộ này, không dùng nhãn).",
+      "Chưa chuẩn hoá / scale; chưa hiệu chỉnh batch."
+    ]
+  },
+  "source": {
+    "description": "GDC API, TCGA-LUAD + TCGA-LUSC, STAR - Counts (GDC data release: Data Release 46.0 - August 10, 2026)",
+    "projects": [
+      "TCGA-LUAD",
+      "TCGA-LUSC"
+    ],
+    "api": "https://api.gdc.cancer.gov",
+    "gdc_status": {
+      "commit": "8f7c2a51ab0084b216ad1b62a3fae8b945439c53",
+      "data_release": "Data Release 46.0 - August 10, 2026",
+      "data_release_version": {
+        "major": 46,
+        "minor": 0,
+        "release_date": "2026-08-10"
+      },
+      "status": "OK",
+      "tag": "8.5.0",
+      "version": 1
+    },
+    "cross_project_patients_removed": []
+  },
+  "versions": {
+    "python": "3.13.15",
+    "numpy": "2.1.3",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.6.1"
+  },
+  "files": [
+    "DATA_CARD.md",
+    "class_stats.csv",
+    "config.json",
+    "expression.h5",
+    "filter_log.csv",
+    "fold_assignment.csv",
+    "folds/fold_1/test.h5",
+    "folds/fold_1/train.h5",
+    "folds/fold_1/val.h5",
+    "folds/fold_2/test.h5",
+    "folds/fold_2/train.h5",
+    "folds/fold_2/val.h5",
+    "folds/fold_3/test.h5",
+    "folds/fold_3/train.h5",
+    "folds/fold_3/val.h5",
+    "folds/fold_4/test.h5",
+    "folds/fold_4/train.h5",
+    "folds/fold_4/val.h5",
+    "folds/fold_5/test.h5",
+    "folds/fold_5/train.h5",
+    "folds/fold_5/val.h5",
+    "gdc_diagnoses_raw.json",
+    "metadata.csv"
+  ],
+  "metadata_patch": {
+    "script": "scripts/patch_v2_tcga_stage.py",
+    "commit": "no-git-repo",
+    "queried_at_utc": "2026-10-14T03:51:51+00:00",
+    "gdc_data_release": "Data Release 46.0 - August 10, 2026",
+    "endpoint": "POST https://api.gdc.cancer.gov/cases",
+    "rule": "ung vien = ban ghi diagnoses co ajcc_pathologic_stage khac rong/'Not Reported'; khong co -> thieu; cung mot gia tri -> lay; khac nhau -> stage_conflict=True, lay ban ghi diagnosis_is_primary_disease=True (u chi diem) neu co dung mot",
+    "stage_group_counts": {
+      "TCGA-LUAD": {
+        "I": 276,
+        "II": 122,
+        "III": 85,
+        "IV": 26
+      },
+      "TCGA-LUSC": {
+        "I": 244,
+        "II": 162,
+        "III": 84,
+        "IV": 7
+      }
+    },
+    "n_missing_stage": 12,
+    "n_stage_conflict": 25,
+    "n_diagnosis_mismatch": 1,
+    "unchanged": "expression.h5, fold_assignment.csv, folds/, experiment-data-v2/h5/ (sha256)"
+  }
+}

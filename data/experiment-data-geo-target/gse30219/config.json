@@ -1,0 +1,28 @@
+{
+  "dataset": "gse30219_r5_fixed",
+  "source_dataset": "GSE30219",
+  "source_expression": "experiment-data-geo-target\\gse30219\\expression.h5",
+  "source_metadata": "experiment-data-geo-target\\gse30219\\metadata.csv",
+  "geo_accession": "GSE30219",
+  "geo_series_matrix_url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE30nnn/GSE30219/matrix/GSE30219_series_matrix.txt.gz",
+  "label_mapping": {
+    "ADC": "LUAD",
+    "SQC": "LUSC"
+  },
+  "exclusion_policy": "Exclude every histology other than exact ADC or SQC; SCC is small-cell carcinoma.",
+  "n_samples": 146,
+  "n_genes": 20848,
+  "class_counts": {
+    "LUAD": 85,
+    "LUSC": 61
+  },
+  "excluded_counts": {},
+  "split_method": "StratifiedGroupKFold over patient_id; fold r: test=P_r, val=P_(r+1), train=remaining partitions.",
+  "selected_seed": 42,
+  "split_imbalance_score": 1.5999999999999979,
+  "files_sha256": {
+    "expression.h5": "622162531d63db0f977cb73217fefe5ac6fc802ca31ce55777015791334d3b92",
+    "metadata.csv": "c36345825cbdbd60673c9a96d2e1cafea2af21c869cf1a9c39652a2e09c3eea0",
+    "fold_assignment.csv": "86eb3b8ef662b97d76277ae050b7667600cd58717863fe2a7e75524adaee4425"
+  }
+}

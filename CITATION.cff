@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "CIRK-DE: code, pre-registration and results"
+title: "CIRK-DE: code, data, pre-registration and results"
 type: software
 authors:
   - given-names: Luan

@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\caption{Ablation of v2: paired differences in best inner fitness (one Holm family).}\label{tab:table_v2_ablation}
+\begin{tabular}{llllllllllllll}
+\hline
+ablation & k & n & mean\_diff & share\_v2\_better & p & outer\_logloss\_ablation\_minus\_v2 & outer\_ci\_low & outer\_ci\_high & p\_holm & holm\_family & family\_size & significant & component\_credited \\
+\hline
+mpqda\_v2\_no\_gap & 2 & 45 & -0.001744794474 & 0.4888888889 & 0.511133032 & -0.01178944827 & -0.1253787715 & 0.101799875 & 1 & HV4 & 9 & False & False \\
+mpqda\_v2\_no\_gap & 5 & 45 & 0.003555542527 & 0.5555555556 & 0.08328485513 & 0.01714931751 & -0.1296521898 & 0.1639508248 & 0.3331394205 & HV4 & 9 & False & False \\
+mpqda\_v2\_no\_gap & 10 & 45 & 0.004521355228 & 0.7555555556 & 6.737092036e-06 & -0.02658331763 & -0.109683481 & 0.05651684575 & 4.042255222e-05 & HV4 & 9 & True & False \\
+mpqda\_v2\_no\_new & 2 & 45 & 0.06977761076 & 0.9333333333 & 5.376766939e-09 & 0.08406155878 & -0.08255950472 & 0.2506826223 & 3.763736857e-08 & HV4 & 9 & True & True \\
+mpqda\_v2\_no\_new & 5 & 45 & 0.03723625318 & 1 & 2.842170943e-14 & 0.003083062108 & -0.1277478292 & 0.1339139534 & 2.557953849e-13 & HV4 & 9 & True & True \\
+mpqda\_v2\_no\_new & 10 & 45 & 0.01750615757 & 0.9777777778 & 5.684341886e-14 & 0.01222457901 & -0.08823856399 & 0.112687722 & 4.547473509e-13 & HV4 & 9 & True & True \\
+mpqda\_v2\_no\_tour & 2 & 45 & -0.0005041169999 & 0.4666666667 & 0.60131189 & 0.03494697777 & -0.1534198432 & 0.2233137987 & 1 & HV4 & 9 & False & False \\
+mpqda\_v2\_no\_tour & 5 & 45 & 0.0004486593192 & 0.5111111111 & 0.3985545148 & 0.02152472517 & -0.1129881672 & 0.1560376175 & 1 & HV4 & 9 & False & False \\
+mpqda\_v2\_no\_tour & 10 & 45 & 0.004319519692 & 0.6888888889 & 0.001879098717 & -0.01678082433 & -0.09984520448 & 0.06628355582 & 0.009395493586 & HV4 & 9 & True & False \\
+\hline
+\end{tabular}
+\end{table}

@@ -1,0 +1,130 @@
+[
+  {
+    "cohort": "tcga_luad_lusc_primary_tumor",
+    "data_dir": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-perm\\tcga_luad_lusc_primary_tumor",
+    "excluded_file": null,
+    "mode": "sex-only",
+    "excluded_now": [],
+    "excluded_already_absent": [],
+    "n_before": 1018,
+    "n_after": 1018,
+    "n_per_class_after": [
+      517,
+      501
+    ],
+    "n_per_class_expected": [
+      517,
+      501
+    ],
+    "sex_column": "added from sex_gdc.csv (GDC demographic.gender)",
+    "sex_counts": {
+      "unknown": 1018
+    },
+    "sha256_before": {
+      "expression.h5": "3ea78ddf18cb49563f778b8d7d1c52976c11f0fa11c27135d7f461680adf77c7",
+      "metadata.csv": "2ae9063720cf2ad98e96124da07aecd088ac27d58686790817c3a50985a0cf7c"
+    },
+    "changed": true,
+    "script": "scripts/geo_sample_qc.py rebuild",
+    "commit_hash": "5facab36019d844c3b1a586f13dcf4d8952123a0",
+    "dirty": false,
+    "dirty_files": [],
+    "script_tracked": true,
+    "pushed": true,
+    "traceable": true,
+    "traceable_errors": [],
+    "run_at": "2026-10-29T11:46:17+07:00",
+    "backup_dir": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-perm\\tcga_luad_lusc_primary_tumor\\_backup_20261029-114617",
+    "sha256_after": {
+      "expression.h5": "3ea78ddf18cb49563f778b8d7d1c52976c11f0fa11c27135d7f461680adf77c7",
+      "metadata.csv": "ee2f1a3a2ca6a9d13637efa54283bc502fa6b3d0fba40a615f5a8359b06dd824"
+    }
+  },
+  {
+    "cohort": "tcga_luad_lusc_primary_tumor",
+    "data_dir": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-perm\\tcga_luad_lusc_primary_tumor",
+    "excluded_file": null,
+    "mode": "sex-only",
+    "excluded_now": [],
+    "excluded_already_absent": [],
+    "n_before": 1018,
+    "n_after": 1018,
+    "n_per_class_after": [
+      517,
+      501
+    ],
+    "n_per_class_expected": [
+      517,
+      501
+    ],
+    "sex_column": "updated from sex_gdc.csv (GDC demographic.gender)",
+    "sex_counts": {
+      "male": 610,
+      "female": 408
+    },
+    "sha256_before": {
+      "expression.h5": "3ea78ddf18cb49563f778b8d7d1c52976c11f0fa11c27135d7f461680adf77c7",
+      "metadata.csv": "ee2f1a3a2ca6a9d13637efa54283bc502fa6b3d0fba40a615f5a8359b06dd824"
+    },
+    "changed": true,
+    "script": "scripts/geo_sample_qc.py rebuild",
+    "commit_hash": "45b11a6f77a3a749e53d3d773645bd130291829e",
+    "dirty": false,
+    "dirty_files": [],
+    "script_tracked": true,
+    "pushed": true,
+    "traceable": true,
+    "traceable_errors": [],
+    "run_at": "2026-10-29T11:52:42+07:00",
+    "backup_dir": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-perm\\tcga_luad_lusc_primary_tumor\\_backup_20261029-115242",
+    "sha256_after": {
+      "expression.h5": "3ea78ddf18cb49563f778b8d7d1c52976c11f0fa11c27135d7f461680adf77c7",
+      "metadata.csv": "b12d80fee82da6ff10644cc6cce98bd690713f32e55e60f2c648319be197c4ee"
+    }
+  },
+  {
+    "cohort": "tcga_luad_lusc_primary_tumor",
+    "data_dir": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-perm\\tcga_luad_lusc_primary_tumor",
+    "excluded_file": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-perm\\tcga_luad_lusc_primary_tumor\\excluded_samples_tcga_luad_lusc_primary_tumor.csv",
+    "mode": "full",
+    "excluded_now": [
+      "TCGA-49-4505-01A",
+      "TCGA-49-AARN-01A"
+    ],
+    "excluded_already_absent": [],
+    "n_before": 1018,
+    "n_after": 1016,
+    "n_per_class_after": [
+      515,
+      501
+    ],
+    "n_per_class_expected": [
+      515,
+      501
+    ],
+    "sex_column": "unchanged from sex_gdc.csv (GDC demographic: gender, nếu trống thì sex_at_birth; ngày truy vấn trong sex_gdc_source.json)",
+    "sex_counts": {
+      "male": 610,
+      "female": 406
+    },
+    "sha256_before": {
+      "expression.h5": "3ea78ddf18cb49563f778b8d7d1c52976c11f0fa11c27135d7f461680adf77c7",
+      "metadata.csv": "b12d80fee82da6ff10644cc6cce98bd690713f32e55e60f2c648319be197c4ee"
+    },
+    "changed": true,
+    "script": "scripts/geo_sample_qc.py rebuild",
+    "commit_hash": "380d01f1d14429becdf631e8550e772599eadb81",
+    "dirty": false,
+    "dirty_files": [],
+    "script_tracked": true,
+    "pushed": true,
+    "traceable": true,
+    "traceable_errors": [],
+    "run_at": "2026-10-29T13:24:04+07:00",
+    "backup_dir": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-perm\\tcga_luad_lusc_primary_tumor\\_backup_20261029-132404",
+    "sha256_after": {
+      "expression.h5": "41bf54bda90aae286eab2ceec7e705aeaa778cd77eb85587ab7ff8aaa75c2cff",
+      "metadata.csv": "ee65ea8b4075967867ce4f7fa8383122449d6ba2e10dd5e178a33b27b5ea7b26"
+    }
+  }
+]

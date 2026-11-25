@@ -1,0 +1,90 @@
+[
+  {
+    "cohort": "gse37745",
+    "data_dir": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-geo-target\\gse37745",
+    "excluded_file": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-geo-target\\gse37745\\excluded_samples_gse37745.csv",
+    "mode": "sex-only",
+    "excluded_now": [],
+    "excluded_already_absent": [],
+    "n_before": 172,
+    "n_after": 172,
+    "n_per_class_after": [
+      106,
+      66
+    ],
+    "n_per_class_expected": [
+      105,
+      65
+    ],
+    "sex_column": "added from Sample_characteristics_ch1_7",
+    "sex_counts": {
+      "male": 92,
+      "female": 80
+    },
+    "sha256_before": {
+      "expression.h5": "783d49f8599f82321f27cfb9081c2b2b71a064d7f481f5bab1fdb4b1b1de768b",
+      "metadata.csv": "af9ef378801234b02d9bb7b7003ad8fcaade99d8fe58be57f5a9d86d2ab3e742"
+    },
+    "changed": true,
+    "script": "scripts/geo_sample_qc.py rebuild",
+    "commit_hash": "5facab36019d844c3b1a586f13dcf4d8952123a0",
+    "dirty": false,
+    "dirty_files": [],
+    "script_tracked": true,
+    "pushed": true,
+    "traceable": true,
+    "traceable_errors": [],
+    "run_at": "2026-10-29T11:46:17+07:00",
+    "backup_dir": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-geo-target\\gse37745\\_backup_20261029-114617",
+    "sha256_after": {
+      "expression.h5": "783d49f8599f82321f27cfb9081c2b2b71a064d7f481f5bab1fdb4b1b1de768b",
+      "metadata.csv": "34cb6b7734dec43971a6c866fac27d8be0a143d709846ce72bf55c81668d72ff"
+    }
+  },
+  {
+    "cohort": "gse37745",
+    "data_dir": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-geo-target\\gse37745",
+    "excluded_file": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-geo-target\\gse37745\\excluded_samples_gse37745.csv",
+    "mode": "full",
+    "excluded_now": [
+      "GSM1019246",
+      "GSM1019247",
+      "GSM1019197"
+    ],
+    "excluded_already_absent": [],
+    "n_before": 172,
+    "n_after": 169,
+    "n_per_class_after": [
+      104,
+      65
+    ],
+    "n_per_class_expected": [
+      104,
+      65
+    ],
+    "sex_column": "unchanged from Sample_characteristics_ch1_7",
+    "sex_counts": {
+      "male": 90,
+      "female": 79
+    },
+    "sha256_before": {
+      "expression.h5": "783d49f8599f82321f27cfb9081c2b2b71a064d7f481f5bab1fdb4b1b1de768b",
+      "metadata.csv": "34cb6b7734dec43971a6c866fac27d8be0a143d709846ce72bf55c81668d72ff"
+    },
+    "changed": true,
+    "script": "scripts/geo_sample_qc.py rebuild",
+    "commit_hash": "380d01f1d14429becdf631e8550e772599eadb81",
+    "dirty": false,
+    "dirty_files": [],
+    "script_tracked": true,
+    "pushed": true,
+    "traceable": true,
+    "traceable_errors": [],
+    "run_at": "2026-10-29T13:24:03+07:00",
+    "backup_dir": "D:\\KLTN\\20_Du-lieu\\experiment-data-v3\\experiment-data-geo-target\\gse37745\\_backup_20261029-132403",
+    "sha256_after": {
+      "expression.h5": "f5dcaf11d7f36defc37ad67cf47da30b2f85823e3360fef2f8f4d0ab96a34ec7",
+      "metadata.csv": "568b557e43c09daee94f8959f0144db642064502d73cb6493e8f5ff77c031328"
+    }
+  }
+]

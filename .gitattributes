@@ -1,2 +1,6 @@
 * text=auto eol=lf
 vendor/** -text
+data/** -text
+result_packages/** -text
+notebooks/sessions/** -text
+tables_v2/** -text

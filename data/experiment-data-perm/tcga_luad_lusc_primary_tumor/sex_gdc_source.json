@@ -1,0 +1,21 @@
+{
+  "api": "POST https://api.gdc.cancer.gov/cases",
+  "fields": "submitter_id,case_id,project.project_id,demographic.gender,demographic.sex_at_birth",
+  "n_patients": 1018,
+  "n_found": 1018,
+  "n_missing": 0,
+  "missing": [],
+  "sex_counts": {
+    "male": 610,
+    "female": 408
+  },
+  "sha256": "72d16061e79f43081a3bc5210b075431ac6ad07fc354e0b583b141588ef1518c",
+  "commit_hash": "45b11a6f77a3a749e53d3d773645bd130291829e",
+  "dirty": false,
+  "dirty_files": [],
+  "script_tracked": true,
+  "pushed": true,
+  "traceable": true,
+  "traceable_errors": [],
+  "run_at": "2026-10-29T11:52:39+07:00"
+}
