@@ -1,4 +1,4 @@
-"""Smoke test của scripts/run_taimma.py trên dữ liệu giả của survey_v2.synthetic (P = 6, T = 3). Không dùng cho bài."""
+"""Smoke test of scripts/run_taimma.py on the synthetic data of survey_v2.synthetic (P = 6, T = 3). Not used for the paper."""
 import json
 
 import numpy as np
@@ -25,18 +25,18 @@ def test_files_and_columns(smoke_run):
     assert list(sel.columns) == RT.METRIC_COLUMNS and list(genes.columns) == RT.GENE_COLUMNS
     assert list(hist.columns) == RT.HISTORY_FILE_COLUMNS
     assert list(cons.columns) == RT.CONSENSUS_COLUMNS and list(arch.columns) == RT.ARCHIVE_COLUMNS
-    assert set(sel.method) == OUTPUTS and len(sel) == 2 * len(OUTPUTS) * 2          # 2 fold × đầu ra × 2 k
+    assert set(sel.method) == OUTPUTS and len(sel) == 2 * len(OUTPUTS) * 2          # 2 folds × outputs × 2 k
     assert sel.exact_k.all() and (sel.n_selected == sel.k).all()
     assert (sel.n_eval <= 6 * (3 + 1) + 1).all() and (sel.fitness_metric == "logloss").all()
     assert (sel.inner_fold_scheme == "shared").all() and not sel.label_shuffled.any()
-    # chế độ log-loss: mọi wrapper trên cùng fold ngoài dùng chung fold nội bộ (Đ4); biến thể T2 dùng seed của mpqda_de
+    # log-loss mode: every wrapper on the same outer fold shares the inner folds; the T2 variants use the seed of mpqda_de
     assert (sel.groupby(["repeat", "fold"]).inner_fold_seed.nunique() == 1).all()
     a3, full = sel[sel.method == "mpqda_a3_fixedF"], sel[sel.method == "mpqda_de"]
     assert a3.search_seed.tolist() == full.search_seed.tolist() and (a3.base_method == "mpqda_de").all()
-    assert sel.groupby(["repeat", "fold"]).search_seed.nunique().min() == 8          # 8 phương pháp gốc, seed khác nhau
+    assert sel.groupby(["repeat", "fold"]).search_seed.nunique().min() == 8          # 8 original methods, different seeds
     sizes = genes.groupby(["repeat", "fold", "method", "k"]).gene.nunique().reset_index()
     assert (sizes.gene == sizes.k).all() and len(sizes) == len(sel)
-    # lịch sử: t = 0..T cho mọi lần chạy; fitness tốt nhất không giảm; cột Q chỉ có ở MPQDA-DE đầy đủ
+    # history: t = 0..T for every run; best fitness never decreases; Q columns only for the full QRK-DE
     for _, g in hist.groupby(["repeat", "fold", "method", "k"]):
         assert g.t.tolist() == [0, 1, 2, 3] and g.best_fitness.is_monotonic_increasing and g.n_eval.is_monotonic_increasing
     assert hist[hist.method == "mpqda_de"].q_00.notna().all() and hist[hist.method == "mpqda_a3_fixedF"].q_00.isna().all()
@@ -65,7 +65,7 @@ def test_rerun_skips_checkpoints_and_is_byte_identical(smoke_run):
 
 
 def test_same_seed_gives_identical_genes_and_history(smoke_run):
-    """Tất định (T0 điều kiện 1) và song song (điều kiện 2): chạy lại vào thư mục khác với n_jobs_eval = 2."""
+    """Determinism (T0 condition 1) and parallelism (condition 2): rerun into another folder with n_jobs_eval = 2."""
     args = [a for a in smoke_run["args"]]
     args[args.index("--workers") + 1] = "1"
     keep = args[:args.index("--methods") + 1] + ["mpqda_de", "ga"] + args[args.index("--k"):]
@@ -79,7 +79,7 @@ def test_same_seed_gives_identical_genes_and_history(smoke_run):
 
 
 def test_stops_on_unexpected_split_sha(smoke_run):
-    """Không ở chế độ smoke: SHA-256 của repeated_splits.csv khác giá trị chờ thì dừng với mã 2, không ghi gì."""
+    """Not in smoke mode: if the SHA-256 of repeated_splits.csv differs from the expected value, stop with code 2 and write nothing."""
     env = smoke_env(smoke_run["data"])
     env.pop("MPQDA_SMOKE")
     args = [*smoke_run["args"], "--out", "taimma/SMOKE_sha"]
@@ -89,7 +89,7 @@ def test_stops_on_unexpected_split_sha(smoke_run):
 
 
 def test_sentinel_outer_test_rows_never_reach_phase_a(smoke_run):
-    """Gán NaN cho các dòng test ngoài sau khi nạp dữ liệu: mọi fitness của pha A vẫn hữu hạn và panel không đổi."""
+    """Set the outer test rows to NaN after loading the data: every phase A fitness stays finite and the panels do not change."""
     args = [a for a in smoke_run["args"]]
     keep = args[:args.index("--methods") + 1] + ["mpqda_de", "ga", "shade"] + args[args.index("--k"):]
     run_script(smoke_run["repo"], "run_taimma.py", [*keep, "--out", "taimma/SMOKE_nan", "--nan-outer-test"], smoke_run["env"])

@@ -1,11 +1,11 @@
-"""Archive, leader và panel đồng thuận (Mục 3.5; PREREG Mục 3.4, 3.5).
+"""Archive, leader and consensus panel (PREREG, Sections 3.4 and 3.5).
 
-Quy tắc (số trong ngoặc là số quy tắc của đặc tả):
-(1) panel trùng hệt một thành viên: bỏ qua; (2) có thành viên cách ứng viên dưới delta: lấy thành viên gần nhất (hoà:
-fitness cao hơn, rồi vào sớm hơn), thay tại chỗ khi fitness của ứng viên cao hơn hẳn, không thì loại ứng viên; (3) không
-có thành viên gần: thêm, và nếu vượt A_max thì bỏ thành viên có 0,5·novelty + 0,5·fitness nhỏ nhất (chuẩn hoá min–max,
-kể cả ứng viên), không bao giờ bỏ thành viên tốt nhất; điểm bằng nhau: bỏ fitness thấp hơn, rồi thành viên mới hơn;
-(4) novelty = trung bình khoảng cách Jaccard tới 3 thành viên gần nhất; (5) leader: một số u cho mỗi lần chọn.
+Rules (numbers in parentheses are the rule numbers of the specification):
+(1) panel identical to a member: ignore; (2) a member lies closer than delta to the candidate: take the nearest member (ties:
+higher fitness, then earlier entry), replace it in place when the candidate's fitness is strictly higher, otherwise reject the candidate; (3) no
+near member: add, and if A_max is exceeded remove the member with the smallest 0.5·novelty + 0.5·fitness (min–max normalised,
+candidate included), never removing the best member; equal scores: remove the lower fitness, then the newer member;
+(4) novelty = mean Jaccard distance to the 3 nearest members; (5) leader: one number u per selection.
 """
 from __future__ import annotations
 
@@ -46,16 +46,16 @@ class Archive:
         return out
 
     def best_index(self, members=None) -> int:
-        """Thành viên tốt nhất: fitness cao nhất, hoà thì vào archive sớm hơn."""
+        """Best member: highest fitness, ties broken by earlier entry into the archive."""
         members = self.members if members is None else members
         return min(range(len(members)), key=lambda i: (-members[i]["f"], members[i]["order"]))
 
     def ranked(self) -> list[int]:
-        """Chỉ số thành viên theo hạng fitness (1 = tốt nhất; hoà thì vào sớm hơn đứng trước)."""
+        """Member indices by fitness rank (1 = best; ties: earlier entry first)."""
         return sorted(range(len(self.members)), key=lambda i: (-self.members[i]["f"], self.members[i]["order"]))
 
     def offer(self, panel, f: float, x) -> str:
-        """Đưa (panel, fitness, khoá đã mã hoá lại) vào archive. Trả về duplicate, replaced, rejected_near, added hoặc
+        """Put (panel, fitness, re-encoded keys) into the archive. Returns duplicate, replaced, rejected_near, added or
         rejected_full."""
         key = tuple(sorted(int(g) for g in panel))
         if any(m["key"] == key for m in self.members):
@@ -66,7 +66,7 @@ class Archive:
             if near:
                 j = min(near, key=lambda i: (d[i], -self.members[i]["f"], self.members[i]["order"]))
                 if f > self.members[j]["f"]:
-                    self.members[j] = self._new(key, f, x)       # thay tại chỗ, nhận dấu thời gian mới
+                    self.members[j] = self._new(key, f, x)       # replace in place, takes a new time stamp
                     return "replaced"
                 return "rejected_near"
         cand = self._new(key, f, x)
@@ -83,8 +83,8 @@ class Archive:
         return "rejected_full" if removed is cand else "added"
 
     def leader_index(self, u: float, mode: str = "roulette") -> int:
-        """Một số u ∈ [0, 1) cho mỗi lần chọn. roulette: trọng số 0,7·novelty + 0,3·fitness (chuẩn hoá min–max trong
-        archive; tổng bằng 0 thì chọn đều). uniform (A2b): int(u·|A|)."""
+        """One number u ∈ [0, 1) per selection. roulette: weight 0.7·novelty + 0.3·fitness (min–max normalised within the
+        archive; uniform choice when the weights sum to 0). uniform (A2b): int(u·|A|)."""
         n = len(self.members)
         if mode == "uniform" or n == 1:
             return min(int(u * n), n - 1)
@@ -95,9 +95,9 @@ class Archive:
         return min(int(np.searchsorted(cdf, u, side="right")), n - 1)
 
     def consensus(self, k: int):
-        """Panel đồng thuận: w_a = |A| − hạng fitness + 1; pi_j = Σ_a w_a·1[j ∈ S_a] / Σ_a w_a; lấy k gen có pi_j lớn nhất.
-        Hoà: gen của thành viên tốt nhất trước, rồi khoá trung bình (trên các thành viên) lớn hơn, rồi chỉ số nhỏ hơn.
-        Trả về (panel đã sắp, {gen: pi})."""
+        """Consensus panel: w_a = |A| − fitness rank + 1; pi_j = Σ_a w_a·1[j ∈ S_a] / Σ_a w_a; take the k genes with the largest pi_j.
+        Ties: genes of the best member first, then larger mean key (over the members), then smaller index.
+        Returns (sorted panel, {gene: pi})."""
         n = len(self.members)
         order = self.ranked()
         w = np.empty(n)

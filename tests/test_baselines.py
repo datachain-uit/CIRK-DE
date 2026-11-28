@@ -42,11 +42,11 @@ def test_rng_streams_follow_the_spec():
 
 def test_shade_memory_and_external_archive_sizes():
     r, _ = run("shade", P=8, T=6)
-    assert r["M_CR"].shape == r["M_F"].shape == (8,) and r["ext_archive_size"] <= 8      # H = P, archive ngoài cỡ P
+    assert r["M_CR"].shape == r["M_F"].shape == (8,) and r["ext_archive_size"] <= 8      # H = P, external archive of size P
     assert ((r["M_CR"] >= 0) & (r["M_CR"] <= 1)).all() and ((r["M_F"] > 0) & (r["M_F"] <= 1)).all()
     h = pd.DataFrame(r["history"])
     assert (h.archive_size <= 8).all() and h.archive_size.is_monotonic_increasing and h.mean_F.between(0, 1).all()
-    n_updates = int((h.success_rate.iloc[1:] > 0).sum())                                  # mỗi thế hệ có thành công ghi một ô
+    n_updates = int((h.success_rate.iloc[1:] > 0).sum())                                  # each generation with a success writes one cell
     assert int((r["M_F"] != 0.5).sum()) <= min(n_updates, 8)
 
 
@@ -60,7 +60,7 @@ def test_jde_parameters_follow_the_rule():
     r, _ = run("jde", P=8, T=6)
     F, CR = r["F"], r["CR"]
     assert ((F == M.JDE_INIT[0]) | ((F >= 0.1) & (F <= 1.0))).all() and ((CR >= 0) & (CR <= 1)).all()
-    # với tau1 = tau2 = 0 không tham số nào đổi; với tau = 1 mọi tham số được nhận đều đã rút lại
+    # with tau1 = tau2 = 0 no parameter changes; with tau = 1 every accepted parameter has been redrawn
     X, y = synthetic_xy(p=200)
     frozen = B.run_jde(InnerCVFitness(X, y, 21), 200, K, np.random.default_rng([3, K]), P=8, T=4, tau=(0.0, 0.0))
     assert (frozen["F"] == 0.5).all() and (frozen["CR"] == 0.9).all()
@@ -70,7 +70,7 @@ def test_jde_parameters_follow_the_rule():
 
 
 def test_qlde_configuration_matches_the_paper():
-    """Table 1, Eq. (7), (8) và Mục 3.1 của Huynh, Do và Lee (2021); xem docs/taimma/baselines/qlde.md."""
+    """Table 1, Eq. (7), (8) and Section 3.1 of Huynh, Do and Lee (2021); see docs/taimma/baselines/qlde.md."""
     q = M.QLDE
     assert q["actions"] == ((0.4, 0.7), (0.6, 0.7), (0.8, 0.7), (0.4, 0.9), (0.6, 0.9), (0.8, 0.9), (0.9, 0.9))
     assert (q["gamma"], q["alpha_start"], q["alpha_drop"], q["reward"], q["q_init"], q["n_states"]) == (0.8, 1.0, 0.9, (1.0, -1.0), 0.0, 1)
@@ -83,18 +83,18 @@ def test_qlde_q_table_follows_eq6_and_greedy_policy():
     improved = (h.best_fitness.diff().iloc[1:] > 0).tolist()
     assert r["rewards"] == [1.0 if x else -1.0 for x in improved]                       # Eq. (8)
     Q, actions = np.zeros(7), []
-    for t, rew in enumerate(r["rewards"], 1):                                           # tính lại bằng tay theo Eq. (6), (7)
-        a = int(np.argmax(Q))                                                           # tham lam; hoà thì chỉ số nhỏ nhất
+    for t, rew in enumerate(r["rewards"], 1):                                           # recomputed by hand from Eq. (6), (7)
+        a = int(np.argmax(Q))                                                           # greedy; ties: smallest index
         actions.append(a)
         Q[a] += B.qlde_alpha(t, 12, 1.0, 0.9) * (rew + 0.8 * Q.max() - Q[a])
     assert actions == r["actions"] and actions[0] == 0 and np.allclose(Q, r["Q"])
     assert h.mean_F.iloc[1:].tolist() == [M.QLDE["actions"][a][0] for a in actions] and (h.sd_F.iloc[1:] == 0).all()
-    first_failure = r["rewards"].index(-1.0)                                            # sau lần phạt đầu, chuyển sang hành động khác
+    first_failure = r["rewards"].index(-1.0)                                            # after the first penalty, switch to another action
     assert first_failure + 1 >= len(actions) or actions[first_failure + 1] != actions[first_failure] or Q[actions[first_failure]] > 0
 
 
 def test_qlde_with_one_action_is_de_rand1():
-    """Một hành động duy nhất (0,5; 0,9): cùng thứ tự rút số nên trùng DE/rand/1/bin trên cùng seed."""
+    """A single action (0.5; 0.9): same draw order, so identical to DE/rand/1/bin with the same seed."""
     X, y = synthetic_xy(p=200)
     a = B.run_qlde(InnerCVFitness(X, y, 21), 200, K, np.random.default_rng([3, K]), P=8, T=5, actions=((0.5, 0.9),))
     b = B.run_de_rand1(InnerCVFitness(X, y, 21), 200, K, np.random.default_rng([3, K]), P=8, T=5)
@@ -105,7 +105,7 @@ def test_qlde_with_one_action_is_de_rand1():
 
 @pytest.mark.parametrize("method", ["ga", "bpso"])
 def test_survey_wrappers_reproduced_in_auroc_mode(method):
-    """G-T1 ở mức đơn vị: GA, BPSO của survey với fitness mới ở chế độ AUROC trùng run_wrapper của survey."""
+    """G-T1 at unit level: GA, BPSO of the vendored code with the new fitness in AUROC mode match run_wrapper of the vendored code."""
     X, y = synthetic_xy(p=200)
     seed = 777
     ref = W.run_wrapper(method, X, y, [K], seed=seed, pop=P, generations=T)
@@ -117,7 +117,7 @@ def test_survey_wrappers_reproduced_in_auroc_mode(method):
 
 
 def test_all_wrappers_share_one_fitness_function():
-    """T-R3: mọi wrapper trên cùng fold ngoài gọi cùng một hàm fitness (cùng fold nội bộ, cùng LR-L2)."""
+    """Every wrapper on the same outer fold calls the same fitness function (same inner folds, same LR-L2)."""
     X, y = synthetic_xy(p=200)
     probe = InnerCVFitness(X, y, fold_seed=21, metric="logloss")
     for method in ("mpqda_de", "de_rand1", "shade", "qlde", "jde", "jade", "ga", "bpso"):

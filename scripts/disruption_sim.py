@@ -1,11 +1,11 @@
-"""Phân tích cơ chế (không dùng dữ liệu): toán tử đột biến + lai ghép của DE random key với mã hoá lại theo dải đưa bao
-nhiêu gen ngẫu nhiên vào panel thử, theo F, CR, độ rộng dải dưới eps và mức chung gen của quần thể.
+"""Mechanism analysis (no data): how many random genes the mutation + crossover operator of random-key DE with band re-encoding
+brings into a trial panel, as a function of F, CR, the width of the lower band eps and the gene overlap of the population.
 
-    python scripts/disruption_sim.py [--reps 200] [--out docs/taimma/disruption.csv]   # chép từ taimma_ref/disruption_ref.py
+    python scripts/disruption_sim.py [--reps 200] [--out docs/taimma/disruption.csv]
 
-Mỗi lần lặp: dựng quần thể P panel (mỗi panel lấy share·k gen từ một lõi chung 2k gen, phần còn lại ngẫu nhiên), mã hoá,
-lấy leader L = 0, đích i = 1, r1, r2 ngẫu nhiên, tạo u = lai ghép(repair(x_L + F(x_r1 − x_r2)), x_i), rồi đếm tỉ lệ gen
-của S(u) thuộc panel leader, panel đích, và không thuộc leader, đích hay r1 (gen ngẫu nhiên). Chưa có đột biến gen mới.
+Each repetition: build a population of P panels (each panel takes share·k genes from a common core of 2k genes, the rest at random), encode,
+take leader L = 0, target i = 1, random r1, r2, build u = crossover(repair(x_L + F(x_r1 − x_r2)), x_i), then count the share of genes
+of S(u) that belong to the leader panel, the target panel, and to neither the leader, the target nor r1 (random genes). No new-gene mutation yet.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import mpqda  # noqa: E402,F401  (đặt vendor/ và gốc kho vào sys.path)
+import mpqda  # noqa: E402,F401  (puts vendor/ and the repository root on sys.path)
 from mpqda.encoding import decode_topk, repair_midpoint  # noqa: E402
 from mpqda.de_v2 import gapped_band_encode  # noqa: E402
 

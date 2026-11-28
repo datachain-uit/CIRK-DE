@@ -1,4 +1,4 @@
-"""MPQDA-DE v2 (Review-2026-11-16), chép từ taimma_ref/test_mpqda_v2_ref.py; chỉ đổi import."""
+"""Tests of CIRK-DE (v2), mpqda/de_v2.py."""
 import numpy as np
 import pytest
 
@@ -54,8 +54,8 @@ def test_gap_removes_random_genes_from_trials():
     df = simulate(reps=40)
     gap = df[(df.eps == 0.01) & (df.CR == 0.9)]
     nogap = df[(df.eps == 0.5) & (df.CR == 0.9)]
-    assert gap.random_genes.max() < 0.01                 # khe: không còn gen ngẫu nhiên
-    assert nogap.random_genes.min() > 0.1                # v1: 18–69 % gen của panel thử là gen ngẫu nhiên
+    assert gap.random_genes.max() < 0.01                 # gap: no random genes left
+    assert nogap.random_genes.min() > 0.1                # v1: 18–69 % of the genes of the trial panel are random
     assert (gap.leader_kept.values > nogap.leader_kept.values).all()
 
 

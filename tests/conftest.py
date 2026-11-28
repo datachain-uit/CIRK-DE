@@ -1,6 +1,6 @@
-"""Thiết lập chung cho test: đưa ROOT/vendor rồi ROOT vào sys.path (qua gói mpqda) và các hàm dựng dữ liệu giả.
+"""Shared test setup: puts ROOT/vendor then ROOT on sys.path (through the mpqda package) and the synthetic data builders.
 
-Dữ liệu giả chỉ để kiểm mã; không kết quả nào ở đây được đưa vào bài.
+Synthetic data only check the code; no result here goes into the paper.
 """
 from __future__ import annotations
 
@@ -15,13 +15,13 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-import mpqda  # noqa: E402,F401  (đặt vendor/ và ROOT vào sys.path)
+import mpqda  # noqa: E402,F401  (puts vendor/ and ROOT on sys.path)
 
 SMOKE_COHORT = "gse10245"
 
 
 def synthetic_xy(n=60, p=400, n_inf=8, seed=0, effect=1.0):
-    """Hai lớp 40/(n − 40); n_inf gen đầu mang tín hiệu, dấu xen kẽ."""
+    """Two classes 40/(n − 40); the first n_inf genes carry signal, with alternating signs."""
     rng = np.random.default_rng(seed)
     y = np.r_[np.zeros(40, int), np.ones(n - 40, int)]
     rng.shuffle(y)
@@ -36,20 +36,20 @@ def xy():
 
 
 def make_smoke_data(root: Path, n_repeats: int = 1) -> Path:
-    """Dữ liệu giả theo layout của survey (survey_v2.synthetic) kèm repeated_splits.csv cho SMOKE_COHORT."""
+    """Synthetic data in the layout of the vendored code (survey_v2.synthetic) with repeated_splits.csv for SMOKE_COHORT."""
     from survey_v2 import config as C
     from survey_v2.data import load_dataset
     from survey_v2.e1_splits import build_repeated_split_manifest
     from survey_v2.synthetic import make_all
     make_all(root, n=120, p=300, n_target=80)
-    ds = load_dataset(root, SMOKE_COHORT, strict_n=False)   # dữ liệu giả: bỏ qua KLTN_STRICT_N mà notebook Kaggle đặt
+    ds = load_dataset(root, SMOKE_COHORT, strict_n=False)   # synthetic data: ignore KLTN_STRICT_N set by the Kaggle notebook
     manifest = build_repeated_split_manifest(ds.sample_ids, ds.groups, ds.y, seeds=C.REPEAT_SEEDS[:n_repeats])
     manifest.to_csv(ds.data_dir / "repeated_splits.csv", index=False)
     return ds.data_dir / "repeated_splits.csv"
 
 
 def clone_repo(dest: Path) -> Path:
-    """Bản sao kho trong một kho Git tạm đã commit, để provenance không vướng cây làm việc đang sửa dở."""
+    """Copy of the repository inside a committed temporary Git repository, so that provenance is not affected by an edited working tree."""
     repo = dest / "repo"
     ignore = shutil.ignore_patterns("__pycache__", ".pytest_cache", ".git", "legacy_icaart", "*.pyc")
     for name in ("mpqda", "scripts", "vendor", "tests"):
@@ -78,13 +78,13 @@ def run_script(repo: Path, script: str, args, env, check: bool = True):
     res = subprocess.run([sys.executable, str(repo / "scripts" / script), *map(str, args)], cwd=repo, env=env,
                          capture_output=True, text=True, encoding="utf-8", errors="replace")
     if check and res.returncode != 0:
-        raise AssertionError(f"{script} trả mã {res.returncode}\nSTDOUT:\n{res.stdout[-3000:]}\nSTDERR:\n{res.stderr[-3000:]}")
+        raise AssertionError(f"{script} returned code {res.returncode}\nSTDOUT:\n{res.stdout[-3000:]}\nSTDERR:\n{res.stderr[-3000:]}")
     return res
 
 
 @pytest.fixture(scope="session")
 def smoke_run(tmp_path_factory):
-    """Một lần chạy trọn run_taimma.py trên dữ liệu giả (P = 6, T = 3); dùng chung cho các test của runner."""
+    """One full run of run_taimma.py on synthetic data (P = 6, T = 3); shared by the runner tests."""
     base = tmp_path_factory.mktemp("smoke")
     repo, data = clone_repo(base), base / "data"
     split = make_smoke_data(data)

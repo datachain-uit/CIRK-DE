@@ -1,8 +1,8 @@
-"""Truy vết cho script ở gốc kho (Mục 2): thay `survey_v2.runlog.start_run`.
+"""Traceability for scripts at the repository root: replaces `survey_v2.runlog.start_run`.
 
-`REPO` của bản vendor là `vendor/`, nên `is_tracked` của survey báo sai cho script nằm ngoài `vendor/`. Ở đây provenance
-và kiểm tra truy vết chạy với `repo = ROOT`. Ghi config vẫn dùng `write_config` của survey; thư mục kết quả là
-`$KLTN_DATA_ROOT/results/survey_v2/taimma/<kịch bản>/<cohort>/` (chung cho pha A và pha B).
+`REPO` of the vendored copy is `vendor/`, so `is_tracked` of the vendored code is wrong for scripts outside `vendor/`. Here provenance
+and the traceability check run with `repo = ROOT`. The config is still written by `write_config` of the vendored code; the result folder is
+`$KLTN_DATA_ROOT/results/survey_v2/taimma/<scenario>/<cohort>/` (shared by phase A and phase B).
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ __all__ = ["DATA_ROOT", "all_versions", "results_dir", "write_config", "start_ru
 
 
 def utf8_console() -> None:
-    """Windows: console không phải UTF-8 làm lỗi khi in tiếng Việt."""
+    """Windows: a console that is not UTF-8 fails when printing non-ASCII text."""
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
@@ -34,7 +34,7 @@ def smoke_mode() -> bool:
 
 
 def vendor_commit() -> str | None:
-    """Commit nguồn của vendor/, đọc từ dòng `| Commit | ... |` của vendor/VENDORED.md."""
+    """Source commit of vendor/, read from the `| Commit | ... |` line of vendor/VENDORED.md."""
     path = VENDOR / "VENDORED.md"
     if not path.is_file():
         return None
@@ -53,12 +53,12 @@ def head_commit(repo: Path = ROOT) -> str | None:
 
 
 def start_run(script, params: dict | None = None) -> dict:
-    """provenance(repo_dir=ROOT) + check_traceable(repo=ROOT); trả về dict provenance để stamp vào config.
+    """provenance(repo_dir=ROOT) + check_traceable(repo=ROOT); returns the provenance dict to stamp into the config.
 
-    Dừng (mã 2) nếu còn thay đổi chưa commit ở tệp đã theo dõi, script chưa được Git theo dõi hoặc HEAD chưa có trên
-    remote (trừ khi KLTN_ALLOW_UNPUSHED=1; khi đó traceable = false). Ở chế độ smoke, traceable luôn là false."""
-    if not os.environ.get("KLTN_DATA_ROOT", "").strip():           # quy tắc chung 3: KLTN_DATA_ROOT bắt buộc
-        print("[provenance] DỪNG: đặt KLTN_DATA_ROOT (thư mục dữ liệu và kết quả).", file=sys.stderr)
+    Stops (code 2) if tracked files have uncommitted changes, a script is not tracked by Git or HEAD is not yet on the
+    remote (unless KLTN_ALLOW_UNPUSHED=1; then traceable = false). In smoke mode, traceable is always false."""
+    if not os.environ.get("KLTN_DATA_ROOT", "").strip():           # general rule 3: KLTN_DATA_ROOT is required
+        print("[provenance] STOP: set KLTN_DATA_ROOT (data and results folder).", file=sys.stderr)
         raise SystemExit(2)
     try:
         prov = provenance(script=script, repo_dir=ROOT, params=params or {})
@@ -68,15 +68,15 @@ def start_run(script, params: dict | None = None) -> dict:
     allow = os.environ.get(ENV_ALLOW_UNPUSHED, "").strip().lower() in {"1", "true", "yes"}
     errors = check_traceable(script, repo=ROOT, require_push=True) if prov.get("tracked") else []
     if smoke_mode():
-        errors = errors + [f"{M.ENV_SMOKE}=1: lần chạy smoke test, không được trích"]
+        errors = errors + [f"{M.ENV_SMOKE}=1: smoke-test run, not citable"]
     prov["traceable"] = bool(prov.get("tracked", False) and not errors)
     prov["traceable_errors"] = errors
     prov["vendor_commit"] = vendor_commit()
     if errors and not (allow or smoke_mode()):
         print("[traceable] DỪNG:\n  - " + "\n  - ".join(errors)
-              + f"\n  (tạm bỏ qua bằng {ENV_ALLOW_UNPUSHED}=1; kết quả khi đó KHÔNG được trích)", file=sys.stderr)
+              + f"\n  (bypass temporarily with {ENV_ALLOW_UNPUSHED}=1; results are then NOT citable)", file=sys.stderr)
         raise SystemExit(2)
     return prov
 
 
-assert survey_runlog.REPO == VENDOR, "survey_v2 phải được nạp từ vendor/"
+assert survey_runlog.REPO == VENDOR, "survey_v2 must be loaded from vendor/"

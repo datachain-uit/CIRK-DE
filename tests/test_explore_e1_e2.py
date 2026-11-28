@@ -1,4 +1,4 @@
-"""Test cho hai phân tích khám phá E1, E2 (TQĐ42, Review-2026-11-18b)."""
+"""Tests of the two exploratory analyses E1, E2."""
 from __future__ import annotations
 
 import numpy as np

@@ -1,4 +1,4 @@
-"""vendor/ giống từng byte với commit nguồn ghi trong VENDORED.md; test của survey chạy lại đạt (log riêng)."""
+"""vendor/ is byte-identical to the source commit recorded in VENDORED.md; the vendored tests rerun and pass (separate log)."""
 import os
 import subprocess
 import sys
@@ -29,7 +29,7 @@ def test_manifest_lists_required_parts():
 
 @pytest.mark.slow
 def test_survey_tests_pass(tmp_path):
-    """pytest vendor/tests -m "not slow"; log ghi vào logs/pytest_vendor.log (thư mục logs/ không được Git theo dõi)."""
+    """pytest vendor/tests -m "not slow"; the log is written to logs/pytest_vendor.log (the logs/ folder is not tracked by Git)."""
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1")
     for name in ("KLTN_DATA_ROOT", "KLTN_STRICT_N", "KLTN_ALLOW_UNPUSHED", "KLTN_ALLOW_UNTRACKED", "MPQDA_SMOKE"):
         env.pop(name, None)
@@ -42,5 +42,5 @@ def test_survey_tests_pass(tmp_path):
     tail = res.stdout.strip().splitlines()[-1] if res.stdout.strip() else res.stderr[-500:]
     missing = [m for m in ("skrebate", "abess") if f"No module named '{m}'" in res.stdout]
     if res.returncode != 0 and missing:
-        pytest.xfail(f"máy này thiếu {missing} (có trong requirements-kaggle.txt): {tail}")
+        pytest.xfail(f"this machine lacks {missing} (listed in requirements-kaggle.txt): {tail}")
     assert res.returncode == 0, res.stdout[-3000:]

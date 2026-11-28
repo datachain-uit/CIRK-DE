@@ -1,7 +1,7 @@
-"""Biểu diễn random key và giải mã đúng k gen (Mục 3.3; PREREG Mục 3.1).
+"""Random-key representation and decoding to exactly k genes (PREREG, Section 3.1).
 
-Cá thể là vector khoá x ∈ (0, 1)^p0. Panel S(x) là k chỉ số có khoá lớn nhất; khoá bằng nhau thì chỉ số nhỏ hơn đứng
-trước, nên mọi cá thể đều khả thi và |S(x)| = k.
+An individual is a key vector x ∈ (0, 1)^p0. Panel S(x) is the k indices with the largest keys; equal keys put the smaller index
+first, so every individual is feasible and |S(x)| = k.
 """
 from __future__ import annotations
 
@@ -11,21 +11,21 @@ from . import config as M
 
 
 def decode_topk(x, k: int) -> np.ndarray:
-    """k chỉ số có khoá lớn nhất; khoá bằng nhau thì chỉ số nhỏ hơn đứng trước. Trả về mảng tăng dần."""
+    """The k indices with the largest keys; equal keys put the smaller index first. Returns an ascending array."""
     order = np.argsort(-np.asarray(x, dtype=float), kind="stable")
     return np.sort(order[:k])
 
 
 def jaccard_distance(a, b) -> float:
-    """d(a, b) = 1 − |a ∩ b| / |a ∪ b|; hai tập rỗng cho 0."""
+    """d(a, b) = 1 − |a ∩ b| / |a ∪ b|; two empty sets give 0."""
     a, b = set(map(int, a)), set(map(int, b))
     u = len(a | b)
     return 0.0 if u == 0 else 1.0 - len(a & b) / u
 
 
 def init_chaotic(P: int, p: int, rng: np.random.Generator, mu: float = M.MU, z0_range=M.Z0_RANGE) -> np.ndarray:
-    """Bản đồ logistic z(t + 1) = mu·z(t)·(1 − z(t)); z_i(0) ~ U(0,001; 0,999), một giá trị cho mỗi cá thể; khoá của gen j
-    là z_i(j + 1). Dùng đúng một lời gọi rng.uniform(size=P)."""
+    """Logistic map z(t + 1) = mu·z(t)·(1 − z(t)); z_i(0) ~ U(0.001; 0.999), one value per individual; the key of gene j
+    is z_i(j + 1). Uses exactly one call rng.uniform(size=P)."""
     z = rng.uniform(z0_range[0], z0_range[1], size=P)
     X = np.empty((P, p))
     for j in range(p):
@@ -35,20 +35,20 @@ def init_chaotic(P: int, p: int, rng: np.random.Generator, mu: float = M.MU, z0_
 
 
 def init_uniform(P: int, p: int, rng: np.random.Generator) -> np.ndarray:
-    """Khoá đều U(0, 1): biến thể A1 và mọi baseline DE. Dùng đúng một lời gọi rng.random((P, p))."""
+    """Uniform keys U(0, 1): variant A1 and every DE baseline. Uses exactly one call rng.random((P, p))."""
     return rng.random((P, p))
 
 
 def repair_midpoint(v: np.ndarray, x: np.ndarray) -> np.ndarray:
-    """Sửa biên trung điểm (Đ1, như JADE, SHADE): v > 1 thành (1 + x)/2, v < 0 thành x/2, với x là cá thể ĐÍCH (cùng
-    hình dạng với v), không phải leader."""
+    """Midpoint bound repair (as in JADE, SHADE): v > 1 becomes (1 + x)/2, v < 0 becomes x/2, where x is the TARGET individual (same
+    shape as v), not the leader."""
     v = np.where(v > 1.0, (1.0 + x) / 2.0, v)
     return np.where(v < 0.0, x / 2.0, v)
 
 
 def band_encode(x: np.ndarray, k: int) -> np.ndarray:
-    """Mã hoá lại theo dải (Đ2): gen của S(x) nhận 0,5 + 0,5·(r + 0,5)/k, gen ngoài nhận 0,5·(r + 0,5)/(p0 − k), với r là
-    hạng ổn định của khoá trong nhóm. Panel và thứ tự khoá trong từng nhóm không đổi."""
+    """Band re-encoding: genes of S(x) get 0.5 + 0.5·(r + 0.5)/k, other genes get 0.5·(r + 0.5)/(p0 − k), where r is
+    the stable rank of the key within its group. The panel and the key order within each group are unchanged."""
     x = np.asarray(x, dtype=float)
     S = decode_topk(x, k)
     in_s = np.zeros(len(x), dtype=bool)

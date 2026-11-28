@@ -1,8 +1,8 @@
-"""Fitness CV nội bộ của LR-L2 trên PHẦN TRAIN của fold ngoài (Mục 3.4; PREREG Mục 3.2).
+"""Inner-CV fitness of LR-L2 on the TRAINING PART of the outer fold (PREREG, Section 3.2).
 
-- metric = "logloss" (chính): −(trung bình log-loss của 3 fold nội bộ), xác suất cắt vào [1e-6; 1 − 1e-6], labels = [0, 1].
-- metric = "auroc" (T1b): giữ đúng từng phép tính của `survey_v2.wrappers.InnerCVFitness`.
-Lớp không có tham số nào cho dữ liệu test: phần test của fold ngoài không bao giờ đi vào tìm kiếm.
+- metric = "logloss" (main): −(mean log-loss over the 3 inner folds), probabilities clipped to [1e-6; 1 − 1e-6], labels = [0, 1].
+- metric = "auroc" (T1b): keeps every computation of `survey_v2.wrappers.InnerCVFitness`.
+The class has no parameter for test data: the test part of the outer fold never enters the search.
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ METRICS = ("logloss", "auroc")
 
 
 def score_panel(X, y, folds, key, metric: str, C_lr: float = M.FITNESS_C, lr_seed: int = 0) -> float:
-    """Fitness của một panel (bộ chỉ số đã sắp). Chuẩn hoá khớp trên phần train nội bộ; LR liblinear, C = 1, balanced."""
+    """Fitness of one panel (sorted index set). Standardisation fitted on the inner training part; LR liblinear, C = 1, balanced."""
     Xs = X[:, list(key)]
     vals = []
     for tr, va in folds:
@@ -44,9 +44,9 @@ def _score_chunk(X, y, folds, keys, metric, C_lr, lr_seed):
 
 
 class InnerCVFitness:
-    """fold_seed quyết định fold nội bộ (và random_state của LR): chế độ logloss dùng seed chung theo fold ngoài, chế độ
-    auroc dùng seed của phương pháp như survey (Đ4). Cache theo panel đã sắp; n_eval đếm số panel khác nhau đã chấm;
-    log ghi mọi lời gọi (panel, giá trị, n_eval sau lời gọi), kể cả lần trúng cache."""
+    """fold_seed decides the inner folds (and random_state of LR): logloss mode uses a common seed per outer fold, auroc
+    mode uses the seed of the method as in the vendored code. Cache keyed by the sorted panel; n_eval counts the distinct panels evaluated;
+    log records every call (panel, value, n_eval after the call), cache hits included."""
 
     def __init__(self, X_tr, y_tr, fold_seed: int, metric: str = "logloss", n_folds: int = M.INNER_FOLDS,
                  C_lr: float = M.FITNESS_C):
@@ -64,12 +64,12 @@ class InnerCVFitness:
     def key(genes) -> tuple:
         return tuple(sorted(int(g) for g in genes))
 
-    def __call__(self, genes) -> float:        # GA, BPSO của survey gọi từng panel một
+    def __call__(self, genes) -> float:        # GA, BPSO of the vendored code call one panel at a time
         return self.evaluate_many([genes])[0]
 
     def evaluate_many(self, panels, n_jobs: int = 1) -> list[float]:
-        """Panel chưa có trong cache được chấm theo thứ tự xuất hiện đầu tiên, chia thành n_jobs khúc liền nhau (joblib,
-        loky), BLAS một luồng trong tiến trình con. Kết quả trùng từng bit giữa các giá trị n_jobs."""
+        """Panels not in the cache are evaluated in order of first appearance, split into n_jobs contiguous chunks (joblib,
+        loky), BLAS single-threaded in the worker processes. Results are bit-identical across values of n_jobs."""
         keys = [self.key(g) for g in panels]
         todo = list(dict.fromkeys(k for k in keys if k not in self._cache))
         if todo:

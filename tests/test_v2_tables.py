@@ -1,5 +1,5 @@
-"""scripts/make_taimma_v2_tables.py trên kết quả GIẢ (số ngẫu nhiên): đủ bảng HV1–HV4, đúng số phép thử, chạy lại trùng byte,
-và bảng của v1 (make_taimma_tables.py) không đổi khi thêm kết quả v2."""
+"""scripts/make_taimma_v2_tables.py on SYNTHETIC results (random numbers): every table HV1–HV4, the right number of tests, byte-identical rerun,
+and the tables of v1 (make_taimma_tables.py) unchanged when v2 results are added."""
 import numpy as np
 import pandas as pd
 
@@ -62,7 +62,7 @@ def test_v2_tables_complete_and_reproducible(tmp_path):
     root = tmp_path / "results"
     fake_results(root)
     write_v2(root)
-    for c in B7:                                   # v1 trên B7 (bảng B7 cần cả v1 lẫn v2)
+    for c in B7:                                   # v1 on B7 (the B7 table needs both v1 and v2)
         for sub in ("T1",):
             src = root / "T5LL" / sub / COHORTS[0]
             dst = root / "T5LL" / sub / c
@@ -77,7 +77,7 @@ def test_v2_tables_complete_and_reproducible(tmp_path):
     assert {"stats_hv1_search", "stats_hv2_generalization", "stats_hv2_generalization_bauc", "stats_hv3_stability",
             "table_v2_ablation", "table_v2_main", "table_v2_main_bc1", "stats_v2_friedman_ranks", "diagnostics_v2_behaviour",
             "table_b7_v2", "table_v2_main_bllw", "stats_hv5_b7", "diagnostics_v2_c_choice"} <= set(info["written"])
-    assert not {"stats_hv2_generalization_bc1", "stats_hv2_generalization_bllw"} & set(info["written"])   # chưa có việc v1b
+    assert not {"stats_hv2_generalization_bc1", "stats_hv2_generalization_bllw"} & set(info["written"])   # job v1b not run
     hv1 = pd.read_csv(a / "stats_hv1_search.csv")
     assert len(hv1) == 4 and set(hv1.reference) == {"mpqda_de", "ga"} and hv1.n.eq(45).all() and (hv1.p_holm >= hv1.p).all()
     assert (hv1.ci_low <= hv1.mean_diff).all() and (hv1.mean_diff <= hv1.ci_high).all()

@@ -1,15 +1,15 @@
-"""Khám phá, không đăng ký (Review-2026-11-18c, E3; mở rộng k = 20 theo Review-2026-11-20, TQĐ51): số gen lạ mà toán tử
-đột biến + lai ghép đưa vào một panel thử theo ngân sách k, với dải ε = 1/2 (v1 và các baseline DE) và khe ε = 0,01 (v2,
-DE-G), F = 0,5, CR = 0,9. Dùng population() và keys() của scripts/disruption_sim.py; seed riêng (3) và tệp ra riêng, nên
-disruption.csv và disruption_plain.csv không đổi.
+"""Exploratory, not registered (k = 20 added by amendment A2 of PREREG-v2): number of foreign genes that the
+mutation + crossover operator brings into a trial panel as a function of k, with the band ε = 1/2 (v1 and the DE baselines) and the gap ε = 0.01 (v2,
+DE-G), F = 0.5, CR = 0.9. Uses population() and keys() of scripts/disruption_sim.py; its own seed (3) and its own output file, so
+disruption.csv and disruption_plain.csv do not change.
 
     python scripts/disruption_k.py [--reps 200] [--ks 2 5 10 50 20] [--out docs/taimma/disruption_k.csv]
 
-Một bộ sinh số ngẫu nhiên đi qua các k theo đúng thứ tự của --ks. Thứ tự mặc định 2, 5, 10, 50 cho lại đúng
-expected/disruption_k.csv của taimma_ref_v7; đặt k = 20 ở CUỐI (--ks 2 5 10 50 20) thì 16 dòng đầu không đổi và chỉ thêm
-bốn dòng của k = 20 (sửa đổi A2 của PREREG-v2 trích các dòng này).
+One random generator goes through the k values in the order of --ks. The default order 2, 5, 10, 50 reproduces exactly the
+first 16 rows of docs/taimma/disruption_k.csv; putting k = 20 LAST (--ks 2 5 10 50 20) leaves the first 16 rows unchanged and only adds
+the four rows of k = 20 (amendment A2 of PREREG-v2 cites these rows).
 
-random_genes_per_trial = random_share · k: số gen không thuộc leader, đích hay vector được cộng trong một panel thử.
+random_genes_per_trial = random_share · k: number of genes that belong to neither the leader, the target nor the added vectors in a trial panel.
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import mpqda  # noqa: E402,F401  (đặt vendor/ và gốc kho vào sys.path)
+import mpqda  # noqa: E402,F401  (puts vendor/ and the repository root on sys.path)
 from mpqda.encoding import decode_topk, repair_midpoint  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -58,11 +58,11 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--reps", type=int, default=200)
     ap.add_argument("--ks", type=int, nargs="+", default=list(DEFAULT_KS),
-                    help="thứ tự chạy; thêm k mới ở cuối để các dòng cũ không đổi")
+                    help="run order; add new k values at the end so that the existing rows do not change")
     ap.add_argument("--out", default="docs/taimma/disruption_k.csv")
     a = ap.parse_args(argv)
     if len(set(a.ks)) != len(a.ks):
-        ap.error("--ks có giá trị lặp")
+        ap.error("--ks has repeated values")
     df = simulate_k(a.reps, ks=tuple(a.ks))
     df.to_csv(a.out, index=False, lineterminator="\n")
     print(df.round(3).to_string(index=False))

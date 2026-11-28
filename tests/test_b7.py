@@ -1,4 +1,4 @@
-"""B7 (T-Y5, TQĐ17): bộ B7 nằm trong B7_INCLUDED phải có SHA-256 bản chia chờ, và runner dừng khi bản chia khác giá trị đó."""
+"""B7: a dataset in B7_INCLUDED must have an expected split SHA-256, and the runner stops when the split differs from that value."""
 import re
 import shutil
 
@@ -20,8 +20,8 @@ def test_every_included_b7_dataset_has_an_expected_split_sha():
 @pytest.mark.slow
 @pytest.mark.parametrize("name", list(M.B7_INCLUDED))
 def test_runner_stops_on_unexpected_b7_split_sha(smoke_run, name):
-    """Dựng bộ B7 giả (bản sao dữ liệu giả của SMOKE_COHORT) ở experiment-data-b7/<bộ>/: bản chia khác giá trị chờ nên
-    runner (không ở chế độ smoke) dừng với mã 2 và không ghi kết quả."""
+    """Build a synthetic B7 dataset (copy of the synthetic data of SMOKE_COHORT) in experiment-data-b7/<dataset>/: the split differs from the expected value, so
+    the runner (not in smoke mode) stops with code 2 and writes no result."""
     data = smoke_run["data"]
     src = data / C.DATASET_DIRS[SMOKE_COHORT]
     dst = data / C.DATASET_DIRS[name]

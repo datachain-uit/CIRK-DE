@@ -1,4 +1,4 @@
-"""survey_v2 và các script của survey phải nạp từ vendor/; mã phương pháp cũ giữ nguyên, mã mới bắt đầu từ 13."""
+"""survey_v2 and the vendored scripts must load from vendor/; existing method codes are unchanged, new codes start at 13."""
 from pathlib import Path
 
 from conftest import ROOT
@@ -35,7 +35,7 @@ def test_method_ids_and_defaults():
     assert C.METHOD_ID["ga"] == 11 and C.METHOD_ID["bpso"] == 12
     new = {m: i for m, i in M.METHOD_ID.items() if m not in C.METHOD_ID}
     assert new == {"mpqda_de": 13, "de_rand1": 14, "shade": 15, "qlde": 16, "jde": 17, "jade": 18,
-                   "mpqda_v2": 19, "de_g": 20}                                  # 19, 20: v2 (Review-2026-11-16)
+                   "mpqda_v2": 19, "de_g": 20}                                  # 19, 20: v2
     assert all(M.base_method(v) == "mpqda_de" for v in M.VARIANTS) and M.base_method("ga") == "ga"
     assert M.output_names("mpqda_a5_A1") == ("mpqda_a5_A1", "mpqda_a5_A1_best") and M.output_names("shade") == ("shade",)
     assert (M.P, M.T, M.CR, M.A_MAX, M.DELTA, M.TAU, M.MU) == (30, 50, 0.9, 15, 0.2, 1.0, 3.99)
@@ -44,7 +44,7 @@ def test_method_ids_and_defaults():
 
 
 def test_expected_split_sha_matches_survey_reference_config():
-    """EXPECTED_SPLIT_SHA256 trùng split_sha256 trong config.json của kết quả GA, BPSO tham chiếu (commit 9b2d6a5)."""
+    """EXPECTED_SPLIT_SHA256 equals split_sha256 in config.json of the GA, BPSO reference results (commit 9b2d6a5)."""
     import json
     from mpqda import config as M
     for cohort in ("gse10245", "gse30219", "gse37745"):
@@ -54,7 +54,7 @@ def test_expected_split_sha_matches_survey_reference_config():
 
 
 def test_seed_formulas_match_survey():
-    """seed thứ 0 của GA, BPSO đúng bằng biến `seed` của survey E1; log-loss dùng fold nội bộ chung, AUROC theo phương pháp."""
+    """Seed 0 of GA, BPSO equals the variable `seed` of E1 in the vendored code; log-loss uses shared inner folds, AUROC folds per method."""
     from scripts import run_taimma as RT
     from survey_v2 import config as C
     cid = C.cohort_id("gse10245")

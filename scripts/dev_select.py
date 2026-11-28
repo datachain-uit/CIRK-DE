@@ -1,19 +1,19 @@
-"""Quy tắc chọn cấu hình MPQDA-DE v2 ở pha phát triển và cổng G-DEV (Review-2026-11-16, TQĐ23). Chỉ đọc kết quả của dữ
-liệu phát triển (tcga_dev_a, tcga_dev_b, tcga_dev_c, gse42127); không bao giờ đọc GPL570 hay B7. Chép từ
-taimma_ref/dev_select_ref.py.
+"""Selection rule of the CIRK-DE configuration in the development phase and gate G-DEV (PREREG-v2, Section 2.2). Reads only results of the
+development data (tcga_dev_a, tcga_dev_b, tcga_dev_c, gse42127); never reads GPL570 or B7.
+
 
     python scripts/dev_select.py --results <...>/taimma/DEV --out dev_selection \
         [--eval <...>/taimma/T5LL/DEV]
 
-Đơn vị so sánh = (bộ dữ liệu, lần lặp, fold, k) với k ∈ {5, 10}; điểm = best_fitness (fitness nội bộ của cá thể tốt nhất
-tại T = 50, cùng ngân sách).
-  1. Trong mỗi đơn vị, xếp hạng ba ứng viên (1 = tốt nhất; hoà lấy hạng trung bình). Chọn ứng viên có hạng trung bình nhỏ
-     nhất. Hai ứng viên chênh nhau dưới 0,10 hạng thì chọn theo thứ tự ưu tiên M1, M3, M2 (ít thành phần hơn trước).
-  2. Cổng G-DEV: ứng viên đã chọn tốt hơn v1 (mpqda_de) về best_fitness, Wilcoxon một phía (greater) trên mọi đơn vị,
-     p < 0,05. Không đạt thì không có pha xác nhận cho v2.
-  3. Mô tả, không dùng để chọn: hiệu best_fitness so với GA, DE-G, DE/rand/1 (trung bình, Wilcoxon hai phía) và log-loss
-     ngoài B-LL của đầu ra chính nếu có --eval.
-Ghi <out>_ranks.csv, <out>_pairs.csv, <out>.json.
+Comparison unit = (dataset, repeat, fold, k) with k ∈ {5, 10}; score = best_fitness (inner fitness of the best individual
+at T = 50, same budget).
+  1. Within each unit, rank the three candidates (1 = best; ties get the mean rank). Choose the candidate with the smallest mean
+     rank. When two candidates differ by less than 0.10 rank, choose by the priority order M1, M3, M2 (fewer components first).
+  2. Gate G-DEV: the chosen candidate beats v1 (mpqda_de) on best_fitness, one-sided Wilcoxon (greater) over all units,
+     p < 0.05. If it fails, there is no confirmatory phase for v2.
+  3. Descriptive, not used for the choice: best_fitness differences against GA, DE-G, DE/rand/1 (mean, two-sided Wilcoxon) and outer
+     B-LL log-loss of the main output if --eval is given.
+Writes <out>_ranks.csv, <out>_pairs.csv, <out>.json.
 """
 from __future__ import annotations
 
@@ -68,11 +68,11 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--results", type=Path, required=True)
     ap.add_argument("--datasets", nargs="+", default=list(DEV_DATASETS))
-    ap.add_argument("--eval", type=Path, default=None, help="thư mục B-LL của DEV (classification_per_fold.csv)")
+    ap.add_argument("--eval", type=Path, default=None, help="B-LL folder of DEV (classification_per_fold.csv)")
     ap.add_argument("--out", default="dev_selection")
     a = ap.parse_args(argv)
     if set(a.datasets) - set(DEV_DATASETS):
-        raise SystemExit(f"DỪNG: chỉ dùng dữ liệu phát triển {DEV_DATASETS}")
+        raise SystemExit(f"STOP: only the development data may be used: {DEV_DATASETS}")
     df = load(a.results, a.datasets)
     chosen, ranks, n_units = choose(df)
     gate = paired(df, chosen, "mpqda_de", "greater")

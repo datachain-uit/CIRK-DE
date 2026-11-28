@@ -14,7 +14,7 @@ def test_auroc_mode_identical_to_survey(xy):
     rng = np.random.default_rng(5)
     for _ in range(20):
         S = rng.choice(X.shape[1], size=int(rng.integers(2, 30)), replace=False)
-        assert ours(S) == ref(S)                       # bằng nhau tuyệt đối, không xấp xỉ
+        assert ours(S) == ref(S)                       # exactly equal, not approximately
     assert ours.n_eval == ref.n_eval == 20
     assert all(np.array_equal(a[0], b[0]) and np.array_equal(a[1], b[1]) for a, b in zip(ours.folds, ref.folds))
 
@@ -23,7 +23,7 @@ def test_cache_n_eval_and_log(xy):
     X, y = xy
     fit = InnerCVFitness(X, y, fold_seed=7, metric="logloss")
     v1, v2 = fit([3, 1, 2]), fit(np.array([2, 3, 1]))
-    assert v1 == v2 and fit.n_eval == 1 and v1 < 0                                   # log-loss âm, cache theo panel đã sắp
+    assert v1 == v2 and fit.n_eval == 1 and v1 < 0                                   # negative log-loss, cache keyed by the sorted panel
     vals = fit.evaluate_many([[1, 2, 3], [4, 5], [5, 4], [6, 7]])
     assert fit.n_eval == 3 and vals[0] == v1 and vals[1] == vals[2]
     assert [entry[0] for entry in fit.log] == [(1, 2, 3), (1, 2, 3), (1, 2, 3), (4, 5), (4, 5), (6, 7)]
@@ -34,7 +34,7 @@ def test_cache_n_eval_and_log(xy):
 def test_logloss_is_clipped_and_finite(xy):
     X, y = xy
     Xs = X.copy()
-    Xs[:, 0] = 50.0 * y                                                              # tách hoàn toàn: xác suất sát 0 hoặc 1
+    Xs[:, 0] = 50.0 * y                                                              # perfect separation: probabilities close to 0 or 1
     v = InnerCVFitness(Xs, y, fold_seed=1, metric="logloss")([0])
     assert np.isfinite(v) and -np.log(1 / 1e-6) <= v < 0
 

@@ -1,8 +1,8 @@
-"""Bộ điều khiển Q-learning của F theo trạng thái từng cá thể (Mục 3.6; PREREG Mục 3.3 bước 4a, 4g, 4h).
+"""Q-learning controller of F with a per-individual state (PREREG, Section 3.3, steps 4a, 4g, 4h).
 
-Trạng thái s_i = 0 nếu lần thử trước của cá thể i cải thiện, 1 nếu không (ban đầu 1). Một bảng Q 2 × 3 dùng chung.
-Thứ tự rút số: `__init__` rút F_i ban đầu bằng một lời gọi rng.uniform(size=P) (ngay sau khoá khởi tạo); `propose` rút
-đúng một số rng.random() cho mỗi i theo thứ tự chỉ số.
+State s_i = 0 if the previous trial of individual i improved, 1 otherwise (initially 1). One shared 2 × 3 Q table.
+Draw order: `__init__` draws the initial F_i with one call rng.uniform(size=P) (right after the initial keys); `propose` draws
+exactly one number rng.random() for each i in index order.
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ class QController:
         return e / e.sum()
 
     def propose(self, rng: np.random.Generator):
-        """a_i ~ softmax(Q[s_i, ·]/tau) bằng hàm phân phối tích luỹ; F_i' = clip(F_i + a_i). Trả về (a, F')."""
+        """a_i ~ softmax(Q[s_i, ·]/tau) by the cumulative distribution function; F_i' = clip(F_i + a_i). Returns (a, F')."""
         a = np.empty(self.P, dtype=int)
         last = len(self.ACTIONS) - 1
         for i in range(self.P):
@@ -37,8 +37,8 @@ class QController:
         return a, np.clip(self.F + self.ACTIONS[a], *self.F_bounds)
 
     def update(self, a, improved, accepted, F_trial) -> None:
-        """Sau khi chấm cả thế hệ, theo thứ tự i: r_i = 1 nếu f(u_i) > f(x_i); s_i' = 0 nếu r_i = 1, ngược lại 1;
-        Q[s_i, a_i] += eta·(r_i + gamma·max Q[s_i', ·] − Q[s_i, a_i]); s_i ← s_i'; F_i ← F_i' chỉ khi u_i được nhận."""
+        """After evaluating the whole generation, in order of i: r_i = 1 if f(u_i) > f(x_i); s_i' = 0 if r_i = 1, otherwise 1;
+        Q[s_i, a_i] += eta·(r_i + gamma·max Q[s_i', ·] − Q[s_i, a_i]); s_i ← s_i'; F_i ← F_i' only when u_i is accepted."""
         for i in range(self.P):
             r = 1.0 if improved[i] else 0.0
             s_next = 0 if improved[i] else 1

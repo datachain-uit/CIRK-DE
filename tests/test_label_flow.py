@@ -1,6 +1,6 @@
-"""Đường đi của nhãn trong T0 nhãn xáo trộn (Review-2026-11-17b, TQĐ33). Ba điều phải đúng thì AUROC ngoài của T0 không thể
-đến từ rò rỉ nhãn thật: (a) mọi phương pháp nhận đúng một vector nhãn train đã hoán vị; (b) tìm kiếm của v2 và DE-G chỉ đọc
-giá trị fitness, không đọc dữ liệu hay nhãn; (c) nhãn test thật không ảnh hưởng tới panel. Dữ liệu giả chỉ để kiểm mã."""
+"""Path of the labels in the shuffled-label T0. Three things must hold so that the outer AUROC of T0 cannot
+come from leakage of the true labels: (a) every method receives exactly one permuted training label vector; (b) the search of v2 and DE-G only reads
+fitness values, never data or labels; (c) the true test labels do not affect the panel. Synthetic data only check the code."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -19,7 +19,7 @@ def _data(seed=3, n=48, p0=40):
     y = np.r_[np.zeros(30, int), np.ones(18, int)]
     rng.shuffle(y)
     X = rng.normal(size=(n, p0))
-    X[:, :6] += 1.5 * y[:, None]                                  # sáu gen mang nhãn thật
+    X[:, :6] += 1.5 * y[:, None]                                  # six genes carry the true labels
     te = np.sort(rng.choice(n, 10, replace=False))
     return X, y, np.setdiff1d(np.arange(n), te), te
 
@@ -52,12 +52,12 @@ def test_every_method_fits_the_same_permuted_training_labels(tmp_path, monkeypat
         unit = _unit(tmp_path / m, m, X, y, tr, te)
         R.run_unit(unit)
         assert len(seen[m]) == 1 and np.array_equal(seen[m][0], unit["y_tr"])
-    assert not np.array_equal(seen["mpqda_v2"][0], y[tr])         # nhãn đã hoán vị, không phải nhãn thật
+    assert not np.array_equal(seen["mpqda_v2"][0], y[tr])         # permuted labels, not the true labels
     assert all(np.array_equal(seen[m][0], seen["mpqda_v2"][0]) for m in METHODS)
 
 
 class ValuesOnly:
-    """Chỉ cho đọc evaluate_many và n_eval; đọc thuộc tính khác (X, y, folds, …) là lỗi."""
+    """Only evaluate_many and n_eval may be read; reading any other attribute (X, y, folds, …) is an error."""
 
     def __init__(self, inner):
         self._inner = inner
@@ -70,7 +70,7 @@ class ValuesOnly:
         return self._inner.n_eval
 
     def __getattr__(self, name):
-        raise AssertionError(f"tìm kiếm đọc thuộc tính {name} của fitness")
+        raise AssertionError(f"the search reads the attribute {name} of the fitness")
 
 
 @pytest.mark.parametrize("search", ["mpqda_v2", "de_g"])

@@ -1,8 +1,8 @@
-"""Khám phá, không đăng ký (TQĐ42, Review-2026-11-18b): fitness nội bộ tốt nhất của DE-G trừ DE/rand/1/bin trên ba cohort
-GPL570, ghép cặp theo (lần lặp, fold); CI bootstrap 95 % phân tầng theo cohort và Wilcoxon một phía (DE-G tốt hơn) như HV1,
-không Holm, không vào họ nào.
+"""Exploratory, not registered: best inner fitness of DE-G minus DE/rand/1/bin on the three
+GPL570 cohorts, paired by (repeat, fold); 95 % bootstrap CI stratified by cohort and one-sided Wilcoxon (DE-G better) as in HV1,
+no Holm, in no family.
 
-    python scripts/explore_deg_vs_de.py --results <thư mục chứa T1 và T1v2> --out tables_v2/explore_deg_vs_de.csv
+    python scripts/explore_deg_vs_de.py --results <folder holding T1 and T1v2> --out tables_v2/explore_deg_vs_de.csv
 """
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ def main() -> None:
     inp = T.Inputs(a.results)
     s1, s2 = inp.scenario("T1", "selection_per_fold.csv"), inp.scenario("T1v2", "selection_per_fold.csv")
     if s1 is None or s2 is None:
-        sys.exit(f"thiếu tệp: {inp.missing}")
+        sys.exit(f"missing files: {inp.missing}")
     out = compare(pd.concat([s1, s2], ignore_index=True))
     out.to_csv(a.out, index=False, lineterminator="\n")
     print(out.round(4).to_string(index=False))

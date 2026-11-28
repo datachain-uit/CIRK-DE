@@ -1,23 +1,23 @@
-"""Hiệu chuẩn hoán vị cho cổng T0-v2 (Review-2026-11-17b, TQĐ34). Chỉ mô tả, chạy song song với C1–C3 ở commit mang tag
-đăng ký; không có ngưỡng và không kết luận tự động.
+"""Permutation calibration of gate T0-v2. Descriptive only, run in parallel with C1–C3 at the commit carrying the registration
+tag; no threshold and no automatic conclusion.
 
     python scripts/t0_calibration.py --dataset gse37745 --k 5 --permutations 0 1 2 3 4 5 6 7 8 9 10 \
         --methods mpqda_v2 ga --random-draws 50 --workers 4 --out taimma/T0v2_calib
 
-Lặp lại thiết kế T0 trên 15 fold ngoài (lần lặp 0–2) với nhiều hoán vị nhãn train: b = 0 là hoán vị đã đăng ký
-(run_taimma.shuffle_permutation, phải tái tạo đúng t0_shuffle_eval của S0v2), b ≥ 1 là default_rng([cid, split_seed, fold,
-SHUFFLE_TAG, b]). Với mỗi (fold, b), mỗi phương pháp chạy qua đúng run_unit của run_taimma.py (cùng fitness, seed tìm kiếm,
-seed pha B, nhãn test thật), và R panel ngẫu nhiên trong phần lọc sơ bộ được đánh giá bằng cùng evaluate_panel làm phân bố so
-sánh trên đúng hoán vị đó.
+Repeats the T0 design on the 15 outer folds (repeats 0–2) with many permutations of the training labels: b = 0 is the registered permutation
+(run_taimma.shuffle_permutation, must reproduce t0_shuffle_eval of S0v2 exactly), b ≥ 1 is default_rng([cid, split_seed, fold,
+SHUFFLE_TAG, b]). For each (fold, b), each method runs through exactly run_unit of run_taimma.py (same fitness, search seed,
+phase B seed, true test labels), and R random panels within the prefilter are evaluated with the same evaluate_panel as the reference
+distribution on that permutation.
 
-Ghi <out>/<dataset>/:
-  calib_units.csv    mỗi dòng một (lần lặp, fold, b, đầu ra): AUROC ngoài, fitness nội bộ, r = tương quan giữa nhãn đã
-                     hoán vị và nhãn thật của phần train, trung bình và độ lệch chuẩn AUROC của panel ngẫu nhiên, PIT (phân vị
-                     của AUROC trong phân bố panel ngẫu nhiên cùng fold, cùng b)
-  calib_random.csv   AUROC từng panel ngẫu nhiên
-  calib_summary.csv  theo đầu ra và b: AUROC trung bình 15 fold, PIT trung bình, số fold dưới trung vị ngẫu nhiên; dòng b = all:
-                     trung bình và độ lệch chuẩn qua các b, tỉ lệ b có trung bình ngoài [0,40; 0,60] (khoảng đã đăng ký)
-  config.json        commit, tag đăng ký, tham số
+Writes <out>/<dataset>/:
+  calib_units.csv    one row per (repeat, fold, b, output): outer AUROC, inner fitness, r = correlation between the permuted
+                     and the true training labels, mean and standard deviation of the AUROC of the random panels, PIT (quantile
+                     of the AUROC within the distribution of random panels of the same fold and b)
+  calib_random.csv   AUROC of each random panel
+  calib_summary.csv  by output and b: mean AUROC over 15 folds, mean PIT, number of folds below the random median; row b = all:
+                     mean and standard deviation over the b, share of b with a mean outside [0.40; 0.60] (the registered range)
+  config.json        commit, registration tag, parameters
 """
 from __future__ import annotations
 
@@ -47,19 +47,19 @@ from mpqda.runlog import DATA_ROOT, head_commit, results_dir  # noqa: E402
 from scripts import run_taimma as R  # noqa: E402
 from scripts.run_e1_feature_selection import split_indices, split_path  # noqa: E402
 
-RANGE = (0.40, 0.60)                    # khoảng đã đăng ký của mục (4) (PREREG-v2 Mục 9); chỉ để đếm, không dùng làm cổng
-RANDOM_TAG = 777                        # seed của panel ngẫu nhiên, như null_shuffle.py của sinh viên (17/11)
+RANGE = (0.40, 0.60)                    # registered range of item (4) (PREREG-v2, Section 9); only counted, not used as a gate
+RANDOM_TAG = 777                        # seed of the random panels, as in null_shuffle.py (2026-11-17)
 
 
 def permutation(cid: int, split_seed: int, fold: int, n: int, b: int) -> np.ndarray:
-    """b = 0: hoán vị đã đăng ký của T0; b ≥ 1: hoán vị mới, độc lập theo b."""
+    """b = 0: the registered permutation of T0; b ≥ 1: new permutations, independent across b."""
     if b == 0:
         return R.shuffle_permutation(cid, split_seed, fold, n)
     return np.random.default_rng([cid, split_seed, fold, M.SHUFFLE_TAG, b]).permutation(n)
 
 
 def prepare(X, y, genes, cid: int, folds, p0: int, perms) -> list[dict]:
-    """Một phần tử cho mỗi (lần lặp, fold, b): phần train đã lọc sơ bộ, nhãn đã hoán vị, phần test với nhãn thật."""
+    """One element per (repeat, fold, b): prefiltered training part, permuted labels, test part with the true labels."""
     cells = []
     for f in folds:
         tr, te = f["tr"], f["te"]
@@ -74,7 +74,7 @@ def prepare(X, y, genes, cid: int, folds, p0: int, perms) -> list[dict]:
 
 
 def method_task(cell: dict, method: str, k: int, P: int, T: int, cohort: str) -> list[dict]:
-    """Chạy một phương pháp trên một (fold, b) bằng run_unit của run_taimma.py; trả các dòng shuffle_eval."""
+    """Run one method on one (fold, b) with run_unit of run_taimma.py; returns the shuffle_eval rows."""
     with tempfile.TemporaryDirectory() as tmp:
         parts = dict(R.PARTS, **R.SHUFFLE_PART)
         paths = R.checkpoint_paths(Path(tmp), cell["repeat"], cell["fold"], method, parts)
@@ -158,7 +158,7 @@ def main(argv=None) -> int:
         for method in args.methods:
             check_run(args.dataset, method, M.V2_CHOSEN)
     except RegistrationError as exc:
-        print(f"DỪNG (cổng đăng ký): {exc}", file=sys.stderr)
+        print(f"STOP (registration gate): {exc}", file=sys.stderr)
         return 2
     ds = load_dataset(DATA_ROOT, args.dataset)
     manifest = pd.read_csv(split_path(ds, None))
@@ -173,6 +173,7 @@ def main(argv=None) -> int:
     out.mkdir(parents=True, exist_ok=True)
     for name, frame in (("calib_units", units), ("calib_random", rand), ("calib_summary", summary)):
         frame.to_csv(out / f"{name}.csv", index=False, float_format="%.10g", lineterminator="\n")
+    # Kept verbatim: the experiment label below is written to config.json of the archived calibration results.
     cfg = {"experiment": "T0-v2 permutation calibration (descriptive; Review-2026-11-17b, TQĐ34)", "commit_hash": head_commit(),
            "registration_tag": registration_tag(), **{k: v for k, v in vars(args).items()}}
     (out / "config.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

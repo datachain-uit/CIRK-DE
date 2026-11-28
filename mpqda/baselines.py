@@ -1,9 +1,9 @@
-"""Baseline wrapper dưới cùng ngân sách và cùng fitness (Mục 3.8; PREREG Mục 4).
+"""Wrapper baselines under the same budget and the same fitness (PREREG, Section 4).
 
-Mọi baseline DE dùng chung: khoá đều `rng.random((P, p0))`, mã hoá lại theo dải (Đ2), sửa biên trung điểm theo cá thể
-đích (Đ1), lai ghép nhị thức có j_rand, chọn lọc u_i thay x_i khi f(u_i) ≥ f(x_i), đầu ra là cá thể tốt nhất khi dừng
-(hoà thì chỉ số nhỏ nhất). GA, BPSO gọi thẳng mã survey trong vendor/ với đối tượng fitness mới (Đ5).
-Thứ tự rút số ngẫu nhiên của từng baseline ghi trong docstring của hàm tương ứng.
+All DE baselines share: uniform keys `rng.random((P, p0))`, band re-encoding, midpoint bound repair against the target
+individual, binomial crossover with j_rand, selection u_i replaces x_i when f(u_i) ≥ f(x_i), output is the best individual at the stop
+(ties: smallest index). GA and BPSO call the vendored code in vendor/ directly with the new fitness object.
+The order of random draws of each baseline is given in the docstring of its function.
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from .encoding import band_encode, decode_topk, init_uniform, repair_midpoint
 
 
 class _Population:
-    """Phần chung của các baseline DE: khởi tạo, lai ghép nhị thức, chấm, chọn lọc ≥ và lịch sử."""
+    """Common part of the DE baselines: initialisation, binomial crossover, evaluation, ≥ selection and history."""
 
     def __init__(self, fitness, p0, k, rng, P, n_jobs):
         self.fitness, self.p0, self.k, self.P, self.n_jobs = fitness, p0, k, P, n_jobs
@@ -31,7 +31,7 @@ class _Population:
         self.history.append(history_row(self.t, self.fitness.n_eval, self.panels, self.f, **extra))
 
     def step(self, V, CR, U, jr):
-        """Lai ghép nhị thức với CR (số hoặc vector theo cá thể), chấm, chọn lọc ≥. Trả về (improved, accepted, X cũ, f cũ, fu)."""
+        """Binomial crossover with CR (scalar or per-individual vector), evaluation, ≥ selection. Returns (improved, accepted, old X, old f, fu)."""
         P = self.P
         V = repair_midpoint(V, self.X)
         mask = U <= (np.asarray(CR, dtype=float).reshape(-1, 1) if np.ndim(CR) else CR)
@@ -65,7 +65,7 @@ def _crossover_numbers(rng, P, p0):
 
 
 def _cauchy_F(rng, loc, scale=M.SHADE_SIGMA):
-    """F ~ Cauchy(loc; scale): rút lại khi ≤ 0, lớn hơn 1 thì lấy 1 (JADE, SHADE)."""
+    """F ~ Cauchy(loc; scale): redrawn when ≤ 0, set to 1 when larger than 1 (JADE, SHADE)."""
     while True:
         F = loc + scale * rng.standard_cauchy()
         if F > 0:
@@ -78,12 +78,12 @@ def _F_stats(F):
 
 
 # ---------------------------------------------------------------------------------------------------
-# DE/rand/1/bin (Storn và Price, 1997)
+# DE/rand/1/bin (Storn and Price, 1997)
 # ---------------------------------------------------------------------------------------------------
 def run_de_rand1(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T: int = M.T,
                  F: float = M.DE_RAND1_F, CR: float = M.CR, n_jobs: int = 1) -> dict:
-    """v_i = x_r1 + F·(x_r2 − x_r3), r1, r2, r3 khác nhau và khác i.
-    Thứ tự rút số: khoá đều rng.random((P, p0)); mỗi thế hệ: (r1, r2, r3) cho i = 0..P − 1 bằng
+    """v_i = x_r1 + F·(x_r2 − x_r3), r1, r2, r3 distinct and different from i.
+    Draw order: uniform keys rng.random((P, p0)); each generation: (r1, r2, r3) for i = 0..P − 1 by
     rng.choice(np.delete(np.arange(P), i), size=3, replace=False); U = rng.random((P, p0)); j_rand = rng.integers(0, p0, size=P)."""
     pop = _Population(fitness, p0, k, rng, P, n_jobs)
     pop.record(n_ties_accepted=0, **_F_stats(np.full(P, F)))
@@ -96,14 +96,14 @@ def run_de_rand1(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.
 
 
 # ---------------------------------------------------------------------------------------------------
-# jDE (Brest et al., 2006) — mức 2
+# jDE (Brest et al., 2006) — tier 2
 # ---------------------------------------------------------------------------------------------------
 def run_jde(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T: int = M.T, tau=M.JDE_TAU,
             F_range=M.JDE_F_RANGE, init=M.JDE_INIT, n_jobs: int = 1) -> dict:
-    """F_i = 0,5, CR_i = 0,9 ban đầu. Mỗi i rút bốn số đều (rand1, rand2, rand3, rand4): F_i' = F_l + F_u·rand1 khi
-    rand2 < tau1, ngược lại F_i; CR_i' = rand3 khi rand4 < tau2, ngược lại CR_i. DE/rand/1/bin với F_i', CR_i'; tham số mới
-    giữ khi u_i được nhận (f(u_i) ≥ f(x_i)).
-    Thứ tự rút số: khoá đều; mỗi thế hệ: rng.random(4) cho i = 0..P − 1; rồi (r1, r2, r3) cho i = 0..P − 1; U; j_rand."""
+    """F_i = 0.5, CR_i = 0.9 initially. Each i draws four uniform numbers (rand1, rand2, rand3, rand4): F_i' = F_l + F_u·rand1 when
+    rand2 < tau1, otherwise F_i; CR_i' = rand3 when rand4 < tau2, otherwise CR_i. DE/rand/1/bin with F_i', CR_i'; the new parameters
+    are kept when u_i is accepted (f(u_i) ≥ f(x_i)).
+    Draw order: uniform keys; each generation: rng.random(4) for i = 0..P − 1; then (r1, r2, r3) for i = 0..P − 1; U; j_rand."""
     pop = _Population(fitness, p0, k, rng, P, n_jobs)
     F, CRv = np.full(P, init[0]), np.full(P, init[1])
     pop.record(n_ties_accepted=0, **_F_stats(F))
@@ -125,12 +125,12 @@ def run_jde(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T:
 
 
 # ---------------------------------------------------------------------------------------------------
-# current-to-pbest/1 với archive ngoài: JADE (Zhang và Sanderson, 2009) và SHADE (Tanabe và Fukunaga, 2013)
+# current-to-pbest/1 with an external archive: JADE (Zhang and Sanderson, 2009) and SHADE (Tanabe and Fukunaga, 2013)
 # ---------------------------------------------------------------------------------------------------
 def _pbest_mutation(pop, rng, F, n_pbest, ext):
-    """v_i = x_i + F_i·(x_pbest − x_i) + F_i·(x_r1 − x̃_r2). Với i = 0..P − 1 theo thứ tự: pbest = rng.integers(0, n_pbest_i)
-    trong các cá thể tốt nhất (sắp ổn định theo fitness giảm); r1 = rng.choice trên quần thể trừ i; r2 = rng.integers trên
-    quần thể ∪ archive ngoài, trừ i và r1 (thứ tự: chỉ số quần thể tăng dần rồi archive theo thứ tự vào)."""
+    """v_i = x_i + F_i·(x_pbest − x_i) + F_i·(x_r1 − x̃_r2). For i = 0..P − 1 in order: pbest = rng.integers(0, n_pbest_i)
+    among the best individuals (stable sort by decreasing fitness); r1 = rng.choice over the population except i; r2 = rng.integers over
+    population ∪ external archive, except i and r1 (order: population indices ascending, then the archive in entry order)."""
     P, X = pop.P, pop.X
     order = np.argsort(-pop.f, kind="stable")
     V = np.empty_like(X)
@@ -145,7 +145,7 @@ def _pbest_mutation(pop, rng, F, n_pbest, ext):
 
 
 def _archive_successes(rng, ext, X_old, improved, size):
-    """x_i cũ của lần thử thành công vào archive ngoài theo thứ tự i; quá cỡ thì bỏ một phần tử rút đều (rng.integers)."""
+    """Old x_i of successful trials enter the external archive in order of i; when oversized, one element drawn uniformly is removed (rng.integers)."""
     for i in np.flatnonzero(improved):
         ext.append(X_old[i].copy())
         if len(ext) > size:
@@ -154,12 +154,12 @@ def _archive_successes(rng, ext, X_old, improved, size):
 
 def run_jade(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T: int = M.T, p_best: float = M.JADE_P,
              p_min: int = M.JADE_P_MIN, c: float = M.JADE_C, archive_size: int | None = None, n_jobs: int = 1) -> dict:
-    """mu_CR = mu_F = 0,5; CR_i ~ N(mu_CR; 0,1) cắt vào [0, 1]; F_i ~ Cauchy(mu_F; 0,1) (rút lại khi ≤ 0, lớn hơn 1 thì lấy 1);
-    current-to-pbest/1 với max(2, ⌈0,05·P⌉) cá thể tốt nhất và archive ngoài cỡ P. Khi có lần thử thành công (f(u) > f(x)):
+    """mu_CR = mu_F = 0.5; CR_i ~ N(mu_CR; 0.1) clipped to [0, 1]; F_i ~ Cauchy(mu_F; 0.1) (redrawn when ≤ 0, set to 1 when larger than 1);
+    current-to-pbest/1 with the max(2, ⌈0.05·P⌉) best individuals and an external archive of size P. When there are successful trials (f(u) > f(x)):
     mu_CR ← 0,9·mu_CR + 0,1·mean(S_CR); mu_F ← 0,9·mu_F + 0,1·mean_Lehmer(S_F).
-    Thứ tự rút số: khoá đều; mỗi thế hệ: với i = 0..P − 1: CR_i (rng.normal), F_i (rng.standard_cauchy, lặp tới khi > 0);
-    rồi với i = 0..P − 1: pbest, r1, r2; U; j_rand; sau khi chấm: phần tử bị bỏ khỏi archive ngoài (nếu đầy)."""
-    archive_size = P if archive_size is None else archive_size       # mặc định theo P thật (M.DE_ARCHIVE_SIZE = M.P)
+    Draw order: uniform keys; each generation: for i = 0..P − 1: CR_i (rng.normal), F_i (rng.standard_cauchy, repeated until > 0);
+    then for i = 0..P − 1: pbest, r1, r2; U; j_rand; after evaluation: the element removed from the external archive (if full)."""
+    archive_size = P if archive_size is None else archive_size       # default from the actual P (M.DE_ARCHIVE_SIZE = M.P)
     pop = _Population(fitness, p0, k, rng, P, n_jobs)
     mu_cr = mu_f = 0.5
     n_pb = np.full(P, max(p_min, int(np.ceil(p_best * P))))
@@ -184,15 +184,15 @@ def run_jade(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T
 
 def run_shade(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T: int = M.T, H: int | None = None,
               p_range=None, archive_size: int | None = None, n_jobs: int = 1) -> dict:
-    """Bộ nhớ H ô M_CR, M_F khởi đầu 0,5. Với mỗi i: ô r_i rút đều; CR_i ~ N(M_CR[r_i]; 0,1) cắt vào [0, 1];
-    F_i ~ Cauchy(M_F[r_i]; 0,1) (rút lại khi ≤ 0, lớn hơn 1 thì lấy 1); p_i ~ U(2/P; 0,2); current-to-pbest/1 với
-    max(2, round(p_i·P)) cá thể tốt nhất và archive ngoài cỡ P. Lần thử thành công (f(u) > f(x)): x_i cũ vào archive ngoài,
-    ghi CR_i, F_i và Δf. Cuối thế hệ có lần thành công: M_CR[pos] = trung bình có trọng số, M_F[pos] = trung bình Lehmer có
-    trọng số (trọng số Δf/ΣΔf); pos tăng vòng.
-    Thứ tự rút số: khoá đều; mỗi thế hệ: với i = 0..P − 1: r_i (rng.integers(0, H)), CR_i (rng.normal), F_i
-    (rng.standard_cauchy, lặp tới khi > 0), p_i (rng.random); rồi với i = 0..P − 1: pbest, r1, r2; U; j_rand; sau khi chấm:
-    phần tử bị bỏ khỏi archive ngoài (nếu đầy)."""
-    H = P if H is None else H                                       # mặc định theo P thật (M.SHADE_H = M.P)
+    """Memory of H cells M_CR, M_F initialised to 0.5. For each i: cell r_i drawn uniformly; CR_i ~ N(M_CR[r_i]; 0.1) clipped to [0, 1];
+    F_i ~ Cauchy(M_F[r_i]; 0.1) (redrawn when ≤ 0, set to 1 when larger than 1); p_i ~ U(2/P; 0.2); current-to-pbest/1 with the
+    max(2, round(p_i·P)) best individuals and an external archive of size P. Successful trial (f(u) > f(x)): old x_i enters the external archive,
+    CR_i, F_i and Δf are recorded. At the end of a generation with successes: M_CR[pos] = weighted mean, M_F[pos] = weighted Lehmer
+    mean (weights Δf/ΣΔf); pos advances cyclically.
+    Draw order: uniform keys; each generation: for i = 0..P − 1: r_i (rng.integers(0, H)), CR_i (rng.normal), F_i
+    (rng.standard_cauchy, repeated until > 0), p_i (rng.random); then for i = 0..P − 1: pbest, r1, r2; U; j_rand; after evaluation:
+    the element removed from the external archive (if full)."""
+    H = P if H is None else H                                       # default from the actual P (M.SHADE_H = M.P)
     p_range = (2 / P, M.SHADE_P_RANGE[1]) if p_range is None else p_range
     archive_size = P if archive_size is None else archive_size
     pop = _Population(fitness, p0, k, rng, P, n_jobs)
@@ -205,7 +205,7 @@ def run_shade(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, 
             r = int(rng.integers(0, H))
             CRv[i] = np.clip(rng.normal(M_cr[r], M.SHADE_SIGMA), 0.0, 1.0)
             F[i] = _cauchy_F(rng, M_f[r])
-            p_i = p_range[0] + (p_range[1] - p_range[0]) * rng.random()    # U(2/P; 0,2); P < 10 (smoke test) đảo hai cận
+            p_i = p_range[0] + (p_range[1] - p_range[0]) * rng.random()    # U(2/P; 0.2); P < 10 (smoke test) swaps the two bounds
             n_pb[i] = min(P, max(2, int(round(p_i * P))))
         V = _pbest_mutation(pop, rng, F, n_pb, ext)
         U, jr = _crossover_numbers(rng, P, p0)
@@ -223,25 +223,25 @@ def run_shade(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, 
 
 
 # ---------------------------------------------------------------------------------------------------
-# qlDE (Huynh, Do và Lee, 2021) — cấu hình trích từ toàn văn, docs/taimma/baselines/qlde.md (Đ6)
+# qlDE (Huynh, Do and Lee, 2021) — configuration taken from the full text, docs/taimma/baselines/qlde.md
 # ---------------------------------------------------------------------------------------------------
 def qlde_alpha(t: int, T: int, start: float, drop: float) -> float:
-    """Tốc độ học của Eq. (7): alpha = start − drop·(eval / MaxEval), với eval = P·(t + 1) sau thế hệ t và MaxEval = P·(T + 1)
-    (số lần đánh giá danh nghĩa như Algorithm 2 của bài gốc, không trừ lần trúng cache)."""
+    """Learning rate of Eq. (7): alpha = start − drop·(eval / MaxEval), with eval = P·(t + 1) after generation t and MaxEval = P·(T + 1)
+    (nominal number of evaluations as in Algorithm 2 of the original paper, cache hits not subtracted)."""
     return start - drop * (t + 1) / (T + 1)
 
 
 def run_qlde(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T: int = M.T, actions=None,
              gamma: float | None = None, n_jobs: int = 1) -> dict:
-    """qlDE theo docs/taimma/baselines/qlde.md: DE/rand/1/bin, mỗi thế hệ dùng một tổ hợp (F, Cr) cho cả quần thể.
-    Đầu thế hệ: hành động có Q lớn nhất (tham lam; hoà thì chỉ số nhỏ nhất); bảng Q bắt đầu bằng 0 và có một trạng thái.
-    Cuối thế hệ: r = +1 nếu fitness tốt nhất của quần thể tăng hẳn, ngược lại −1 (Eq. 8);
-    Q[a] += alpha·(r + gamma·max Q − Q[a]) (Eq. 6), alpha theo Eq. (7), gamma = 0,8.
-    Khác bài gốc chỉ ở phần chung của mọi baseline DE: khoá đều và giải mã top-k, mã hoá lại theo dải, sửa biên trung điểm
-    (bài gốc: phản xạ), ngân sách P, T cố định (bài gốc: thêm tiêu chí hội tụ), không có hàm phạt ràng buộc.
-    Thứ tự rút số: như DE/rand/1/bin — khoá đều rng.random((P, p0)); mỗi thế hệ: (r1, r2, r3) cho i = 0..P − 1 bằng
+    """qlDE following docs/taimma/baselines/qlde.md: DE/rand/1/bin, each generation uses one (F, Cr) pair for the whole population.
+    Start of a generation: the action with the largest Q (greedy; ties: smallest index); the Q table starts at 0 and has one state.
+    End of a generation: r = +1 if the best fitness of the population strictly increases, otherwise −1 (Eq. 8);
+    Q[a] += alpha·(r + gamma·max Q − Q[a]) (Eq. 6), alpha from Eq. (7), gamma = 0.8.
+    Differs from the original paper only in the part shared by all DE baselines: uniform keys and top-k decoding, band re-encoding, midpoint bound repair
+    (original: reflection), fixed budget P, T (original: an additional convergence criterion), no constraint penalty function.
+    Draw order: as DE/rand/1/bin — uniform keys rng.random((P, p0)); each generation: (r1, r2, r3) for i = 0..P − 1 by
     rng.choice(np.delete(np.arange(P), i), size=3, replace=False); U = rng.random((P, p0)); j_rand = rng.integers(0, p0, size=P).
-    Chọn hành động không dùng số ngẫu nhiên."""
+    Action selection uses no random numbers."""
     cfg = M.QLDE
     actions = tuple(cfg["actions"] if actions is None else actions)
     gamma = cfg["gamma"] if gamma is None else gamma
@@ -250,7 +250,7 @@ def run_qlde(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T
     chosen, rewards = [], []
     pop.record(n_ties_accepted=0)
     for t in range(1, T + 1):
-        a = int(np.argmax(Q))                                      # tham lam; hoà thì chỉ số nhỏ nhất
+        a = int(np.argmax(Q))                                      # greedy; ties: smallest index
         F, CR = actions[a]
         best_before = float(pop.f.max())
         R = np.array([_others(rng, P, i, 3) for i in range(P)])
@@ -266,12 +266,12 @@ def run_qlde(fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T
 
 
 # ---------------------------------------------------------------------------------------------------
-# GA, BPSO của survey với fitness mới (Đ5)
+# GA and BPSO of the vendored code with the new fitness
 # ---------------------------------------------------------------------------------------------------
 def run_survey_wrapper(method: str, fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T: int = M.T) -> dict:
-    """Gọi nguyên trạng `genetic_algorithm` / `binary_pso` trong vendor/survey_v2/wrappers.py. rng phải là
-    default_rng([seed_run, k, 0]) cho GA và default_rng([seed_run, k, 1]) cho BPSO, như `run_wrapper` của survey.
-    Lịch sử dựng từ fitness.log theo khối P lời gọi."""
+    """Calls `genetic_algorithm` / `binary_pso` of vendor/survey_v2/wrappers.py unchanged. rng must be
+    default_rng([seed_run, k, 0]) for GA and default_rng([seed_run, k, 1]) for BPSO, as in `run_wrapper` of the vendored code.
+    The history is built from fitness.log in blocks of P calls."""
     if method == "ga":
         best, best_fit, _ = W.genetic_algorithm(fitness, p0, k, rng, pop=P, generations=T)
     elif method == "bpso":
@@ -287,7 +287,7 @@ SURVEY_RNG_TAG = {"ga": 0, "bpso": 1}
 
 
 def make_rng(method: str, seed_run: int, k: int) -> np.random.Generator:
-    """Bộ sinh số theo k (Mục 3.2): họ DE default_rng([seed_run, k]); GA [seed_run, k, 0]; BPSO [seed_run, k, 1]."""
+    """Random generators per k: DE family default_rng([seed_run, k]); GA [seed_run, k, 0]; BPSO [seed_run, k, 1]."""
     if method in SURVEY_RNG_TAG:
         return np.random.default_rng([seed_run, k, SURVEY_RNG_TAG[method]])
     return np.random.default_rng([seed_run, k])
@@ -295,10 +295,10 @@ def make_rng(method: str, seed_run: int, k: int) -> np.random.Generator:
 
 def run_method(method: str, fitness, p0: int, k: int, rng: np.random.Generator, P: int = M.P, T: int = M.T,
                n_jobs: int = 1) -> dict:
-    """Chạy một phương pháp (kể cả biến thể T2) với ngân sách P, T. Họ MPQDA trả thêm consensus, pi, archive."""
+    """Run one method (including the T2 variants) with budget P, T. The MPQDA family also returns consensus, pi, archive."""
     from .de import run_mpqda
     from .de_v2 import run_de_gapped, run_mpqda_v2
-    if method in M.V2_FAMILY:                                       # v2: ứng viên, bản chốt và ablation (TQĐ22)
+    if method in M.V2_FAMILY:                                       # v2: candidates, chosen configuration and ablations
         return run_mpqda_v2(fitness, p0, k, rng, P=P, T=T, n_jobs=n_jobs, **M.v2_config(method))
     if method == "de_g":
         return run_de_gapped(fitness, p0, k, rng, P=P, T=T, n_jobs=n_jobs)
@@ -308,4 +308,4 @@ def run_method(method: str, fitness, p0: int, k: int, rng: np.random.Generator, 
         return run_survey_wrapper(method, fitness, p0, k, rng, P=P, T=T)
     if method in RUNNERS:
         return RUNNERS[method](fitness, p0, k, rng, P=P, T=T, n_jobs=n_jobs)
-    raise ValueError(f"phương pháp không có: {method}")
+    raise ValueError(f"unknown method: {method}")

@@ -50,7 +50,7 @@ def test_n_eval_exact_and_fitness_beyond_tolerance_fail(tmp_path):
 
 
 def test_last_bit_fitness_difference_is_reported_but_passes(tmp_path):
-    """Trường hợp gặp trên Kaggle ngày 15/11/2026: cùng tập gen và n_eval, best_fitness khác ở bit cuối."""
+    """Case met on Kaggle on 2026-11-15: same gene set and n_eval, best_fitness differs in the last bit."""
     import numpy as np
     root = copy_reference(tmp_path)
     path = root / COHORT / "selection_per_fold.csv"
@@ -69,7 +69,7 @@ def test_last_bit_fitness_difference_is_reported_but_passes(tmp_path):
 
 
 def test_subset_of_units_passes_and_empty_run_fails(tmp_path):
-    """Phiên S0 chỉ chạy lần lặp 0: chỉ các đơn vị đã chạy được so. Không có đơn vị nào thì cổng không đạt."""
+    """Session S0 runs only repeat 0: only the units that were run are compared. With no unit at all the gate fails."""
     root = copy_reference(tmp_path)
     for name in ("selected_genes.csv", "selection_per_fold.csv"):
         frame = pd.read_csv(root / COHORT / name, float_precision="round_trip")

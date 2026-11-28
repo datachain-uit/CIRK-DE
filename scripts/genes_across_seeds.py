@@ -1,9 +1,9 @@
-"""Mô tả, không đăng ký (Review-2026-11-18, Mục 6.2): số gen khác nhau trong các panel của năm seed trên gse37745.
+"""Descriptive, not registered: number of distinct genes in the panels of the five seeds on gse37745.
 
-Với mỗi (method, k, repeat, fold), đếm số gen khác nhau trong hợp của panel đồng thuận của seed 0 (T1, T1v2) và seed 1–4
-(T3_s1..4, T3v2_s1..4), rồi lấy trung bình, min, max qua 15 (repeat, fold).
+For each (method, k, repeat, fold), count the distinct genes in the union of the consensus panels of seed 0 (T1, T1v2) and seeds 1–4
+(T3_s1..4, T3v2_s1..4), then take the mean, min and max over the 15 (repeat, fold).
 
-    python scripts/genes_across_seeds.py <thư mục chứa T1, T1v2, T3_s*, T3v2_s*> tables_v2/genes_across_seeds_gse37745.csv
+    python scripts/genes_across_seeds.py <folder holding T1, T1v2, T3_s*, T3v2_s*> tables_v2/genes_across_seeds_gse37745.csv
 """
 import sys
 import pandas as pd

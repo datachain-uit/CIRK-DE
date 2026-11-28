@@ -1,7 +1,7 @@
-"""Pha B-LL (TQĐ11, Review-2026-11-14b): khác biệt duy nhất so với pha B của survey là tiêu chí chọn C.
+"""Phase B-LL: the only difference from the vendored phase B is the criterion that selects C.
 
-Test 1–4 chép từ taimma_ref/test_phase_b_ll_ref.py; test 5 chạy hai script trên dữ liệu giả của smoke test; test 6 (bảng) nằm ở
-tests/test_tables.py. Dữ liệu giả chỉ để kiểm mã.
+Tests 1–4 test mpqda/phase_b.py directly; test 5 runs the two scripts on the synthetic data of the smoke test; test 6 (tables) is in
+tests/test_tables.py. Synthetic data only check the code.
 """
 import json
 import subprocess
@@ -19,7 +19,7 @@ FIELDS = ("hyperparam", "auroc", "bacc", "mcc", "logloss", "brier", "threshold")
 
 
 def data(seed, effect, n=141, n1=60, k=10, n_test=28):
-    """Cỡ mẫu và tỉ lệ lớp như GSE30219 (Bảng 4 của review)."""
+    """Sample size and class ratio as in GSE30219."""
     rng = np.random.default_rng(seed)
     y = np.r_[np.zeros(n - n1, int), np.ones(n1, int)]
     rng.shuffle(y)
@@ -47,13 +47,13 @@ def test_logloss_criterion_removes_the_tie_artifact():
         a = evaluate_panel_ll(Xtr, ytr, Xte, yte, seed=seed, criterion="auroc")
         b = evaluate_panel_ll(Xtr, ytr, Xte, yte, seed=seed, criterion="logloss")
         c_auc.append(a.hyperparam); c_ll.append(b.hyperparam); ll_auc.append(a.logloss); ll_ll.append(b.logloss)
-    assert np.mean(np.array(c_auc) == 0.01) > 0.5          # tham chiếu: 7/12
-    assert np.mean(np.array(c_ll) == 0.01) == 0.0           # tham chiếu: 0/12
-    assert np.mean(ll_ll) < 0.5 * np.mean(ll_auc)           # tham chiếu: 0,266 -> 0,086
+    assert np.mean(np.array(c_auc) == 0.01) > 0.5          # reference: 7/12
+    assert np.mean(np.array(c_ll) == 0.01) == 0.0           # reference: 0/12
+    assert np.mean(ll_ll) < 0.5 * np.mean(ll_auc)           # reference: 0.266 -> 0.086
 
 
 def test_small_n_rule_is_unchanged():
-    Xtr, ytr, Xte, yte = data(3, 1.0, n=40, n1=12, n_test=10)    # lớp nhỏ còn <= 10 mẫu train
+    Xtr, ytr, Xte, yte = data(3, 1.0, n=40, n1=12, n_test=10)    # minority class keeps <= 10 training samples
     assert min(np.sum(ytr == 0), np.sum(ytr == 1)) <= 10
     a = evaluate_panel(Xtr, ytr, Xte, yte, classifier="lr_l2", seed=3)
     b = evaluate_panel_ll(Xtr, ytr, Xte, yte, seed=3)
@@ -78,13 +78,13 @@ def _classify(repo, script, out, env, extra=()):
     clean = {k: v for k, v in env.items() if not k.startswith("_")}
     res = subprocess.run([sys.executable, str(repo / script), *args], cwd=repo, env=clean, capture_output=True, text=True,
                          encoding="utf-8", errors="replace")
-    assert res.returncode == 0, f"{script} trả mã {res.returncode}\n{res.stdout[-2000:]}\n{res.stderr[-2000:]}"
+    assert res.returncode == 0, f"{script} returned code {res.returncode}\n{res.stdout[-2000:]}\n{res.stderr[-2000:]}"
 
 
 @pytest.mark.slow
 def test_script_auroc_mode_matches_survey_and_logloss_mode_records_rule(smoke_run):
-    """Mức script: --criterion auroc trùng script survey (mọi cột trừ thời gian fit), config.json có c_selection, vendor/
-    không đổi. --criterion logloss ghi đúng quy tắc và không chọn C theo hoà AUROC."""
+    """Script level: --criterion auroc matches the vendored script (every column except fit time), config.json has c_selection, vendor/
+    unchanged. --criterion logloss writes the right rule and does not choose C by AUROC ties."""
     from scripts.vendor_survey import check
     repo, env = smoke_run["repo"], dict(smoke_run["env"], _SEL_ROOT=smoke_run["out"].parent)
     results = smoke_run["data"] / "results" / "survey_v2"
@@ -102,14 +102,15 @@ def test_script_auroc_mode_matches_survey_and_logloss_mode_records_rule(smoke_ru
     cfg_ll = json.loads((ll / "config.json").read_text(encoding="utf-8"))
     assert "c_selection" not in cfg_a
     assert cfg_b["c_selection"]["criterion"] == "auroc" and cfg_ll["c_selection"]["criterion"] == "logloss"
+    # the decision code is kept verbatim: it is written to config.json of the archived phase B results
     assert cfg_ll["c_selection"]["grid"] == [0.01, 0.1, 1.0, 10.0] and cfg_ll["c_selection"]["decision"] == "TQĐ11"
     assert cfg_ll["provenance"]["script"].replace("\\", "/").endswith("scripts/run_taimma_phase_b.py")
     assert not cfg_a["provenance"]["script"].replace("\\", "/").endswith("scripts/run_taimma_phase_b.py")
-    # bản sao kho trong test đã commit nhưng chưa push: lỗi truy vết duy nhất được phép là "chưa push"; script ngoài vendor/
-    # phải được nhận là đã theo dõi (lỗi gặp trên Kaggle ngày 15/11/2026 ở commit 38bc3fe)
+    # the repository copy in the test is committed but not pushed: the only allowed traceability error is "not pushed"; scripts outside vendor/
+    # must be seen as tracked (error met on Kaggle on 2026-11-15 at commit 38bc3fe)
     for cfg in (cfg_b, cfg_ll):
         errors = cfg.get("traceable_errors") or cfg["provenance"].get("traceable_errors")
         assert errors is not None and len(errors) == 1 and "remote" in errors[0], errors
     pll = pd.read_csv(ll / "classification_per_fold.csv", float_precision="round_trip")
     assert len(pll) == len(pa) and set(pll.method) == set(pa.method)
-    assert check() == []                                                    # vendor/ của kho đang test không đổi
+    assert check() == []                                                    # vendor/ of the repository under test is unchanged

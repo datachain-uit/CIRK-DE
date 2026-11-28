@@ -1,5 +1,5 @@
-"""Bản vá của Review-2026-11-17 (taimma_ref_v3): B-LL-wide (TQĐ27), việc v1b và lệnh check-registered (TQĐ30), HV5 và cột
-family_size của các bảng HV (TQĐ27, TQĐ29). Dữ liệu giả chỉ để kiểm mã, không phải kết quả thực nghiệm."""
+"""B-LL-wide, job v1b and the command check-registered, HV5 and the column
+family_size of the HV tables. Synthetic data only check the code, not experimental results."""
 import json
 
 import numpy as np
@@ -38,7 +38,7 @@ def test_llwide_is_logloss_on_the_wide_grid_whatever_grid_the_caller_passes():
 
 
 def test_llwide_reaches_below_the_original_grid_on_noise():
-    Xtr, ytr, Xte, yte = data(3, 0.0)                   # không có tín hiệu: log-loss nhỏ nhất ở C nhỏ nhất
+    Xtr, ytr, Xte, yte = data(3, 0.0)                   # no signal: the smallest log-loss is at the smallest C
     a = evaluate_panel_ll(Xtr, ytr, Xte, yte, seed=3, criterion="llwide")
     b = evaluate_panel_ll(Xtr, ytr, Xte, yte, seed=3, criterion="logloss")
     assert a.hyperparam in C_GRID_WIDE and a.hyperparam < 0.01 and b.hyperparam == 0.01
@@ -52,6 +52,7 @@ def test_llwide_keeps_the_small_n_rule():
 
 
 def test_phase_b_script_records_the_wide_grid():
+    # the decision code is kept verbatim: it is written to config.json of the archived phase B results
     assert PB.GRIDS["llwide"] == list(C_GRID_WIDE) and PB.DECISIONS.get("llwide") == "TQĐ27"
     assert set(PB.RULES) == set(PB.GRIDS) == {"logloss", "auroc", "c1", "llwide"}
 
@@ -68,7 +69,7 @@ def test_eval_llw_writes_to_t5llw_and_checks_its_criterion(tmp_path, monkeypatch
         (d / "config.json").write_text(json.dumps(cfg), encoding="utf-8")
     ok = lambda sub: E.check_configs(f"{M.RESULT_SUBDIR}/{sub}/T1", ["gse10245"], "abc")  # noqa: E731
     assert ok("T5LLW") == [] and ok("T5C1") == [] and ok("T5") == []
-    assert len(ok("T5LL")) == 1 and "chờ logloss" in ok("T5LL")[0]          # T5LL không nhận nhầm tiêu chí của T5LLW
+    assert len(ok("T5LL")) == 1 and "expected logloss" in ok("T5LL")[0]          # T5LL does not accept the criterion of T5LLW
 
 
 def test_eval_selection_root_overrides_only_the_panel_source(tmp_path):
@@ -116,7 +117,7 @@ def test_check_registered(capsys):
     assert "REGISTERED_OK" in capsys.readouterr().out
 
 
-# ---------------------------------------------------------------- bảng v2: họ Holm, HV2 dưới B-C1 và B-LL-wide, HV5
+# ---------------------------------------------------------------- v2 tables: Holm family, HV2 under B-C1 and B-LL-wide, HV5
 def _results(tmp_path, v1b=False):
     root = tmp_path / "results"
     fake_results(root)
@@ -127,7 +128,7 @@ def _results(tmp_path, v1b=False):
         dst.mkdir(parents=True, exist_ok=True)
         ev = pd.read_csv(src / "classification_per_fold.csv", encoding="utf-8-sig").assign(cohort=c)
         ev.to_csv(dst / "classification_per_fold.csv", index=False, encoding="utf-8-sig")
-    if v1b:                                       # việc v1b: B-C1, B-LL-wide của T1 v1 (ở đây chép từ T5LL)
+    if v1b:                                       # job v1b: B-C1, B-LL-wide of T1 of v1 (here copied from T5LL)
         for sub in ("T5C1", "T5LLW"):
             for c in COHORTS:
                 dst = root / sub / "T1" / c
@@ -147,7 +148,7 @@ def test_every_hv_table_carries_its_registered_family_size(tmp_path):
         size = V.FAMILY_SIZE[family.split("_")[0]]
         assert t.holm_family.eq(family).all() and t.family_size.eq(size).all() and len(t) == size, name
         p_col = "p_two_sided" if family.startswith("HV2") else "p"
-        i = t[p_col].idxmin()                    # Holm trên cả họ: p_holm nhỏ nhất bằng cỡ họ nhân p nhỏ nhất
+        i = t[p_col].idxmin()                    # Holm over the whole family: the smallest p_holm equals family size times the smallest p
         assert np.isclose(t.p_holm[i], min(1.0, size * t[p_col][i])), name
 
 
@@ -172,7 +173,7 @@ def _b7_frame(shift5, shift10, n_rep=3, n_fold=5, seed=0):
     for k, shift in ((5, shift5), (10, shift10)):
         for r in range(n_rep):
             for f in range(n_fold):
-                base, j = float(rng.uniform(0.70, 0.85)), 1e-4 * (n_fold * r + f)   # hiệu khác nhau từng fold: Wilcoxon chính xác
+                base, j = float(rng.uniform(0.70, 0.85)), 1e-4 * (n_fold * r + f)   # differences vary by fold: exact Wilcoxon
                 for m, au, ll in (("mpqda_de", base, 0.55), ("mpqda_v2", base - shift - np.sign(shift) * j, 0.60),
                                   ("ga", base - 0.01, 0.65)):
                     rows.append({"cohort": V.HV5_COHORT, "repeat": r, "fold": f, "method": m, "k": k, "model": "lr_l2",
@@ -210,13 +211,14 @@ def test_hv5_refuses_a_missing_cohort():
 
 @pytest.mark.slow
 def test_script_llwide_records_and_uses_the_wide_grid(smoke_run):
-    """Mức script: --criterion llwide ghi lưới rộng và TQĐ27 vào config.json; mọi C của LR-L2 nằm trong lưới rộng."""
+    """Script level: --criterion llwide writes the wide grid and its decision code to config.json; every C of LR-L2 lies in the wide grid."""
     from conftest import SMOKE_COHORT
     from test_phase_b import _classify
     repo, env = smoke_run["repo"], dict(smoke_run["env"], _SEL_ROOT=smoke_run["out"].parent)
     _classify(repo, "scripts/run_taimma_phase_b.py", "taimma/PB_llw", env, ("--criterion", "llwide"))
     d = smoke_run["data"] / "results" / "survey_v2" / "taimma" / "PB_llw" / SMOKE_COHORT
     sel = json.loads((d / "config.json").read_text(encoding="utf-8"))["c_selection"]
+    # the decision code is kept verbatim: it is written to config.json of the archived phase B results
     assert sel["criterion"] == "llwide" and sel["grid"] == list(C_GRID_WIDE) and sel["decision"] == "TQĐ27"
     ev = pd.read_csv(d / "classification_per_fold.csv", float_precision="round_trip")
     lr = ev[(ev.model == "lr_l2") & ev.C.notna()]

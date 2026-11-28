@@ -24,7 +24,7 @@ authors:
 repository-code: "https://github.com/datachain-uit/CIRK-DE"
 license: MIT
 version: taimma-2027-submission
-date-released: 2026-11-26
+date-released: 2026-11-28
 keywords:
   - gene selection
   - differential evolution

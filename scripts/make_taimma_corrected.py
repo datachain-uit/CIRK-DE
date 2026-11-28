@@ -1,21 +1,21 @@
-"""Phân tích lại từ kết quả đã có và phân tích sửa đổi A2 (Review-2026-11-20, TQĐ50, TQĐ51).
+"""Re-analysis of existing results and analysis of amendment A2 (PREREG-v2, Section 12; docs/taimma/PREREG-v2_A2.md).
 
-Không chạy tìm kiếm mới. Đọc thư mục kết quả của bài (cùng bố cục với make_taimma_v2_tables.py: T1, T1v2, T2v2, T5LL/...,
-và T4v2 khi phiên C4 đã chạy) và ghi vào --out:
+No new search is run. Reads the result folder of the paper (same layout as make_taimma_v2_tables.py: T1, T1v2, T2v2, T5LL/...,
+and T4v2 once session C4 has run) and writes to --out:
 
-* corrected_inner.csv (không đăng ký, độ nhạy): mọi hiệu fitness nội bộ tốt nhất mà bài nêu (HV1, HV4, E2 và phân rã
-  v2 − v1 = (v2 − DE-G) + (DE-G − DE/rand/1/bin) + (DE/rand/1/bin − v1)), mỗi dòng có trung bình, hiệu trung bình từng cohort,
-  số cohort có hiệu dương, CI bootstrap phân tầng (như HV1, cùng seed), CI Nadeau–Bengio gộp ba cohort (công thức của HV2:
-  ρ = 1/4, J = 15, df = 14), p một phía theo t hiệu chỉnh, và p Wilcoxon một phía (như bản đăng ký) để đối chiếu.
-* corrected_outer.csv: HV2 dưới B-LL, hiệu log-loss và AUROC ngoài (v2 trừ BPSO, v2 trừ v1) kèm CI Nadeau–Bengio gộp.
-* corrected_hv5.csv: HV5 (gse31210_egfr), CI Nadeau–Bengio một bộ cho AUROC v1 − v2 (mô tả).
-* runtime.csv: thời gian chọn gen trung bình mỗi lần chạy (cột selection_time_s) theo phương pháp và k, ba cohort GPL570.
-* gate_r50.csv và hv6.csv, hv6_page.csv (chỉ khi có T4v2): cổng tái lập R50 và HV6 của sửa đổi A2.
-* claims_corrected.csv và inputs_sha256_corrected.csv: sổ số liệu và SHA-256 đầu vào.
+* corrected_inner.csv (not registered, sensitivity): every difference of best inner fitness stated in the paper (HV1, HV4, E2 and the decomposition
+  v2 − v1 = (v2 − DE-G) + (DE-G − DE/rand/1/bin) + (DE/rand/1/bin − v1)); each row has the mean, the mean difference per cohort,
+  the number of cohorts with a positive difference, a stratified bootstrap CI (as in HV1, same seed), a Nadeau–Bengio CI pooled over the three cohorts (formula of HV2:
+  ρ = 1/4, J = 15, df = 14), the one-sided p of the corrected t, and the one-sided Wilcoxon p (as registered) for comparison.
+* corrected_outer.csv: HV2 under B-LL, differences of outer log-loss and AUROC (v2 minus BPSO, v2 minus v1) with the pooled Nadeau–Bengio CI.
+* corrected_hv5.csv: HV5 (gse31210_egfr), single-dataset Nadeau–Bengio CI for AUROC v1 − v2 (descriptive).
+* runtime.csv: mean gene-selection time per run (column selection_time_s) by method and k, three GPL570 cohorts.
+* gate_r50.csv and hv6.csv, hv6_page.csv (only when T4v2 exists): reproduction gate R50 and HV6 of amendment A2.
+* claims_corrected.csv and inputs_sha256_corrected.csv: register of numbers and SHA-256 of the inputs.
 
     python scripts/make_taimma_corrected.py --results <$KLTN_DATA_ROOT/results/survey_v2/taimma> --out tables_v2/corrected
 
-Cách đọc viết trước khi tính (Review-2026-11-20, Mục 6): xem README_taimma_ref_v8.md.
+Reading rules written before computing: docs/taimma/PREREG-v2_A2.md.
 """
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ from scripts.make_taimma_v2_tables import HV5_COHORT, bootstrap_ci  # noqa: E402
 COHORTS = T.COHORTS
 V1, V2, DEG, DR, NOGAP = "mpqda_de", "mpqda_v2", "de_g", "de_rand1", "mpqda_v2_no_gap"
 ALL_K = (2, 5, 10, 50)
-# (nhóm, nhãn, phương pháp a, phương pháp b, các k, đã đăng ký?)  — hiệu a − b của best_fitness theo fold
+# (group, label, method a, method b, the k values, registered?)  — difference a − b of best_fitness per fold
 INNER = (
     ("HV1", "v2 - v1", V2, V1, (5, 10), True),
     ("HV1", "v2 - GA", V2, "ga", (5, 10), True),
@@ -59,9 +59,9 @@ HV6_TREND_K = (2, 5, 10, 20, 50)
 R50_TOL = 1e-12
 
 
-# ------------------------------------------------------------------------------------------------- thống kê
+# ------------------------------------------------------------------------------------------------- statistics
 def describe(by_c, alternative: str = "greater") -> dict:
-    """Mô tả một hiệu ghép cặp theo fold, chia theo ba cohort (danh sách mảng, cùng thứ tự COHORTS)."""
+    """Describe one paired difference per fold, split by the three cohorts (list of arrays, same order as COHORTS)."""
     by_c = [np.asarray(d, dtype=float) for d in by_c]
     d = np.concatenate(by_c)
     lo, hi = bootstrap_ci(by_c)
@@ -92,7 +92,7 @@ def inner_table(sel: pd.DataFrame) -> pd.DataFrame:
 
 
 def decomposition_check(inner: pd.DataFrame, tol: float = 1e-9) -> pd.DataFrame:
-    """v2 − v1 phải bằng tổng ba hạng (cùng fold, cùng k); trả về chênh lệch theo k (≈ 0)."""
+    """v2 − v1 must equal the sum of the three terms (same fold, same k); returns the discrepancy per k (≈ 0)."""
     part = inner[inner.group == "D"].set_index(["comparison", "k"]).mean_diff
     rows = []
     for k in sorted(inner[inner.group == "D"].k.unique()):
@@ -138,10 +138,10 @@ def runtime_table(sel: pd.DataFrame, ks=(5, 10)) -> pd.DataFrame:
     return g.agg(n="size", mean_s="mean", median_s="median").reset_index()
 
 
-# ------------------------------------------------------------------------------------------------- sửa đổi A2
+# ------------------------------------------------------------------------------------------------- amendment A2
 def gate_r50(sel_c1: pd.DataFrame, sel_c4: pd.DataFrame, genes_c1: pd.DataFrame | None = None,
              genes_c4: pd.DataFrame | None = None, k: int = 50, tol: float = R50_TOL) -> pd.DataFrame:
-    """R50: mpqda_v2 ở k = 50 của C4 phải trùng C1 (T1v2): cùng best_fitness (lệch ≤ tol), cùng N_eval, cùng panel."""
+    """R50: mpqda_v2 at k = 50 of C4 must match C1 (T1v2): same best_fitness (difference ≤ tol), same N_eval, same panel."""
     key = ["cohort", "repeat", "fold", "method"]
     names = (V2, V2 + "_best")
     a = sel_c1[(sel_c1.k == k) & sel_c1.method.isin(names)].set_index(key).sort_index()
@@ -171,7 +171,7 @@ def gate_r50(sel_c1: pd.DataFrame, sel_c4: pd.DataFrame, genes_c1: pd.DataFrame 
 
 
 def hv6_diffs(sel_small: pd.DataFrame, sel_c4: pd.DataFrame) -> pd.DataFrame:
-    """d_k = best_fitness(v2) − best_fitness(v2 không khe) theo fold: k ≤ 10 từ C1 + C2, k ∈ {20, 50} từ C4."""
+    """d_k = best_fitness(v2) − best_fitness(v2 without gap) per fold: k ≤ 10 from C1 + C2, k ∈ {20, 50} from C4."""
     key = ["cohort", "repeat", "fold"]
     frames = []
     for k in HV6_TREND_K:
@@ -185,7 +185,7 @@ def hv6_diffs(sel_small: pd.DataFrame, sel_c4: pd.DataFrame) -> pd.DataFrame:
 
 
 def hv6(diffs: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """HV6a: Wilcoxon một phía (d > 0) ở k ∈ {20, 50}, Holm trên 2; HV6: Page's L, xu hướng tăng theo k ∈ {2, 5, 10, 20, 50}."""
+    """HV6a: one-sided Wilcoxon (d > 0) at k ∈ {20, 50}, Holm over 2; HV6: Page's L, increasing trend over k ∈ {2, 5, 10, 20, 50}."""
     rows = []
     for k in HV6_K:
         part = diffs[diffs.k == k]
@@ -202,7 +202,7 @@ def hv6(diffs: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     wide = wide[[k for k in HV6_TREND_K if k in wide.columns]].dropna()
     page = pd.DataFrame()
     if wide.shape[1] == len(HV6_TREND_K) and len(wide) >= 2:
-        res = st.page_trend_test(wide.to_numpy())          # cột theo thứ tự k tăng = hạng dự đoán 1..5
+        res = st.page_trend_test(wide.to_numpy())          # columns in increasing k = predicted ranks 1..5
         page = pd.DataFrame([{"n_blocks": int(len(wide)), "ks": " ".join(map(str, HV6_TREND_K)), "L": float(res.statistic),
                               "p": float(res.pvalue), "method": res.method, "significant": bool(res.pvalue < T.ALPHA),
                               **{f"mean_d_k{k}": float(wide[k].mean()) for k in HV6_TREND_K}}])
@@ -210,7 +210,7 @@ def hv6(diffs: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 def hv6_reading(a: pd.DataFrame, page: pd.DataFrame) -> str:
-    """Quy tắc đọc của sửa đổi A2 (viết trước khi chạy): supported / partially supported / not supported."""
+    """Reading rule of amendment A2 (written before the run): supported / partially supported / not supported."""
     trend = bool(len(page) and page.significant.iloc[0])
     at50 = bool(len(a) and a[a.k == 50].significant.any())
     if trend and at50:
@@ -251,13 +251,13 @@ def build(results: Path, out: Path) -> dict:
         emit("corrected_hv5", hv5_table(b7[b7.model == "lr_l2"].reset_index(drop=True)), "CORRHV5",
              ["auroc_v1_minus_v2", "nb_ci_low", "nb_ci_high"], ["cohort", "k"], "B-LL")
     sel_c4 = inp.scenario("T4v2", "selection_per_fold.csv")
-    status = "C4 chưa có (T4v2): bỏ qua R50 và HV6"
+    status = "C4 not available (T4v2): R50 and HV6 skipped"
     if sel_c4 is not None and frames[1] is not None and frames[2] is not None:
         g1, g4 = inp.scenario("T1v2", "selected_genes.csv"), inp.scenario("T4v2", "selected_genes.csv")
         gate = gate_r50(frames[1], sel_c4, g1, g4)
         emit("gate_r50", gate)
         if not len(gate) or not gate["pass"].all():
-            status = "R50 KHÔNG ĐẠT: dừng, không tính HV6, báo giảng viên"
+            status = "R50 FAILED: stop, HV6 not computed, report it"
         else:
             a, page = hv6(hv6_diffs(pd.concat([frames[1], frames[2]], ignore_index=True), sel_c4))
             reading = hv6_reading(a, page)
@@ -265,7 +265,7 @@ def build(results: Path, out: Path) -> dict:
                  ["mean_diff", "boot_ci_low", "boot_ci_high", "nb_ci_low", "nb_ci_high", "share_positive", "p_wilcoxon_one_sided",
                   "p_holm", "significant"], ["k"])
             emit("hv6_page", page.assign(reading=reading), "HV6PAGE", ["L", "p", "significant"], ["ks"])
-            status = f"R50 đạt; HV6: {reading}"
+            status = f"R50 passed; HV6: {reading}"
     T.write_csv(pd.DataFrame(sorted(inp.used.items()), columns=["file", "sha256"]), out / "inputs_sha256_corrected.csv")
     T.write_csv(pd.DataFrame(claims, columns=T.CLAIM_COLUMNS), out / "claims_corrected.csv")
     return {"written": done, "missing": sorted(set(inp.missing)), "status": status}
@@ -280,10 +280,10 @@ def main(argv=None) -> int:
     ap.add_argument("--out", type=Path, default=Path("tables_v2/corrected"))
     args = ap.parse_args(argv)
     res = build(args.results, args.out)
-    print("đã ghi: " + ", ".join(res["written"]))
+    print("written: " + ", ".join(res["written"]))
     print(res["status"])
     if res["missing"]:
-        print(f"thiếu {len(res['missing'])} tệp: " + ", ".join(res["missing"][:6]))
+        print(f"missing {len(res['missing'])} files: " + ", ".join(res["missing"][:6]))
     return 0
 
 

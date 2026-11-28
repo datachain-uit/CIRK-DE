@@ -1,67 +1,67 @@
-# qlDE — cấu hình trích từ bài gốc (Đ6)
+# qlDE — configuration taken from the original paper
 
-Nguồn: Huynh TN, Do DTT, Lee J (2021) Q-learning-based parameter control in differential evolution for structural
+Source: Huynh TN, Do DTT, Lee J (2021) Q-learning-based parameter control in differential evolution for structural
 optimization. Applied Soft Computing 107:107464. doi:10.1016/j.asoc.2021.107464
 
-**Trạng thái: đã điền từ toàn văn ngày 14/11/2026** (bản PDF của nhà xuất bản, 14 trang). Cấu hình nằm ở
-`mpqda.config.QLDE`; cài đặt là `mpqda.baselines.run_qlde`. Bốn chỗ bài gốc để ngỏ hoặc tự mâu thuẫn (Mục 3 dưới đây) đã ghi
-vào `CHOICES_TO_CONFIRM` và **được giảng viên chấp nhận cả bốn** (TQĐ12, Review-2026-11-14b): một trạng thái; α theo Eq. (7) và
-γ = 0,8 theo Mục 3.1; phá hoà bằng chỉ số nhỏ nhất; một tổ hợp (F, CR) cho cả quần thể mỗi thế hệ. Mục 4 của bài nêu hai chỗ bài
-gốc để ngỏ (trạng thái, cách phá hoà).
+**Status: filled in from the full text on 2026-11-14** (publisher's PDF, 14 pages). The configuration is in
+`mpqda.config.QLDE`; the implementation is `mpqda.baselines.run_qlde`. The four points that the original paper leaves open or contradicts (Section 3 below) were recorded
+in `CHOICES_TO_CONFIRM` and **all four were approved** before the main runs: one state; α from Eq. (7) and
+γ = 0.8 from Section 3.1; ties broken by the smallest index; one (F, CR) pair for the whole population per generation. Section 4 of the paper states the two points the original
+paper leaves open (state, tie-breaking).
 
-## 1. Cấu hình của bài gốc
+## 1. Configuration of the original paper
 
-| Hạng mục | Giá trị trong bài gốc | Mục, phương trình, bảng |
+| Item | Value in the original paper | Section, equation, table |
 |---|---|---|
-| Đột biến | DE/rand/1: v_i = x_R1 + F·(x_R2 − x_R3), i ≠ R1 ≠ R2 ≠ R3 | Mục 2, Eq. (2); Algorithm 2 dòng 15–17 |
-| Sửa biên | phản xạ (reflecting wall): v < x_min thành 2·x_min − v; v > x_max thành 2·x_max − v | Mục 2, Eq. (3) |
-| Lai ghép | nhị thức: u_ij = v_ij nếu j = K_i hoặc rand ≤ Cr; K_i rút đều trong {1, …, D} | Mục 2, Eq. (4); Algorithm 2 dòng 18–23 |
-| Chọn lọc | u_i thay x_i khi f(u_i) ≤ f(x_i) (bài toán cực tiểu) | Mục 2, Eq. (5); Algorithm 2 dòng 26–28 |
-| Hành động | 7 tổ hợp [F, Cr]: [0,4; 0,7], [0,6; 0,7], [0,8; 0,7], [0,4; 0,9], [0,6; 0,9], [0,8; 0,9], [0,9; 0,9] | Mục 3.2, Eq. (9); Table 1 |
-| Phạm vi của hành động | một tổ hợp cho cả quần thể trong một vòng lặp: "at the beginning of each DE iteration, a combination of control parameters is chosen" | Mục 3.2; Fig. 2 |
-| Phần thưởng | r_t = +1 nếu best_{t+1} < best_t (nghiệm tốt nhất của quần thể tốt lên), ngược lại −1; tính ở cuối vòng lặp | Mục 3.2, Eq. (8) |
-| Cập nhật Q | Q(s_t, a_t) ← Q(s_t, a_t) + α·[r_t + γ·max_a Q(s_{t+1}, a) − Q(s_t, a_t)], một lần mỗi vòng lặp | Mục 3.1, Eq. (6); Algorithm 2 dòng 30 |
-| Tốc độ học | α(t) = 1 − 0,9·(eval / MaxEval), giảm tuyến tính | Mục 3.1, Eq. (7) |
-| Hệ số chiết khấu | γ = 0,8 | Mục 3.1 |
-| Chính sách | chọn hành động có Q lớn nhất ở trạng thái hiện tại (tham lam, không có thăm dò) | Algorithm 2 dòng 1–2, 14 |
-| Giá trị đầu | bảng Q toàn 0 | Algorithm 2 dòng 10 |
-| Trạng thái | **không định nghĩa.** Mục 3.1 chỉ nêu S = {s_1, …, s_m} ở dạng tổng quát; Mục 3.2, Table 1 và Algorithm 2 không nói trạng thái là gì hay có bao nhiêu | – |
-| Ngân sách trong bài gốc | NP = 50 (và 20), MaxEval = 150.000, dừng khi δ = \|f_mean / f_best − 1\| < 1e−6 hoặc hết MaxEval; 30 lần chạy | Mục 4 |
-| DE so sánh trong bài gốc | F = 0,8, Cr = 0,9 | Table 1 |
+| Mutation | DE/rand/1: v_i = x_R1 + F·(x_R2 − x_R3), i ≠ R1 ≠ R2 ≠ R3 | Section 2, Eq. (2); Algorithm 2 lines 15–17 |
+| Bound repair | reflection (reflecting wall): v < x_min becomes 2·x_min − v; v > x_max becomes 2·x_max − v | Section 2, Eq. (3) |
+| Crossover | binomial: u_ij = v_ij if j = K_i or rand ≤ Cr; K_i drawn uniformly from {1, …, D} | Section 2, Eq. (4); Algorithm 2 lines 18–23 |
+| Selection | u_i replaces x_i when f(u_i) ≤ f(x_i) (minimisation problem) | Section 2, Eq. (5); Algorithm 2 lines 26–28 |
+| Actions | 7 pairs [F, Cr]: [0.4; 0.7], [0.6; 0.7], [0.8; 0.7], [0.4; 0.9], [0.6; 0.9], [0.8; 0.9], [0.9; 0.9] | Section 3.2, Eq. (9); Table 1 |
+| Scope of an action | one pair for the whole population in one iteration: "at the beginning of each DE iteration, a combination of control parameters is chosen" | Section 3.2; Fig. 2 |
+| Reward | r_t = +1 if best_{t+1} < best_t (the best solution of the population improves), otherwise −1; computed at the end of the iteration | Section 3.2, Eq. (8) |
+| Q update | Q(s_t, a_t) ← Q(s_t, a_t) + α·[r_t + γ·max_a Q(s_{t+1}, a) − Q(s_t, a_t)], once per iteration | Section 3.1, Eq. (6); Algorithm 2 line 30 |
+| Learning rate | α(t) = 1 − 0.9·(eval / MaxEval), decreasing linearly | Section 3.1, Eq. (7) |
+| Discount factor | γ = 0.8 | Section 3.1 |
+| Policy | choose the action with the largest Q in the current state (greedy, no exploration) | Algorithm 2 lines 1–2, 14 |
+| Initial values | Q table all 0 | Algorithm 2 line 10 |
+| State | **not defined.** Section 3.1 only gives S = {s_1, …, s_m} in general form; Section 3.2, Table 1 and Algorithm 2 do not say what the state is or how many there are | – |
+| Budget in the original paper | NP = 50 (and 20), MaxEval = 150,000, stop when δ = \|f_mean / f_best − 1\| < 1e−6 or MaxEval is reached; 30 runs | Section 4 |
+| DE compared in the original paper | F = 0.8, Cr = 0.9 | Table 1 |
 
-## 2. Chỗ khác bài gốc trong bài TAIMMA
+## 2. Differences from the original paper in the TAIMMA study
 
-Chỉ thay những phần chung cho mọi baseline DE (Mục 3.8 của YEU-CAU-DOI-CODE-2026-11-14-TAIMMA).
+Only the parts shared by every DE baseline are changed.
 
-| Hạng mục | Bài gốc | Bài TAIMMA | Lý do |
+| Item | Original paper | TAIMMA study | Reason |
 |---|---|---|---|
-| Biểu diễn | vector thực của biến thiết kế | khoá đều `rng.random((P, p0))`, giải mã top-k, mã hoá lại theo dải | cùng mã hoá cho mọi wrapper (Đ2, TQĐ6) |
-| Sửa biên | phản xạ, Eq. (3) | trung điểm theo cá thể đích | Đ1, áp cho mọi biến thể DE |
-| Chọn lọc | f(u) ≤ f(x), cực tiểu | f(u) ≥ f(x), cực đại | cùng quy tắc, đổi chiều vì fitness được cực đại hoá |
-| Phần thưởng | best_{t+1} < best_t | fitness tốt nhất của quần thể sau chọn lọc lớn hơn hẳn trước chọn lọc | như trên |
-| Xử lý ràng buộc | hàm phạt, Eq. (11), ε_1 = 1,5, ε_2 = 3 | không có | mọi cá thể đều khả thi (đúng k gen) |
-| Ngân sách và điều kiện dừng | NP = 50, MaxEval = 150.000, hoặc δ < 1e−6 | P = 30, T = 50, không có tiêu chí hội tụ | TQĐ6: mọi wrapper cùng ngân sách |
-| eval / MaxEval trong Eq. (7) | số lần gọi hàm mục tiêu | P·(t + 1) / (P·(T + 1)) sau thế hệ t, tức α đi từ 0,965 (t = 1) tới 0,1 (t = 50) | N_eval của bài này đếm panel khác nhau (có cache); dùng số danh nghĩa để α không phụ thuộc cache |
+| Representation | real vector of design variables | uniform keys `rng.random((P, p0))`, top-k decoding, band re-encoding | same encoding for every wrapper |
+| Bound repair | reflection, Eq. (3) | midpoint against the target individual | applied to every DE variant |
+| Selection | f(u) ≤ f(x), minimisation | f(u) ≥ f(x), maximisation | same rule, reversed because the fitness is maximised |
+| Reward | best_{t+1} < best_t | the best fitness of the population after selection is strictly larger than before selection | as above |
+| Constraint handling | penalty function, Eq. (11), ε_1 = 1.5, ε_2 = 3 | none | every individual is feasible (exactly k genes) |
+| Budget and stopping rule | NP = 50, MaxEval = 150,000, or δ < 1e−6 | P = 30, T = 50, no convergence criterion | every wrapper has the same budget |
+| eval / MaxEval in Eq. (7) | number of objective function calls | P·(t + 1) / (P·(T + 1)) after generation t, so α goes from 0.965 (t = 1) to 0.1 (t = 50) | N_eval of this study counts distinct panels (with a cache); the nominal count keeps α independent of the cache |
 
-## 3. Chỗ bài gốc để ngỏ hoặc tự mâu thuẫn — chờ giảng viên duyệt
+## 3. Points left open or contradictory in the original paper
 
-| # | Vấn đề | Cài đặt hiện tại | Phương án khác |
+| # | Issue | Current implementation | Alternative |
 |---|---|---|---|
-| 1 | Trạng thái không được định nghĩa | một trạng thái, bảng Q 1 × 7; max_a Q(s_{t+1}, a) lấy trên cùng dòng đó | tự đặt trạng thái (ví dụ theo kết quả vòng trước) thì không còn là thiết lập của bài gốc |
-| 2 | Table 1 ghi "QLearning: α = 0.8", còn Mục 3.1 ghi α theo Eq. (7) và "γ = 0.8" | theo Mục 3.1: α theo Eq. (7), γ = 0,8 (đọc dòng của Table 1 là lỗi ký hiệu của γ) | α = 0,8 cố định |
-| 3 | Cách phá hoà khi nhiều hành động có cùng Q lớn nhất không được nêu; với Q toàn 0 và chính sách tham lam, lựa chọn này quyết định hành động đầu tiên | chỉ số nhỏ nhất (thứ tự của Table 1), nên thế hệ đầu luôn dùng (F, Cr) = (0,4; 0,7); không tốn số ngẫu nhiên | rút đều trong các hành động hoà (thêm một số ngẫu nhiên mỗi thế hệ) |
-| 4 | Algorithm 2 gọi ChooseAction trong vòng `for i = 1 → NP`, còn Mục 3.2 và Fig. 2 nói một tổ hợp mỗi vòng lặp | một tổ hợp mỗi thế hệ. Hai cách cho cùng kết quả vì bảng Q chỉ cập nhật cuối vòng lặp và chính sách tất định | – |
+| 1 | The state is not defined | one state, Q table 1 × 7; max_a Q(s_{t+1}, a) is taken over that same row | defining a state of our own (for example from the result of the previous iteration) would no longer be the setting of the original paper |
+| 2 | Table 1 gives "QLearning: α = 0.8", while Section 3.1 gives α from Eq. (7) and "γ = 0.8" | following Section 3.1: α from Eq. (7), γ = 0.8 (the line of Table 1 is read as a notation error for γ) | α = 0.8 fixed |
+| 3 | Tie-breaking when several actions share the largest Q is not stated; with Q all 0 and a greedy policy, this choice decides the first action | smallest index (order of Table 1), so the first generation always uses (F, Cr) = (0.4; 0.7); no random number used | uniform draw among the tied actions (one more random number per generation) |
+| 4 | Algorithm 2 calls ChooseAction inside the loop `for i = 1 → NP`, while Section 3.2 and Fig. 2 say one pair per iteration | one pair per generation. The two readings give the same result because the Q table is updated only at the end of the iteration and the policy is deterministic | – |
 
-Hệ quả cho các tài liệu khác: Bảng 6 của Review-2026-11-14 và PREREG mô tả qlDE là "Q-learning chọn tổ hợp (F, CR) cho từng cá
-thể". Theo toàn văn, qlDE chọn một tổ hợp cho cả quần thể mỗi vòng lặp. Table 1 và Table 2 của bài cần ghi đúng điều này.
+Consequence for other documents: PREREG describes qlDE as "Q-learning choosing an (F, CR) pair for each
+individual". According to the full text, qlDE chooses one pair for the whole population per iteration. Table 1 and Table 2 of the paper must state this correctly.
 
-Hành vi cần biết khi đọc kết quả: phần thưởng −1 làm Q của hành động vừa dùng âm, nên chính sách tham lam chuyển sang hành động
-kế tiếp còn Q = 0. Bộ điều khiển vì thế đi lần lượt qua bảy tổ hợp trong những thế hệ không cải thiện và quay lại tổ hợp từng
-được thưởng.
+Behaviour to know when reading the results: a reward of −1 makes the Q of the action just used negative, so the greedy policy moves to the next
+action that still has Q = 0. The controller therefore goes through the seven pairs in turn during generations without improvement and returns to a pair that
+was once rewarded.
 
-## 4. Thứ tự rút số ngẫu nhiên của cài đặt
+## 4. Order of random draws of the implementation
 
-Như DE/rand/1/bin: khoá đều `rng.random((P, p0))`; mỗi thế hệ: (r1, r2, r3) cho i = 0..P − 1 bằng
+As DE/rand/1/bin: uniform keys `rng.random((P, p0))`; each generation: (r1, r2, r3) for i = 0..P − 1 by
 `rng.choice(np.delete(np.arange(P), i), size=3, replace=False)`; `U = rng.random((P, p0))`; `j_rand = rng.integers(0, p0, size=P)`.
-Chọn hành động và cập nhật Q không dùng số ngẫu nhiên. `tests/test_baselines.py` khẳng định: với một hành động duy nhất
-(0,5; 0,9), `run_qlde` cho đúng kết quả của `run_de_rand1` trên cùng seed.
+Action selection and the Q update use no random numbers. `tests/test_baselines.py` asserts: with a single action
+(0.5; 0.9), `run_qlde` gives exactly the result of `run_de_rand1` with the same seed.

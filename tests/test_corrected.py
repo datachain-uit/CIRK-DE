@@ -1,4 +1,4 @@
-"""Test cho phân tích lại và phân tích sửa đổi A2 (Review-2026-11-20, TQĐ50, TQĐ51). Dữ liệu giả, chỉ để kiểm mã."""
+"""Tests of the re-analysis and of the analysis of amendment A2. Synthetic data, only to check the code."""
 from __future__ import annotations
 
 import numpy as np
@@ -13,7 +13,7 @@ COH = list(T.COHORTS)
 
 
 def _sel(methods_k, seed=0, shift=None):
-    """selection_per_fold giả: 3 cohort × 3 lần lặp × 5 fold; best_fitness = nền theo fold + độ lệch theo phương pháp + nhiễu."""
+    """Synthetic selection_per_fold: 3 cohorts × 3 repeats × 5 folds; best_fitness = fold baseline + method offset + noise."""
     rng = np.random.default_rng(seed)
     shift = shift or {}
     rows = []
@@ -40,7 +40,7 @@ def test_describe_uses_the_pooled_nadeau_bengio_formula():
     assert np.isclose(out["nb_ci_low"], mean - q * se) and np.isclose(out["nb_ci_high"], mean + q * se)
     assert out["n"] == 45 and out["n_cohorts_positive"] == sum(d.mean() > 0 for d in by_c)
     assert out["boot_ci_low"] < out["mean_diff"] < out["boot_ci_high"]
-    # CI hiệu chỉnh rộng hơn CI bootstrap (phương sai nhân (1/J + ρ)·J = 4,75 khi J = 15)
+    # the corrected CI is wider than the bootstrap CI (variance factor (1/J + ρ)·J = 4.75 when J = 15)
     assert out["nb_ci_high"] - out["nb_ci_low"] > out["boot_ci_high"] - out["boot_ci_low"]
 
 
@@ -105,7 +105,7 @@ def test_hv6_reading_without_a_trend():
     small, c4 = _hv6_frames({2: 0.0, 5: 0.0, 10: 0.0, 20: 0.0, 50: 0.0})
     a, page = K.hv6(K.hv6_diffs(small, c4))
     assert K.hv6_reading(a, page) == "not supported"
-    small, c4 = _hv6_frames({2: 0.015, 5: 0.009, 10: 0.005, 20: 0.002, 50: 0.0})     # giảm theo k
+    small, c4 = _hv6_frames({2: 0.015, 5: 0.009, 10: 0.005, 20: 0.002, 50: 0.0})     # decreasing in k
     a, page = K.hv6(K.hv6_diffs(small, c4))
     assert not page.significant.iloc[0]
 
@@ -142,4 +142,4 @@ def test_build_end_to_end(tmp_path):
     assert pd.read_csv(out / "decomposition_check.csv").ok.all()
     claims = pd.read_csv(out / "claims_corrected.csv")
     assert len(claims) and claims.claim_id.str.startswith("CORR:").any()
-    assert "C4 chưa có" in info["status"]
+    assert "C4 not available" in info["status"]

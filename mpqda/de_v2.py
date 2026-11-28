@@ -1,21 +1,21 @@
-"""MPQDA-DE v2 (Review-2026-11-16, TQĐ22), chép từ taimma_ref/mpqda_v2_ref.py; thân hàm và thứ tự số ngẫu nhiên giữ nguyên.
+"""CIRK-DE (v2; PREREG-v2, Section 3). Function bodies and the order of random draws are fixed by the registration.
 
-v2 là DE random key đúng k gen, sửa đúng chỗ gây xáo trộn ở v1 rồi thêm áp lực chọn lọc:
-  (1) mã hoá lại hai dải có khe: gen trong panel nhận khoá trong (1/2, 1) theo hạng như v1; gen ngoài panel bị nén vào
-      (0, eps). Ở v1 (eps = 1/2), vector hiệu kéo hàng loạt gen ngẫu nhiên ở dải dưới vượt lên dải trên; với eps nhỏ,
-      đột biến và lai ghép chỉ trao đổi gen giữa các panel đang có;
-  (2) đột biến gen mới kiểu GA: mỗi gen của panel thử được thay, với xác suất rate_new (mặc định 1/k), bằng một gen ngoài
-      panel rút đều trong p0, thực hiện bằng đổi khoá giữa hai gen. Đây là nguồn gen mới duy nhất;
-  (3) leader và vector cho r1 lấy từ archive bằng tournament theo hạng fitness (tour = 3);
-  (4) F, CR cố định (mặc định), hoặc thích nghi theo lịch sử thành công kiểu SHADE (adapt = True, ứng viên M2);
-  (5) đầu ra chính là panel đồng thuận từ archive như v1, kèm cá thể tốt nhất.
-eps = 1/2, rate_new = 0, tour = 1, r1_from = "population" cho lại toán tử của v1 với leader rút đều (A2b), F cố định.
+v2 is a random-key DE with exactly k genes; it fixes the source of disruption in v1 and then adds selection pressure:
+  (1) two-band re-encoding with a gap: genes in the panel get keys in (1/2, 1) by rank as in v1; genes outside the panel are compressed into
+      (0, eps). In v1 (eps = 1/2), the difference vector pushes many random genes of the lower band into the upper band; with a small eps,
+      mutation and crossover only exchange genes between the existing panels;
+  (2) GA-style new-gene mutation: each gene of the trial panel is replaced, with probability rate_new (default 1/k), by a gene outside the
+      panel drawn uniformly from p0, implemented by swapping the keys of the two genes. This is the only source of new genes;
+  (3) the leader and the vector for r1 come from the archive by tournament on fitness rank (tour = 3);
+  (4) F, CR fixed (default), or adapted from the success history as in SHADE (adapt = True, candidate M2);
+  (5) the main output is the consensus panel of the archive as in v1, together with the best individual.
+eps = 1/2, rate_new = 0, tour = 1, r1_from = "population" give back the operator of v1 with a uniformly drawn leader (A2b) and fixed F.
 
-Dùng decode_topk, repair_midpoint, Archive, history_row, exploration_rate của gói mpqda (nhánh taimma-2027).
-Thứ tự số ngẫu nhiên mỗi thế hệ (một phần của đặc tả): (1) nếu adapt: chỉ số ô nhớ, F (Cauchy, rút lại khi ≤ 0), CR
-cho i = 0..P−1; (2) leader: tour số nguyên cho mỗi i; (3) r1 ≠ r2 ≠ i cho mỗi i; (4) nếu r1_from = "archive": tour số
-nguyên cho mỗi i; (5) U = rng.random((P, p0)), j_rand; (6) đột biến gen mới cho i = 0..P−1: k số đều, rồi choice nếu
-có gen bị thay. Khởi tạo: rng.random((P, p0)).
+Uses decode_topk, repair_midpoint, Archive, history_row, exploration_rate of the mpqda package (branch taimma-2027).
+Order of random draws in each generation (part of the specification): (1) if adapt: memory cell index, F (Cauchy, redrawn when ≤ 0), CR
+for i = 0..P−1; (2) leader: tour integers for each i; (3) r1 ≠ r2 ≠ i for each i; (4) if r1_from = "archive": tour
+integers for each i; (5) U = rng.random((P, p0)), j_rand; (6) new-gene mutation for i = 0..P−1: k uniform numbers, then choice if
+a gene is replaced. Initialisation: rng.random((P, p0)).
 """
 from __future__ import annotations
 
@@ -25,17 +25,17 @@ from mpqda.archive import Archive
 from mpqda.de import exploration_rate, history_row
 from mpqda.encoding import decode_topk, repair_midpoint
 
-EPS_LOW = 0.01                                     # độ rộng dải dưới
-F_FIXED, CR_FIXED = 0.5, 0.9                       # như DE/rand/1 của bài
-H_MEM, M_INIT, F_SCALE, CR_SD, F_MAX = 6, 0.5, 0.1, 0.1, 1.0   # chỉ dùng khi adapt = True (như SHADE)
+EPS_LOW = 0.01                                     # width of the lower band
+F_FIXED, CR_FIXED = 0.5, 0.9                       # as DE/rand/1 of the paper
+H_MEM, M_INIT, F_SCALE, CR_SD, F_MAX = 6, 0.5, 0.1, 0.1, 1.0   # used only when adapt = True (as in SHADE)
 
-# Ứng viên của pha phát triển (Mục 6.2 của Review-2026-11-16) và biến thể ablation của pha xác nhận
+# Candidates of the development phase (PREREG-v2, Section 2.2) and ablation variants of the confirmatory phase
 CANDIDATES = {
-    "mpqda_v2_m1": dict(),                                    # lõi: khe, gen mới, tournament 3 cho leader và r1, F, CR cố định
-    "mpqda_v2_m2": dict(adapt=True),                          # M1 + thích nghi kiểu SHADE
-    "mpqda_v2_m3": dict(tour=2),                              # M1 với tournament 2
+    "mpqda_v2_m1": dict(),                                    # core: gap, new genes, tournament 3 for the leader and r1, fixed F, CR
+    "mpqda_v2_m2": dict(adapt=True),                          # M1 + SHADE-style adaptation
+    "mpqda_v2_m3": dict(tour=2),                              # M1 with tournament 2
 }
-ABLATIONS = {                                                 # bỏ từng thành phần của bản chốt (ghi đè lên cấu hình đã chọn)
+ABLATIONS = {                                                 # remove one component of the chosen configuration (overrides the chosen configuration)
     "v2_no_gap": dict(eps=0.5),
     "v2_no_new": dict(rate_new=0.0),
     "v2_no_tour": dict(tour=1, r1_from="population"),
@@ -43,8 +43,8 @@ ABLATIONS = {                                                 # bỏ từng thà
 
 
 def gapped_band_encode(x: np.ndarray, k: int, eps: float = EPS_LOW) -> np.ndarray:
-    """Gen của S(x) nhận 0,5 + 0,5·(r + 0,5)/k; gen ngoài nhận eps·(r + 0,5)/(p0 − k); r là hạng ổn định trong nhóm.
-    eps = 0,5 cho đúng band_encode của v1. Panel và thứ tự khoá trong từng nhóm không đổi."""
+    """Genes of S(x) get 0.5 + 0.5·(r + 0.5)/k; other genes get eps·(r + 0.5)/(p0 − k); r is the stable rank within the group.
+    eps = 0.5 gives exactly band_encode of v1. The panel and the key order within each group are unchanged."""
     x = np.asarray(x, dtype=float)
     if not 0.0 < eps <= 0.5:
         raise ValueError(eps)
@@ -63,8 +63,8 @@ def gapped_band_encode(x: np.ndarray, k: int, eps: float = EPS_LOW) -> np.ndarra
 
 
 def innovate(u: np.ndarray, k: int, rate: float, rng: np.random.Generator) -> tuple[np.ndarray, int]:
-    """Mỗi gen của panel S(u) được thay với xác suất rate bằng một gen ngoài panel rút đều; đổi khoá giữa gen cũ và gen
-    mới nên S(u) mới đúng là panel đã thay. Luôn rút k số đều; thêm một lời gọi choice khi có gen bị thay."""
+    """Each gene of panel S(u) is replaced with probability rate by a gene outside the panel drawn uniformly; the keys of the old and the new
+    gene are swapped, so the new S(u) is exactly the modified panel. Always draws k uniform numbers; one more choice call when a gene is replaced."""
     S = decode_topk(u, k)
     flip = rng.random(k) < rate
     n = int(flip.sum())
@@ -93,7 +93,7 @@ def run_mpqda_v2(fitness, p0: int, k: int, rng: np.random.Generator, P: int = 30
                  rate_new: float | None = None, tour: int = 3, r1_from: str = "archive", adapt: bool = False,
                  F_fixed: float = F_FIXED, CR_fixed: float = CR_FIXED, A_max: int = 15, delta: float = 0.2,
                  n_jobs: int = 1) -> dict:
-    """Một lần chạy MPQDA-DE v2 cho một fold ngoài và một k. Trả về cùng các khoá với run_mpqda của v1."""
+    """One run of CIRK-DE (v2) for one outer fold and one k. Returns the same keys as run_mpqda of v1."""
     if r1_from not in ("archive", "population") or tour < 1:
         raise ValueError((r1_from, tour))
     rate = (1.0 / k) if rate_new is None else float(rate_new)
@@ -154,7 +154,7 @@ def run_mpqda_v2(fitness, p0: int, k: int, rng: np.random.Generator, P: int = 30
             MF[pos] = _lehmer(F[improved], w)
             MCR[pos] = float(np.sum(w / w.sum() * CR[improved]))
             pos = (pos + 1) % H_MEM
-        for i in range(P):                                        # chọn lọc rồi archive, theo thứ tự chỉ số
+        for i in range(P):                                        # selection then archive, in index order
             if accepted[i]:
                 X[i] = gapped_band_encode(Ut[i], k, eps)
                 f[i], panels[i] = fu[i], trial[i]
@@ -166,7 +166,7 @@ def run_mpqda_v2(fitness, p0: int, k: int, rng: np.random.Generator, P: int = 30
             mean_CR=float(CR.mean()), n_new_genes=n_new / P))
     ibest = int(np.argmax(f))
     S_c, pi = arch.consensus(k)
-    f_c = fitness.evaluate_many([S_c])[0]                          # tính vào n_eval nếu là panel mới
+    f_c = fitness.evaluate_many([S_c])[0]                          # counted in n_eval if the panel is new
     return {"consensus": S_c, "consensus_fitness": float(f_c), "best": np.asarray(panels[ibest]),
             "best_fitness": float(f[ibest]), "pi": pi,
             "archive": [(arch.members[i]["key"], arch.members[i]["f"]) for i in arch.ranked()], "history": hist,
@@ -175,9 +175,9 @@ def run_mpqda_v2(fitness, p0: int, k: int, rng: np.random.Generator, P: int = 30
 
 def run_de_gapped(fitness, p0: int, k: int, rng: np.random.Generator, P: int = 30, T: int = 50, F: float = F_FIXED,
                   CR: float = CR_FIXED, eps: float = EPS_LOW, rate_new: float | None = None, n_jobs: int = 1) -> dict:
-    """Baseline DE-G: DE/rand/1/bin với mã hoá lại có khe và đột biến gen mới; không archive, không tournament, F, CR
-    cố định. Tách phần đóng góp của biểu diễn khỏi các thành phần còn lại của v2. Thứ tự số ngẫu nhiên như
-    run_de_rand1 của bài, thêm bước đột biến gen mới sau lai ghép."""
+    """Baseline DE-G: DE/rand/1/bin with gap re-encoding and new-gene mutation; no archive, no tournament, fixed F,
+    CR. Separates the contribution of the representation from the other components of v2. Order of random draws as in
+    run_de_rand1 of the paper, with the new-gene mutation step added after crossover."""
     rate = (1.0 / k) if rate_new is None else float(rate_new)
     X = rng.random((P, p0))
     panels = [decode_topk(X[i], k) for i in range(P)]

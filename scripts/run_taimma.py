@@ -1,14 +1,14 @@
-"""Pha A của bài TAIMMA: chọn panel đúng k gen bằng các wrapper, trên phần train của từng fold ngoài (Mục 4.1).
+"""Phase A of the TAIMMA study: wrappers select panels of exactly k genes on the training part of each outer fold.
 
     python scripts/run_taimma.py --scenario T1 --metric logloss --datasets gse10245 gse30219 gse37745 \
         --methods mpqda_de ga bpso de_rand1 shade qlde --k 2 5 10 50 --repeats 0 1 2 \
         [--seed-index 0] [--workers 4] [--n-jobs-eval 1] [--folds 0 1 2] [--shuffle-train-labels] [--pop 30 --generations 50]
 
-Mỗi đơn vị là (lần lặp, fold, phương pháp) và chứa mọi k. Phần test của fold ngoài không được đọc trong pha A, trừ khi
-chạy T0 với --shuffle-train-labels: khi đó runner tự đánh giá ngoài trên nhãn test thật và ghi t0_shuffle_eval.csv.
---metric logloss dùng fold nội bộ chung cho mọi wrapper trên cùng fold ngoài; --metric auroc dùng fold theo seed của
-phương pháp như survey (Đ4). Không có cờ đổi cách này.
-Kết quả: $KLTN_DATA_ROOT/results/survey_v2/taimma/<kịch bản>/<cohort>/.
+Each unit is (repeat, fold, method) and holds every k. The test part of the outer fold is never read in phase A, except when
+running T0 with --shuffle-train-labels: the runner then evaluates on the true test labels itself and writes t0_shuffle_eval.csv.
+--metric logloss uses inner folds shared by every wrapper on the same outer fold; --metric auroc uses folds from the seed of the
+method as in the vendored code. No flag changes this.
+Results: $KLTN_DATA_ROOT/results/survey_v2/taimma/<scenario>/<cohort>/.
 """
 from __future__ import annotations
 
@@ -60,60 +60,60 @@ PARTS = {"metrics": (METRIC_COLUMNS, ["repeat", "fold", "method", "k"]),
 SHUFFLE_PART = {"shuffle_eval": (SHUFFLE_COLUMNS, ["repeat", "fold", "method", "k"])}
 AGGREGATE_NAMES = {"metrics": "selection_per_fold.csv", "genes": "selected_genes.csv", "history": "history.csv",
                    "consensus": "consensus_weights.csv", "archive": "archive_final.csv", "shuffle_eval": "t0_shuffle_eval.csv"}
-PHASE_B_METHOD_ID = 90                         # mọi phương pháp mới nhận 90 ở pha B của survey (Mục 3.2)
+PHASE_B_METHOD_ID = 90                         # every new method gets 90 in the phase B of the vendored code (PREREG, Section 3.8)
 
 
 def parse_args(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--scenario", required=True, help="T0, T1, T1b, T2, T3_s1..T3_s4, T6 hoặc tên smoke test")
+    ap.add_argument("--scenario", required=True, help="T0, T1, T1b, T2, T3_s1..T3_s4, T6 or a smoke-test name")
     ap.add_argument("--metric", required=True, choices=METRICS)
     ap.add_argument("--datasets", nargs="+", required=True)
     ap.add_argument("--methods", nargs="+", required=True, help=f"{M.ALL_METHODS}")
     ap.add_argument("--k", nargs="+", type=int, required=True)
     ap.add_argument("--repeats", nargs="+", type=int, default=[0, 1, 2])
-    ap.add_argument("--folds", nargs="+", type=int, default=None, help="mặc định: mọi fold của các lần lặp đã chọn")
-    ap.add_argument("--seed-index", type=int, default=0, help="0 cho T0, T1, T1b, T2, T6; 1..4 cho T3")
-    ap.add_argument("--workers", type=int, default=1, help="số đơn vị chạy song song (joblib)")
-    ap.add_argument("--n-jobs-eval", type=int, default=1, help="> 1 chỉ dùng cho T0 và T6, và chỉ khi --workers 1")
-    ap.add_argument("--shuffle-train-labels", action="store_true", help="chỉ T0: hoán vị nhãn phần train ngoài")
+    ap.add_argument("--folds", nargs="+", type=int, default=None, help="default: every fold of the selected repeats")
+    ap.add_argument("--seed-index", type=int, default=0, help="0 for T0, T1, T1b, T2, T6; 1..4 for T3")
+    ap.add_argument("--workers", type=int, default=1, help="number of units run in parallel (joblib)")
+    ap.add_argument("--n-jobs-eval", type=int, default=1, help="> 1 only for T0 and T6, and only with --workers 1")
+    ap.add_argument("--shuffle-train-labels", action="store_true", help="T0 only: permute the labels of the outer training part")
     ap.add_argument("--pop", type=int, default=M.P)
     ap.add_argument("--generations", type=int, default=M.T)
     ap.add_argument("--prefilter", type=int, default=C.PREFILTER_P0)
     ap.add_argument("--splits-root", type=Path, default=None,
-                    help="thư mục chứa <cohort>/repeated_splits.csv; mặc định là thư mục dữ liệu của cohort")
-    ap.add_argument("--out", default=None, help=f"mặc định {M.RESULT_SUBDIR}/<kịch bản>")
+                    help="folder holding <cohort>/repeated_splits.csv; default is the data folder of the cohort")
+    ap.add_argument("--out", default=None, help=f"default {M.RESULT_SUBDIR}/<scenario>")
     ap.add_argument("--nan-outer-test", action="store_true",
-                    help=f"chỉ smoke test ({M.ENV_SMOKE}=1): gán NaN cho các dòng test ngoài sau khi nạp dữ liệu")
+                    help=f"smoke tests only ({M.ENV_SMOKE}=1): set the outer test rows to NaN after loading the data")
     args = ap.parse_args(argv)
     unknown = [m for m in args.methods if m not in M.ALL_METHODS]
     if unknown:
-        ap.error(f"phương pháp không có: {unknown}")
+        ap.error(f"unknown method: {unknown}")
     if len(set(args.methods)) != len(args.methods):
-        ap.error("--methods có tên lặp")
+        ap.error("--methods has repeated names")
     needs_choice = [m for m in args.methods if m in M.V2_FAMILY and m not in M.V2_CANDIDATES]
     if needs_choice and M.V2_CHOSEN is None:
-        ap.error(f"{needs_choice}: mpqda.config.V2_CHOSEN chưa chốt (chỉ ứng viên {list(M.V2_CANDIDATES)} chạy được)")
+        ap.error(f"{needs_choice}: mpqda.config.V2_CHOSEN is not fixed (only the candidates {list(M.V2_CANDIDATES)} can run)")
     if "qlde" in args.methods and M.QLDE is None:
-        ap.error("qlde chưa có cấu hình (Đ6): điền docs/taimma/baselines/qlde.md và mpqda.config.QLDE trước")
+        ap.error("qlde has no configuration: fill in docs/taimma/baselines/qlde.md and mpqda.config.QLDE first")
     if args.n_jobs_eval > 1 and args.workers > 1:
-        ap.error("--n-jobs-eval > 1 chỉ dùng với --workers 1")
+        ap.error("--n-jobs-eval > 1 is only allowed with --workers 1")
     if args.nan_outer_test and (not smoke_mode() or args.shuffle_train_labels):
-        ap.error(f"--nan-outer-test chỉ dùng cho smoke test ({M.ENV_SMOKE}=1) và không dùng cùng --shuffle-train-labels")
+        ap.error(f"--nan-outer-test is only for smoke tests ({M.ENV_SMOKE}=1) and not together with --shuffle-train-labels")
     if args.seed_index < 0:
-        ap.error("--seed-index phải ≥ 0")
+        ap.error("--seed-index must be ≥ 0")
     args.k = sorted(set(int(k) for k in args.k))
     args.out = args.out or f"{M.RESULT_SUBDIR}/{args.scenario}"
     return args
 
 
 def search_seed(cid: int, split_seed: int, fold: int, method: str, seed_index: int) -> int:
-    """seed_run (Mục 3.2): seed thứ 0 đúng bằng biến `seed` của survey E1; seed thứ s ≥ 1 thêm s vào cuối."""
+    """seed_run: seed 0 equals the variable `seed` of E1 in the vendored code; seed s ≥ 1 appends s."""
     parts = [cid, split_seed, fold, M.METHOD_ID[M.base_method(method)]]
     return C.seed_for(*parts) if seed_index == 0 else C.seed_for(*parts, seed_index)
 
 
 def inner_fold_seed(metric: str, cid: int, split_seed: int, fold: int, seed_run: int) -> int:
-    """logloss: fold nội bộ chung theo fold ngoài; auroc: theo seed của phương pháp, như survey (Đ4)."""
+    """logloss: inner folds shared per outer fold; auroc: from the seed of the method, as in the vendored code."""
     return C.seed_for(cid, split_seed, fold, M.INNER_FOLD_TAG) if metric == "logloss" else seed_run
 
 
@@ -127,7 +127,7 @@ def checkpoint_paths(out: Path, repeat: int, fold: int, method: str, parts) -> d
 
 
 def head_tags() -> list[str]:
-    """Tag ở HEAD của kho (ghi vào config.json); rỗng nếu không đọc được."""
+    """Tag at HEAD of the repository (written to config.json); empty if it cannot be read."""
     try:
         return sorted(_git("tag", "--points-at", "HEAD").split())
     except Exception:  # noqa: BLE001
@@ -135,8 +135,8 @@ def head_tags() -> list[str]:
 
 
 def run_unit(unit: dict) -> str:
-    """Một đơn vị (lần lặp, fold, phương pháp): chạy mọi k rồi ghi checkpoint. Chỉ nhận phần train; phần test chỉ có mặt
-    khi nhãn train bị xáo trộn (T0) và chỉ dùng sau khi panel đã chọn xong."""
+    """One unit (repeat, fold, method): run every k then write a checkpoint. Takes only the training part; the test part is present
+    only when the training labels are shuffled (T0), and is used only after the panel has been selected."""
     name, method, cid = unit["cohort"], unit["method"], unit["cid"]
     repeat, split_seed, fold, s = unit["repeat"], unit["split_seed"], unit["fold"], unit["seed_index"]
     X_tr, y_tr, genes = unit["X_tr"], unit["y_tr"], unit["genes"]
@@ -147,13 +147,13 @@ def run_unit(unit: dict) -> str:
     key = {"cohort": name, "repeat": repeat, "fold": fold, "method": method, "seed_index": s}
     with threadpool_limits(1):
         for k in unit["k_list"]:
-            fitness = InnerCVFitness(X_tr, y_tr, fold_seed=fold_seed, metric=unit["metric"])     # cache riêng theo k
+            fitness = InnerCVFitness(X_tr, y_tr, fold_seed=fold_seed, metric=unit["metric"])     # separate cache per k
             cpu0, t0 = time.process_time(), time.perf_counter()
             res = run_method(method, fitness, p0, k, make_rng(method, seed_run, k), P=unit["P"], T=unit["T"],
                              n_jobs=unit["n_jobs_eval"])
             elapsed, cpu = time.perf_counter() - t0, time.process_time() - cpu0
             if not np.isfinite([h["best_fitness"] for h in res["history"]] + [res["best_fitness"]]).all():
-                raise FloatingPointError(f"{name} repeat {repeat} fold {fold} {method} k={k}: fitness không hữu hạn")
+                raise FloatingPointError(f"{name} repeat {repeat} fold {fold} {method} k={k}: fitness is not finite")
             best = np.sort(np.asarray(res["best"], dtype=int))
             if method in M.TWO_OUTPUTS:
                 cons = np.sort(np.asarray(res["consensus"], dtype=int))
@@ -199,7 +199,7 @@ def run_unit(unit: dict) -> str:
 
 
 def aggregate(out: Path, parts) -> dict[str, pd.DataFrame]:
-    """Gộp mọi checkpoint thành tệp theo cohort; thứ tự dòng cố định để hai lần chạy cùng seed cho tệp trùng từng byte."""
+    """Merge every checkpoint into files per cohort; fixed row order so that two runs with the same seed give byte-identical files."""
     columns = {**PARTS, **SHUFFLE_PART}
     frames = {}
     for part in parts:
@@ -217,12 +217,12 @@ def aggregate(out: Path, parts) -> dict[str, pd.DataFrame]:
 def main(argv=None, script=__file__) -> int:
     utf8_console()
     args = parse_args(argv)
-    try:                                                   # cổng đăng ký của v2 (TQĐ24): trước mọi đơn vị, không cờ nào bỏ qua
+    try:                                                   # registration gate of v2: before every unit, no flag bypasses it
         for name in args.datasets:
             for method in args.methods:
                 check_run(name, method, M.V2_CHOSEN)
     except RegistrationError as exc:
-        print(f"DỪNG (cổng đăng ký): {exc}", file=sys.stderr)
+        print(f"STOP (registration gate): {exc}", file=sys.stderr)
         return 2
     prov = start_run(script, params={k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()})
     smoke = smoke_mode()
@@ -232,7 +232,7 @@ def main(argv=None, script=__file__) -> int:
         path = split_path(ds, args.splits_root)
         split_sha, expected = sha256(path), M.EXPECTED_SPLIT_SHA256.get(name)
         if split_sha != expected and not smoke:
-            print(f"[{name}] DỪNG: SHA-256 của {path} là {split_sha}, giá trị chờ là {expected} "
+            print(f"[{name}] STOP: SHA-256 of {path} is {split_sha}, expected value is {expected} "
                   f"(mpqda.config.EXPECTED_SPLIT_SHA256).", file=sys.stderr)
             return 2
         manifest = pd.read_csv(path)
@@ -257,7 +257,7 @@ def main(argv=None, script=__file__) -> int:
                 continue
             tr, te = split_indices(ds, manifest, repeat, fold)
             X_all = ds.X
-            if args.nan_outer_test:                                # sentinel: phần test ngoài không được đi vào pha A
+            if args.nan_outer_test:                                # sentinel: the outer test part must not enter phase A
                 X_all = np.array(ds.X, dtype=float, copy=True)
                 X_all[te] = np.nan
             pre = variance_prefilter(X_all[tr], args.prefilter)
@@ -265,7 +265,7 @@ def main(argv=None, script=__file__) -> int:
             extra = {}
             if args.shuffle_train_labels:
                 y_tr = y_tr[shuffle_permutation(cid, split_seed, fold, len(tr))]
-                extra = {"X_te": ds.X[te][:, pre], "y_te": ds.y[te]}     # nhãn test thật; chỉ dùng sau khi chọn panel
+                extra = {"X_te": ds.X[te][:, pre], "y_te": ds.y[te]}     # true test labels; used only after the panel is selected
             for method, paths in todo:
                 units.append({"cohort": name, "cid": cid, "repeat": repeat, "split_seed": split_seed, "fold": fold,
                               "method": method, "seed_index": args.seed_index, "k_list": args.k, "metric": args.metric,
@@ -299,7 +299,7 @@ def main(argv=None, script=__file__) -> int:
                "v2_config": {m: M.v2_config(m) for m in args.methods if m in M.V2_FAMILY},
                "head_tags": head_tags()}
         write_config(out, prov, cfg, data_files=[ds.data_dir / "expression.h5", ds.data_dir / "metadata.csv", path])
-        print(f"[{name}] {len(metrics)} dòng selection_per_fold.csv -> {out}", flush=True)
+        print(f"[{name}] {len(metrics)} rows of selection_per_fold.csv -> {out}", flush=True)
     return 0
 
 

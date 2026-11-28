@@ -25,7 +25,7 @@ def frame(res):
 def test_deterministic_parallel_identical_and_budget(name):
     kw = M.VARIANTS.get(name, {})
     (a, fa), (b, _), (c, _) = run(kw, 1), run(kw, 4), run(kw, 1)
-    for other in (b, c):                                       # trùng giữa n_jobs_eval 1 và 4, và giữa hai lần chạy cùng seed
+    for other in (b, c):                                       # identical between n_jobs_eval 1 and 4, and between two runs with the same seed
         assert a["consensus"].tolist() == other["consensus"].tolist() and a["best"].tolist() == other["best"].tolist()
         assert a["consensus_fitness"] == other["consensus_fitness"] and a["best_fitness"] == other["best_fitness"]
         assert a["archive"] == other["archive"] and a["pi"] == other["pi"] and a["n_eval"] == other["n_eval"]
@@ -47,16 +47,16 @@ def test_each_variant_flag_changes_only_its_part():
     full, _ = run({})
     h = frame(full)
     assert h.q_00.notna().all() and h.mean_F.between(0.1, 1.0).all() and full["Q"].shape == (2, 3)
-    a3, _ = run(M.VARIANTS["mpqda_a3_fixedF"])                 # A3: không có bộ điều khiển, F luôn 0,5
+    a3, _ = run(M.VARIANTS["mpqda_a3_fixedF"])                 # A3: no controller, F always 0.5
     assert a3["Q"] is None and (frame(a3).mean_F == 0.5).all() and (frame(a3).sd_F == 0).all() and frame(a3).q_00.isna().all()
-    a51, _ = run(M.VARIANTS["mpqda_a5_A1"])                    # A5_A1: archive luôn là panel tốt nhất
+    a51, _ = run(M.VARIANTS["mpqda_a5_A1"])                    # A5_A1: the archive is always the best panel
     assert a51["consensus_fitness"] == a51["best_fitness"] and (frame(a51).archive_size == 1).all()
     assert a51["consensus"].tolist() == a51["best"].tolist() and (frame(a51).leader_is_archive_best.iloc[1:] == 1.0).all()
-    a2a, _ = run(M.VARIANTS["mpqda_a2a_bestleader"])           # A2a: leader là cá thể tốt nhất, không lấy từ archive
+    a2a, _ = run(M.VARIANTS["mpqda_a2a_bestleader"])           # A2a: the leader is the best individual, not taken from the archive
     assert frame(a2a).leader_is_archive_best.isna().all() and frame(a2a).q_00.notna().all()
-    a1, _ = run(M.VARIANTS["mpqda_a1_uniform"])                # A1: chỉ đổi khoá khởi tạo
+    a1, _ = run(M.VARIANTS["mpqda_a1_uniform"])                # A1: only the initial keys change
     assert frame(a1).best_fitness.iloc[0] != h.best_fitness.iloc[0]
-    # quần thể đầu (t = 0) của các biến thể không đổi khởi tạo trùng với bản đầy đủ: cùng seed, cùng thứ tự rút số
+    # the initial population (t = 0) of the variants that keep the initialisation equals the full version: same seed, same draw order
     for name in ("mpqda_a0_noband", "mpqda_a2a_bestleader", "mpqda_a2b_randleader", "mpqda_a5_A30"):
         other = frame(run(M.VARIANTS[name])[0])
         assert other.loc[0, ["best_fitness", "mean_fitness", "diversity", "mean_F"]].tolist() == \
@@ -72,7 +72,7 @@ def test_invalid_flags_are_rejected():
 
 
 def test_leader_overlap_at_first_generation():
-    """p0 = 5.000, P = 30, t = 1 trên dữ liệu giả: leader_overlap thuộc [0,3; 0,7], và dưới 0,1 khi reencode = False (Đ2)."""
+    """p0 = 5,000, P = 30, t = 1 on synthetic data: leader_overlap in [0.3; 0.7], and below 0.1 when reencode = False."""
     rng = np.random.default_rng(3)
     X = rng.normal(8, 1, size=(60, 5000))
     y = np.r_[np.zeros(40, int), np.ones(20, int)]

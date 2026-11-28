@@ -1,5 +1,5 @@
-"""scripts/t0_calibration.py (Review-2026-11-17b, TQĐ34) trên dữ liệu giả: b = 0 dùng đúng hoán vị và phần train của T0,
-b ≥ 1 cho hoán vị mới; bảng tóm tắt đủ dòng; chạy lại trùng giá trị. Dữ liệu giả chỉ để kiểm mã."""
+"""scripts/t0_calibration.py on synthetic data: b = 0 uses exactly the permutation and training part of T0,
+b ≥ 1 gives new permutations; the summary table has every row; a rerun gives the same values. Synthetic data only check the code."""
 import numpy as np
 import pandas as pd
 from survey_v2.data import variance_prefilter
@@ -42,7 +42,7 @@ def test_calibration_tables_are_complete_and_reproducible():
     units, rand, summary = K.calibrate(X, y, genes, CID, folds, **kw)
     units2, _, summary2 = K.calibrate(X, y, genes, CID, folds, **kw)
     assert units.equals(units2) and summary.equals(summary2)
-    assert len(units) == 2 * 2 * 2 and set(units.output) == {"mpqda_v2", "mpqda_v2_best"}      # 2 fold × 2 b × 2 đầu ra
+    assert len(units) == 2 * 2 * 2 and set(units.output) == {"mpqda_v2", "mpqda_v2_best"}      # 2 folds × 2 b × 2 outputs
     assert units.pit.between(0, 1).all() and len(rand) == 2 * 2 * 8
     allrows = summary[summary.b == "all"].set_index("output")
     assert set(allrows.index) == {"mpqda_v2", "mpqda_v2_best"} and allrows.n_folds.eq(4).all()

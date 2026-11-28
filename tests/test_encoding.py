@@ -9,14 +9,14 @@ def test_decode_topk_size_and_ties():
         for _ in range(20):
             S = E.decode_topk(rng.random(500), k)
             assert len(S) == k == len(set(S.tolist())) and (np.diff(S) > 0).all()
-    assert E.decode_topk(np.zeros(10), 3).tolist() == [0, 1, 2]                      # hoà: chỉ số nhỏ hơn đứng trước
+    assert E.decode_topk(np.zeros(10), 3).tolist() == [0, 1, 2]                      # ties: smaller index first
     assert E.decode_topk(np.array([0.2, 0.9, 0.9, 0.1, 0.9]), 2).tolist() == [1, 2]
 
 
 def test_jaccard():
     rng = np.random.default_rng(2)
     assert E.jaccard_distance({1, 2}, {1, 2}) == 0.0 and E.jaccard_distance({1, 2}, {3, 4}) == 1.0
-    a, b = set(range(10)), set(range(1, 11))                                         # chung 9/10 gen
+    a, b = set(range(10)), set(range(1, 11))                                         # 9/10 genes in common
     assert abs(E.jaccard_distance(a, b) - (1 - 9 / 11)) < 1e-12 and E.jaccard_distance(a, b) < 0.2
     for _ in range(50):
         x, y = rng.choice(40, 7, replace=False), rng.choice(40, 7, replace=False)
@@ -57,11 +57,11 @@ def test_band_encode_keeps_panel_bands_and_order():
         assert (np.argsort(b[S], kind="stable") == np.argsort(x[S], kind="stable")).all()
         r = np.argsort(np.argsort(x[S], kind="stable"), kind="stable")
         assert np.allclose(b[S], 0.5 + 0.5 * (r + 0.5) / k)
-    assert E.decode_topk(E.band_encode(np.zeros(20), 4), 4).tolist() == [0, 1, 2, 3]   # khoá hoà vẫn giữ panel
+    assert E.decode_topk(E.band_encode(np.zeros(20), 4), 4).tolist() == [0, 1, 2, 3]   # tied keys still keep the panel
 
 
 def test_no_low_index_bias_after_repair():
-    """Hồi quy cho Đ1: với cắt vào [0, 1], hàng trăm khoá bằng 1,0 và panel dồn về chỉ số nhỏ."""
+    """Regression for the midpoint repair: with clipping to [0, 1], hundreds of keys equal 1.0 and the panel collapses to small indices."""
     rng = np.random.default_rng(0)
     P, p, k = 30, 5000, 10
     X = E.init_chaotic(P, p, rng)
@@ -77,7 +77,7 @@ def test_no_low_index_bias_after_repair():
 
 
 def test_leader_information_transmitted_only_with_band_encoding():
-    """Đ2: có mã hoá lại, panel thử giữ phần lớn panel của leader ở F = 0,5; không mã hoá lại thì gần như mất hết."""
+    """Band re-encoding: with re-encoding, the trial panel keeps most of the leader panel at F = 0.5; without re-encoding almost all of it is lost."""
     rng = np.random.default_rng(14)
     P, p, k = 30, 5000, 10
     X = E.init_uniform(P, p, rng)

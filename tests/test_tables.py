@@ -1,4 +1,4 @@
-"""make_taimma_tables.py trên kết quả GIẢ (số ngẫu nhiên, không phải kết quả thực nghiệm)."""
+"""make_taimma_tables.py on SYNTHETIC results (random numbers, not experimental results)."""
 import shutil
 
 import numpy as np
@@ -13,8 +13,8 @@ T1_METHODS = ["mpqda_de", "ga", "bpso", "de_rand1", "shade", "qlde"]
 
 
 def fake_results(root, seed=0):
-    """Tệp theo đúng tên và cột mà bảng đọc: selection_per_fold, selected_genes, history (pha A) và classification_per_fold (pha B).
-    T5LL (B-LL) và T5 (B-AUC) là cùng một bản: các bảng chính và bảng *_bauc phải trùng nhau."""
+    """Files with exactly the names and columns read by the tables: selection_per_fold, selected_genes, history (phase A) and classification_per_fold (phase B).
+    T5LL (B-LL) and T5 (B-AUC) are the same copy: the main tables and the *_bauc tables must be identical."""
     rng = np.random.default_rng(seed)
 
     def write(scenario, cohort, methods, ks, metric="logloss", with_history=False):
@@ -77,25 +77,25 @@ def test_tables_are_byte_identical_and_complete(tmp_path):
     T.build(tmp_path / "results", second)
     names = sorted(p.name for p in first.iterdir())
     assert names == sorted(p.name for p in second.iterdir())
-    assert all((first / n).read_bytes() == (second / n).read_bytes() for n in names)       # kể cả hai hình PDF
+    assert all((first / n).read_bytes() == (second / n).read_bytes() for n in names)       # the two PDF figures included
     assert {"table3_main.tex", "table4_ablation.tex", "table5_seed_stability.tex", "fig2_anytime.pdf",
             "fig3_critical_difference.pdf", "claims.csv", "inputs_sha256.csv", "stats_h1_saturation.csv",
             "stats_h2_inner_fitness.csv", "stats_h3_noninferiority.csv", "stats_h4_stability.csv", "table3_main_bauc.csv",
             "stats_h3_noninferiority_bauc.csv", "stats_secondary_pairwise_bauc.csv", "table_s_c_choice.csv"} <= set(names)
     assert info["missing"] == []
     inputs = pd.read_csv(first / "inputs_sha256.csv")
-    # pha A của T1, T1b, T2; B-LL của T1, T1b, T2; B-AUC của T1; history T1; selected_genes T1 (GSE37745) và T3_s1..4
+    # phase A of T1, T1b, T2; B-LL of T1, T1b, T2; B-AUC of T1; history T1; selected_genes T1 (GSE37745) and T3_s1..4
     assert len(inputs) == 3 * 3 + 3 * 3 + 3 + 3 + 4 + 1 and inputs.sha256.str.len().eq(64).all()
     claims = pd.read_csv(first / "claims.csv")
     assert list(claims.columns) == ["claim_id", "value", "file", "column", "filter", "phase_b"] and claims.claim_id.is_unique
     h1 = pd.read_csv(first / "stats_h1_saturation.csv")
-    assert h1.n_runs.tolist() == [270, 270, 270, 540]          # 15 fold × 6 phương pháp × 3 k: mỗi lần chạy MPQDA tính một lần
+    assert h1.n_runs.tolist() == [270, 270, 270, 540]          # 15 folds × 6 methods × 3 k: each MPQDA run counted once
     h2 = pd.read_csv(first / "stats_h2_inner_fitness.csv")
     assert len(h2) == 6 and h2.n.eq(15).all() and (h2.p_holm >= h2.p).all()
     h3 = pd.read_csv(first / "stats_h3_noninferiority.csv")
     assert h3.k.tolist() == [5, 10] and h3.comparator.isin(T.BASELINE_ORDER).all()
     h5 = pd.read_csv(first / "table4_ablation.csv")
-    assert (h5.family == "main").sum() == 39 and set(h5.family) == {"main", "descriptive"}        # TQĐ14
+    assert (h5.family == "main").sum() == 39 and set(h5.family) == {"main", "descriptive"}
     assert (h5[h5.variant == "mpqda_a0_noband"].component == "band re-encoding").all()
     assert h5[h5.family == "main"].p_holm.notna().all() and h5[h5.family == "descriptive"].p_holm.isna().all()
     h4 = pd.read_csv(first / "stats_h4_stability.csv")
@@ -103,7 +103,7 @@ def test_tables_are_byte_identical_and_complete(tmp_path):
 
 
 def test_bauc_tables_match_main_tables_when_phase_b_is_identical(tmp_path):
-    """T5LL là bản sao của T5: bảng chính và bảng *_bauc trùng nhau; claims.csv ghi pha B của từng số (Mục 6.1, test 6)."""
+    """T5LL is a copy of T5: the main tables and the *_bauc tables are identical; claims.csv records the phase B of each number."""
     fake_results(tmp_path / "results")
     out = tmp_path / "out"
     T.build(tmp_path / "results", out)
@@ -137,7 +137,7 @@ def test_t4_c_choice_is_read_when_present(tmp_path):
 
 
 def fake_b7(root, seed=1):
-    """Pha B-LL giả cho các bộ B7: classification_per_fold.csv và e1_scores.csv (điểm từng mẫu để tính AUPRC)."""
+    """Synthetic phase B-LL for the B7 datasets: classification_per_fold.csv and e1_scores.csv (per-sample scores for AUPRC)."""
     rng = np.random.default_rng(seed)
     for cohort in M.B7_INCLUDED:
         ev, sc = [], []
@@ -160,7 +160,7 @@ def fake_b7(root, seed=1):
 
 
 def test_b7_table_is_separate_and_has_auprc(tmp_path):
-    """PREREG Mục 8: bảng riêng cho B7 (so sánh phụ, Holm trong các baseline, AUPRC); không vào H1–H5 và Table 3."""
+    """PREREG, Section 8: separate table for B7 (secondary comparison, Holm over the baselines, AUPRC); not in H1–H5 and Table 3."""
     from sklearn.metrics import average_precision_score
     fake_results(tmp_path / "results")
     fake_b7(tmp_path / "results")

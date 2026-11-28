@@ -1,4 +1,4 @@
-"""Tích hợp MPQDA-DE v2 vào nhánh taimma-2027 (Review-2026-11-16, Mục 6.1): cấu hình, seed, runner, B-C1 và v1 không đổi."""
+"""Integration of CIRK-DE (v2) into the branch taimma-2027: configuration, seeds, runner, B-C1, and v1 unchanged."""
 import json
 import shutil
 
@@ -19,7 +19,7 @@ from mpqda.phase_b import evaluate_panel_ll
 REFERENCE = ROOT / "tests" / "data" / "v1_reference_4fea32f.json"
 
 
-# ---------------------------------------------------------------- test 1: hai bảng cấu hình khớp de_v2.py
+# ---------------------------------------------------------------- test 1: the two configuration tables match de_v2.py
 def test_config_tables_match_de_v2():
     assert M.V2_CANDIDATES == de_v2.CANDIDATES
     renamed = {"mpqda_" + name: cfg for name, cfg in de_v2.ABLATIONS.items()}
@@ -31,7 +31,7 @@ def test_config_tables_match_de_v2():
     assert set(M.DEV_DATASETS) <= set(M.EXPECTED_SPLIT_SHA256)
 
 
-# ---------------------------------------------------------------- test 2: METHOD_ID cũ không đổi, seed chung cho họ v2
+# ---------------------------------------------------------------- test 2: existing METHOD_ID unchanged, shared seed for the v2 family
 def test_method_ids_and_seed_family():
     old = {"mpqda_de": 13, "de_rand1": 14, "shade": 15, "qlde": 16, "jde": 17, "jade": 18}
     assert all(M.METHOD_ID[m] == v for m, v in old.items())
@@ -57,10 +57,10 @@ def test_ablation_configs_follow_the_chosen_candidate(monkeypatch):
         assert len(r["consensus"]) == 5 and r["n_eval"] <= 6 * 3 + 1
 
 
-# ---------------------------------------------------------------- test 3: smoke test của runner với v2 và de_g
+# ---------------------------------------------------------------- test 3: smoke test of the runner with v2 and de_g
 @pytest.mark.slow
 def test_runner_smoke_v2_on_development_name(smoke_run):
-    """Dữ liệu giả đặt tên tcga_dev_a (dữ liệu phát triển, cổng đăng ký không chặn): ứng viên M1–M3 và de_g."""
+    """Synthetic data named tcga_dev_a (development data, not blocked by the registration gate): candidates M1–M3 and de_g."""
     data, repo, env = smoke_run["data"], smoke_run["repo"], smoke_run["env"]
     dst = data / C.dataset_dir("tcga_dev_a")
     if not dst.exists():
@@ -75,7 +75,7 @@ def test_runner_smoke_v2_on_development_name(smoke_run):
     assert set(sel.method) == {*(n for m in methods[:3] for n in (m, m + "_best")), "de_g"}
     assert sel.exact_k.all() and (sel.n_selected == sel.k).all() and (sel.n_eval <= 6 * 4 + 1).all()
     assert (sel[sel.method.str.startswith("mpqda_v2")].base_method == "mpqda_v2").all()
-    assert sel[sel.method.isin(methods[:3])].search_seed.nunique() == 1          # cùng seed cho họ v2
+    assert sel[sel.method.isin(methods[:3])].search_seed.nunique() == 1          # same seed for the v2 family
     assert list(hist.columns[-2:]) == ["mean_CR", "n_new_genes"]
     v2 = hist[hist.method.isin(methods[:3])]
     assert v2.mean_CR.notna().all() and v2[v2.t > 0].n_new_genes.notna().all()
@@ -86,13 +86,13 @@ def test_runner_smoke_v2_on_development_name(smoke_run):
 
 @pytest.mark.slow
 def test_runner_registration_gate_blocks_confirmatory_names(smoke_run):
-    """Tên bộ GPL570 (SMOKE_COHORT) là dữ liệu xác nhận: ứng viên bị chặn (mã 2) kể cả ở chế độ smoke; mpqda_v2 khi chưa
-    chốt V2_CHOSEN bị từ chối ngay ở dòng lệnh; sau khi chốt, bị chặn vì bản sao kho trong test không mang tag đăng ký."""
+    """The GPL570 dataset name (SMOKE_COHORT) is confirmatory data: the candidates are blocked (code 2) even in smoke mode; mpqda_v2 without a fixed
+    V2_CHOSEN is refused at the command line; once fixed, it is blocked because the repository copy in the test carries no registration tag."""
     reason = "V2_CHOSEN" if M.V2_CHOSEN is None else "taimma-2027-prereg-v2"
     base = ["--scenario", "SMOKE_gate", "--metric", "logloss", "--datasets", SMOKE_COHORT, "--k", "5", "--repeats", "0",
             "--folds", "0", "--pop", "6", "--generations", "2"]
     res = run_script(smoke_run["repo"], "run_taimma.py", [*base, "--methods", "mpqda_v2_m1"], smoke_run["env"], check=False)
-    assert res.returncode == 2 and "cổng đăng ký" in res.stderr
+    assert res.returncode == 2 and "registration gate" in res.stderr
     res = run_script(smoke_run["repo"], "run_taimma.py", [*base, "--methods", "de_g"], smoke_run["env"], check=False)
     assert res.returncode == 2 and reason in res.stderr
     res = run_script(smoke_run["repo"], "run_taimma.py", [*base, "--methods", "mpqda_v2"], smoke_run["env"], check=False)
@@ -100,7 +100,7 @@ def test_runner_registration_gate_blocks_confirmatory_names(smoke_run):
     assert not (smoke_run["data"] / "results" / "survey_v2" / "taimma" / "SMOKE_gate").exists()
 
 
-# ---------------------------------------------------------------- test 4: v1 và bảy baseline trùng kết quả ở 4fea32f
+# ---------------------------------------------------------------- test 4: v1 and the seven baselines match the results at 4fea32f
 def _j(v):
     if isinstance(v, (np.floating, float)):
         return None if np.isnan(v) else repr(float(v))
@@ -109,11 +109,11 @@ def _j(v):
     return v
 
 
-FLOAT_TOL = 1e-12        # như cổng G-T1 (TQĐ20): số thực lệch bit cuối giữa Windows và Linux; panel, n_eval trùng tuyệt đối
+FLOAT_TOL = 1e-12        # as gate G-T1: floats differ in the last bit between Windows and Linux; panel, n_eval identical exactly
 
 
 def _same(got, want) -> bool:
-    """So kết quả: panel, số nguyên, None trùng tuyệt đối; số thực (ghi bằng repr) lệch tối đa FLOAT_TOL."""
+    """Compare results: panels, integers, None identical exactly; floats (written with repr) differ by at most FLOAT_TOL."""
     if isinstance(want, dict):
         return isinstance(got, dict) and got.keys() == want.keys() and all(_same(got[k], want[k]) for k in want)
     if isinstance(want, list):

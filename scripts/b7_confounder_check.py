@@ -1,16 +1,16 @@
-"""B7: kiểm yếu tố nhiễu trên panel của wrapper (Review-2026-11-16, TQĐ27).
+"""B7: confounder check on the panels of the wrappers.
 
     python scripts/b7_confounder_check.py --results <KLTN_DATA_ROOT>/results/survey_v2/taimma --scenarios T1 T1v2 \
         --data-root <KLTN_DATA_ROOT> --out b7_confounders
-(--scenarios nhận tên thư mục pha A: T1 cho v1 và baseline, T1v2 cho v2 và DE-G.)
+(--scenarios takes phase A folder names: T1 for v1 and the baselines, T1v2 for v2 and DE-G.)
 
-Cùng cách kiểm với advisor_recheck/b7_confounder_check.py của survey (16/11/2026), áp cho panel pha A của bài TAIMMA:
-  * với mỗi (kịch bản, bộ B7, phương pháp, k ∈ {5, 10}): số panel, số panel chứa gen đánh dấu giới tính (SEX_GENES: XIST, TSIX
-    và 12 gen trên nhiễm sắc thể Y, đúng danh sách của survey), số panel chứa chính EGFR;
-  * trên tcga_luad_egfr: AUROC của giới tính đơn lẻ (nữ = 1) và của nơi lấy mẫu (TSS, mã thứ hai của barcode) đơn lẻ bằng
-    LR trên CV 5 × 5 phân tầng, seed 42–46. Giá trị của survey: 0,649 và 0,577. Khoá ở mức đầu của <out>_dataset.json.
-  * trên gse31210_egfr (bộ của HV5, Review-2026-11-17): cùng phép kiểm khi metadata có cột sex; ghi dưới khoá "gse31210_egfr".
-Chỉ để mô tả trong bảng B7; không dùng để chọn, loại hay xếp hạng phương pháp. Ghi <out>_panels.csv và <out>_dataset.json.
+Same check as b7_confounder_check.py of the vendored study (2026-11-16), applied to the phase A panels of the TAIMMA study:
+  * for each (scenario, B7 dataset, method, k ∈ {5, 10}): number of panels, number of panels containing a sex-marker gene (SEX_GENES: XIST, TSIX
+    and 12 genes on chromosome Y, the same list as the vendored code), number of panels containing EGFR itself;
+  * on tcga_luad_egfr: AUROC of sex alone (female = 1) and of the tissue source site alone (TSS, second field of the barcode) by
+    LR with stratified 5 × 5 CV, seeds 42–46. Values of the vendored study: 0.649 and 0.577. Keys at the top level of <out>_dataset.json.
+  * on gse31210_egfr (the dataset of HV5): the same check when the metadata have a sex column; written under the key "gse31210_egfr".
+Descriptive only, for the B7 table; not used to choose, exclude or rank methods. Writes <out>_panels.csv and <out>_dataset.json.
 """
 from __future__ import annotations
 
@@ -81,7 +81,7 @@ def run(results: Path, scenarios, data_root: Path | None) -> tuple[pd.DataFrame,
             if path.is_file():
                 frames.append(panel_table(pd.read_csv(path), sc, co))
     if not frames:
-        raise FileNotFoundError(f"không thấy selected_genes.csv của B7 trong {results} / {list(scenarios)}")
+        raise FileNotFoundError(f"no B7 selected_genes.csv found in {results} / {list(scenarios)}")
     info = {}
     if data_root is not None:
         from survey_v2.data import resolve_dataset_dir
@@ -91,7 +91,7 @@ def run(results: Path, scenarios, data_root: Path | None) -> tuple[pd.DataFrame,
                 continue
             checks = dataset_checks(pd.read_csv(meta_path))
             if co == "tcga_luad_egfr":
-                info.update(checks)                       # khoá như bản của survey
+                info.update(checks)                       # same keys as the vendored version
             else:
                 info[co] = checks
     return pd.concat(frames, ignore_index=True), info
@@ -99,7 +99,7 @@ def run(results: Path, scenarios, data_root: Path | None) -> tuple[pd.DataFrame,
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--results", type=Path, required=True, help="thư mục taimma/ chứa các kịch bản")
+    ap.add_argument("--results", type=Path, required=True, help="taimma/ folder holding the scenarios")
     ap.add_argument("--scenarios", nargs="+", default=["T1"])
     ap.add_argument("--data-root", type=Path, default=None)
     ap.add_argument("--out", default="b7_confounders")

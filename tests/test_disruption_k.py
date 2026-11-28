@@ -1,4 +1,4 @@
-"""Test cho E3 (Review-2026-11-18c) và phần mở rộng k = 20 (Review-2026-11-20, TQĐ51)."""
+"""Tests of E3 and of the extension to k = 20 (amendment A2 of PREREG-v2)."""
 from __future__ import annotations
 
 import pandas as pd
@@ -17,7 +17,7 @@ def test_disruption_k_is_deterministic_and_gap_inserts_almost_nothing():
 
 
 def test_new_budget_appended_last_leaves_earlier_rows_unchanged():
-    """k = 20 đặt cuối --ks: các dòng của k đã chạy (seed 3, cùng thứ tự) phải trùng từng giá trị."""
+    """k = 20 placed last in --ks: the rows of the k values already run (seed 3, same order) must match value by value."""
     base = DK.simulate_k(reps=3, p0=400, ks=(2, 5, 10))
     ext = DK.simulate_k(reps=3, p0=400, ks=(2, 5, 10, 20))
     pd.testing.assert_frame_equal(ext.iloc[: len(base)].reset_index(drop=True), base)

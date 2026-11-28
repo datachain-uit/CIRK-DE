@@ -1,5 +1,5 @@
-"""Bản miễn A1 của T0-v2 (Review-2026-11-17b, TQĐ33): chỉ miễn mục (4) cho mpqda_v2, cận dưới, đúng AUROC từng fold của lần
-chạy S0v2 ở d5e72e4 (tests/data/t0v2_shuffle_d5e72e4, chép từ S0v2_results.zip); mọi lệch khác vẫn làm cổng không đạt."""
+"""Waiver A1 of T0-v2: only item (4) is waived for mpqda_v2, lower bound, exactly the per-fold AUROC of the
+S0v2 run at d5e72e4 (tests/data/t0v2_shuffle_d5e72e4, copied from S0v2_results.zip); every other difference still fails the gate."""
 import json
 import shutil
 
@@ -49,6 +49,7 @@ def test_kaggle_run_fails_without_waiver(tmp_path):
 
 def test_committed_waiver_covers_exactly_this_run(tmp_path):
     problems, info = _check(_root(tmp_path), WAIVER)
+    # the decision code is kept verbatim: it is recorded in docs/taimma/T0v2_waiver.json
     assert problems == [] and [w["method"] for w in info["waived"]] == ["mpqda_v2"] and info["waived"][0]["decision"] == "TQĐ33"
     assert WAIVER["items"][0]["bound"] == "lower" and len(WAIVER["items"][0]["per_fold_auroc"]) == M.N_OUTER_FOLDS
 
@@ -58,7 +59,7 @@ def test_waiver_does_not_cover_a_different_run(tmp_path):
     path = root / "T0v2_shuffle" / "gse37745" / "t0_shuffle_eval.csv"
     ev = pd.read_csv(path, float_precision="round_trip")
     i = ev.index[(ev.method == "mpqda_v2") & (ev.repeat == 0) & (ev.fold == 0)][0]
-    ev.loc[i, "auroc"] += 1e-6                                     # một fold lệch: không còn là lần chạy đã miễn
+    ev.loc[i, "auroc"] += 1e-6                                     # one fold differs: no longer the waived run
     ev.to_csv(path, index=False)
     problems, info = _check(root, WAIVER)
     assert len(problems) == 1 and "mpqda_v2" in problems[0] and info["waived"] == []
@@ -69,11 +70,11 @@ def test_waiver_never_covers_other_failures(tmp_path, change):
     root = _root(tmp_path)
     path = root / "T0v2_shuffle" / "gse37745" / "t0_shuffle_eval.csv"
     ev = pd.read_csv(path, float_precision="round_trip")
-    if change == "upper":                                          # cùng phương pháp nhưng vượt cận trên
+    if change == "upper":                                          # same method but above the upper bound
         ev.loc[ev.method == "mpqda_v2", "auroc"] = 1 - ev.loc[ev.method == "mpqda_v2", "auroc"]
-    elif change == "other_method":                                 # de_g dưới cận dưới: không có trong bản miễn
+    elif change == "other_method":                                 # de_g below the lower bound: not in the waiver
         ev.loc[ev.method == "de_g", "auroc"] = 0.30
-    else:                                                          # (1) tất định hỏng
+    else:                                                          # (1) determinism broken
         (root / "T0v2_det_b" / "gse10245" / "history.csv").write_text("x\n", encoding="utf-8")
     ev.to_csv(path, index=False)
     problems, _ = _check(root, WAIVER)
@@ -91,11 +92,11 @@ def test_cmd_check_t0_records_the_waiver(tmp_path, monkeypatch, capsys):
     assert J.cmd_check_t0(v2=True, waiver_path=J.T0V2_WAIVER) == 0
     report = json.loads((root / "T0v2_report.json").read_text(encoding="utf-8"))
     assert report["passed"] and report["waived"][0]["method"] == "mpqda_v2" and len(report["waiver_sha256"]) == 64
-    assert "miễn theo PREREG-v2 Mục 12" in capsys.readouterr().out
-    assert J.cmd_check_t0(v2=True) == 3                            # không có bản miễn: không đạt như bản đăng ký
+    assert "waived under PREREG-v2, Section 12" in capsys.readouterr().out
+    assert J.cmd_check_t0(v2=True) == 3                            # no waiver: fails as registered
 
 
 def test_t0v2_shuffle_job_uses_the_committed_waiver():
     step = J.JOBS["t0v2_shuffle"].steps[-1]
     assert step == [J.SELF, "check-t0", "--v2", "--waiver", J.T0V2_WAIVER] and (ROOT / J.T0V2_WAIVER).is_file()
-    assert "--waiver" not in J.JOBS["t0_shuffle"].steps[-1]        # T0 của v1 giữ nguyên
+    assert "--waiver" not in J.JOBS["t0_shuffle"].steps[-1]        # T0 of v1 unchanged

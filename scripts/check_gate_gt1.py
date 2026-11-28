@@ -1,16 +1,16 @@
-"""Cổng G-T1 (Mục 4.3): GA, BPSO ở chế độ AUROC phải tái tạo đúng panel của survey.
+"""Gate G-T1: GA and BPSO in AUROC mode must reproduce the panels of the vendored code exactly.
 
     python scripts/check_gate_gt1.py [--run-root $KLTN_DATA_ROOT/results/survey_v2/taimma/T1b] [--datasets gse10245 ...]
 
-So `selected_genes.csv` và `selection_per_fold.csv` của GA, BPSO trong lần chạy với `vendor/reference/`: cùng tập gen ở mọi
-(lần lặp, fold, phương pháp, k) đã chạy; `n_eval` bằng nhau tuyệt đối; `best_fitness` lệch không quá FITNESS_TOL = 1e-12
-(PREREG Mục 9, sửa trước đăng ký ngày 15/11/2026). In bảng lệch và trả mã 2 nếu có lệch hoặc không có đơn vị nào để so; trả 0
-khi mọi đơn vị trùng. Các đơn vị có `best_fitness` khác nhau nhưng trong dung sai được in ra và ghi vào
-`<report>_within_tol.csv`, không làm cổng trượt.
+Compares `selected_genes.csv` and `selection_per_fold.csv` of GA and BPSO of the run with `vendor/reference/`: same gene set in every
+(repeat, fold, method, k) that was run; `n_eval` exactly equal; `best_fitness` differing by at most FITNESS_TOL = 1e-12
+(PREREG, Section 9, amended before registration on 2026-11-15). Prints the differences and returns code 2 if any differ or no unit can be compared; returns 0
+when every unit matches. Units whose `best_fitness` differs within the tolerance are printed and written to
+`<report>_within_tol.csv`, and do not fail the gate.
 
-Lý do của dung sai: trên Kaggle ngày 15/11/2026 (commit 35331ed), 268/270 đơn vị của T1b trùng hệt; hai đơn vị còn lại có cùng
-tập gen và cùng n_eval, `best_fitness` chỉ khác ở bit cuối (0.9993141289437585 so với 0.9993141289437584), do phép cộng số thực
-khác nhau giữa hai máy. 1e-12 là ngưỡng bão hoà của PREREG (mpqda.config.SATURATION_EPS).
+Reason for the tolerance: on Kaggle on 2026-11-15 (commit 35331ed), 268/270 units of T1b matched exactly; the other two had the same
+gene set and the same n_eval, and `best_fitness` differed only in the last bit (0.9993141289437585 against 0.9993141289437584), because floating-point
+addition differs between the two machines. 1e-12 is the saturation threshold of PREREG (mpqda.config.SATURATION_EPS).
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ for _p in (ROOT / "vendor", ROOT):
 
 REFERENCE = ROOT / "vendor" / "reference" / "E1_wrapper_feature_selection"
 METHODS = ("ga", "bpso")
-FITNESS_TOL = 1e-12                    # = mpqda.config.SATURATION_EPS; tập gen và n_eval vẫn phải trùng tuyệt đối
+FITNESS_TOL = 1e-12                    # = mpqda.config.SATURATION_EPS; gene set and n_eval must still match exactly
 UNIT = ["repeat", "fold", "method", "k"]
 
 
@@ -42,8 +42,8 @@ def _panels(genes: pd.DataFrame) -> dict:
 
 def compare(run_dir: Path, ref_dir: Path, cohort: str = "", methods=METHODS, within_tol: list | None = None
             ) -> tuple[pd.DataFrame, int]:
-    """Bảng lệch (rỗng = trùng) và số đơn vị (lần lặp, fold, phương pháp, k) đã so. Nếu truyền `within_tol`, các dòng có
-    best_fitness khác nhau nhưng |hiệu| <= FITNESS_TOL được thêm vào đó."""
+    """Table of differences (empty = match) and number of units (repeat, fold, method, k) compared. If `within_tol` is given, rows with
+    different best_fitness but |difference| <= FITNESS_TOL are appended to it."""
     run_sel, ref_sel = _read(Path(run_dir) / "selection_per_fold.csv"), _read(Path(ref_dir) / "selection_per_fold.csv")
     run_sel = run_sel[run_sel.method.isin(methods)]
     run_p, ref_p = _panels(_read(Path(run_dir) / "selected_genes.csv")), _panels(_read(Path(ref_dir) / "selected_genes.csv"))
@@ -54,13 +54,13 @@ def compare(run_dir: Path, ref_dir: Path, cohort: str = "", methods=METHODS, wit
         base = dict(zip(["cohort", *UNIT], [cohort, *key]))
         ref = ref_rows.get(key)
         if ref is None or key not in ref_p:
-            rows.append({**base, "field": "reference", "run": "có", "survey": "không có đơn vị này"})
+            rows.append({**base, "field": "reference", "run": "present", "survey": "unit absent"})
             continue
         mine, theirs = run_p.get(key, frozenset()), ref_p[key]
         if mine != theirs:
-            rows.append({**base, "field": "genes", "run": ";".join(sorted(mine - theirs)) or "(thiếu gen)",
-                         "survey": ";".join(sorted(theirs - mine)) or "(thừa gen)"})
-        if not r["n_eval"] == ref["n_eval"]:                          # bằng nhau tuyệt đối; NaN cũng tính là lệch
+            rows.append({**base, "field": "genes", "run": ";".join(sorted(mine - theirs)) or "(missing genes)",
+                         "survey": ";".join(sorted(theirs - mine)) or "(extra genes)"})
+        if not r["n_eval"] == ref["n_eval"]:                          # exactly equal; NaN also counts as a difference
             rows.append({**base, "field": "n_eval", "run": repr(r["n_eval"]), "survey": repr(ref["n_eval"])})
         a, b = r["best_fitness"], ref["best_fitness"]
         if not a == b:
@@ -79,11 +79,11 @@ def main(argv=None) -> int:
             stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run-root", type=Path, default=None,
-                    help="thư mục chứa <cohort>/selected_genes.csv của lần chạy T1b (mặc định: kết quả taimma/T1b)")
+                    help="folder holding <cohort>/selected_genes.csv of the T1b run (default: results taimma/T1b)")
     ap.add_argument("--reference", type=Path, default=REFERENCE)
     ap.add_argument("--datasets", nargs="+", default=["gse10245", "gse30219", "gse37745"])
     ap.add_argument("--methods", nargs="+", default=list(METHODS))
-    ap.add_argument("--report", type=Path, default=None, help="ghi bảng lệch ra CSV (kể cả khi rỗng)")
+    ap.add_argument("--report", type=Path, default=None, help="write the table of differences to CSV (even when empty)")
     args = ap.parse_args(argv)
     if args.run_root is None:
         from mpqda import config as M
@@ -99,7 +99,7 @@ def main(argv=None) -> int:
         table, n = compare(run_dir, args.reference / name, cohort=name, methods=args.methods, within_tol=near)
         tables.append(table)
         n_units += n
-        print(f"[G-T1] {name}: {n} đơn vị đã so, {table[UNIT].drop_duplicates().shape[0]} đơn vị lệch", flush=True)
+        print(f"[G-T1] {name}: {n} units compared, {table[UNIT].drop_duplicates().shape[0]} units differ", flush=True)
     diff = pd.concat(tables, ignore_index=True) if tables else pd.DataFrame()
     near_df = pd.DataFrame(near, columns=["cohort", *UNIT, "field", "run", "survey", "abs_diff"])
     if args.report:
@@ -107,19 +107,19 @@ def main(argv=None) -> int:
         diff.to_csv(args.report, index=False)
         near_df.to_csv(args.report.with_name(args.report.stem + "_within_tol.csv"), index=False)
     if len(near_df):
-        print(f"[G-T1] {len(near_df)} đơn vị có best_fitness khác ở mức làm tròn (|hiệu| <= {FITNESS_TOL:g}; tập gen và n_eval "
-              "trùng), không tính là lệch:", flush=True)
+        print(f"[G-T1] {len(near_df)} units have best_fitness differing at rounding level (|difference| <= {FITNESS_TOL:g}; gene set and n_eval "
+              "match), not counted as differences:", flush=True)
         print(near_df.to_string(index=False), flush=True)
     if missing:
-        print(f"[G-T1] không có kết quả cho: {missing}", flush=True)
+        print(f"[G-T1] no results for: {missing}", flush=True)
     if n_units == 0:
-        print("[G-T1] KHÔNG ĐẠT: không có đơn vị GA, BPSO nào để so.", flush=True)
+        print("[G-T1] FAILED: no GA or BPSO unit to compare.", flush=True)
         return 2
     if len(diff):
         print(diff.to_string(index=False), flush=True)
-        print(f"[G-T1] KHÔNG ĐẠT: {len(diff)} dòng lệch trên {n_units} đơn vị. Dừng, không mở S1–S3.", flush=True)
+        print(f"[G-T1] FAILED: {len(diff)} differing rows over {n_units} units. Stop, do not open S1–S3.", flush=True)
         return 2
-    print(f"[G-T1] ĐẠT: {n_units} đơn vị trùng survey (tập gen, n_eval; best_fitness trong {FITNESS_TOL:g}).", flush=True)
+    print(f"[G-T1] PASSED: {n_units} units match the vendored code (gene set, n_eval; best_fitness within {FITNESS_TOL:g}).", flush=True)
     return 0
 
 

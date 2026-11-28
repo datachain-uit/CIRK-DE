@@ -1,15 +1,15 @@
-"""Bảng, hình, kiểm định và sổ số liệu của bài TAIMMA (Mục 4.5; PREREG Mục 7).
+"""Tables, figures, tests and register of numbers of the TAIMMA study (PREREG, Section 7).
 
-    python scripts/make_taimma_tables.py --results <thư mục chứa T1, T1b, T2, T3_s1..4, T5LL/..., T5/...> --out tables
+    python scripts/make_taimma_tables.py --results <folder holding T1, T1b, T2, T3_s1..4, T5LL/..., T5/...> --out tables
 
-Pha B (TQĐ11): mọi bảng chính, H3, H4 (qua H3), H5 (Q2), phép thử phụ và Friedman đọc B-LL (`T5LL/`). Bảng độ nhạy
-`*_bauc` đọc pha B của survey (`T5/`), nhãn trong claims.csv có hậu tố `_BAUC`. `table_s_c_choice` ghi tỉ lệ panel nhận
-từng giá trị C dưới hai pha B. Cột `phase_b` của claims.csv ghi pha của từng số (B-LL, B-AUC hoặc phase A).
-Đầu vào là các thư mục kết quả đã giải nén (cấu trúc của results/survey_v2/taimma/). SHA-256 của mọi tệp đầu vào ghi vào
-`inputs_sha256.csv`. Mọi phép thống kê dùng `survey_v2.stats` (nadeau_bengio_ttest, holm, bayesian_correlated_ttest),
-`survey_v2.stability.nogueira`, `scipy.stats.wilcoxon`, `scipy.stats.friedmanchisquare`; công thức gộp ba cohort là
-`pooled_nb`. Chạy hai lần cho kết quả trùng từng byte: sắp dòng cố định, định dạng số cố định, không ghi thời điểm.
-Kịch bản chưa có kết quả thì bảng tương ứng bị bỏ qua và được ghi trong `missing_inputs.txt`.
+Phase B: every main table, H3, H4 (through H3), H5 (Q2), the secondary tests and Friedman read B-LL (`T5LL/`). The sensitivity tables
+`*_bauc` read the phase B of the vendored code (`T5/`); their labels in claims.csv carry the suffix `_BAUC`. `table_s_c_choice` gives the share of panels that receive
+each C value under the two phase B variants. The `phase_b` column of claims.csv gives the phase of each number (B-LL, B-AUC or phase A).
+Inputs are the extracted result folders (layout of results/survey_v2/taimma/). The SHA-256 of every input file is written to
+`inputs_sha256.csv`. Every statistic uses `survey_v2.stats` (nadeau_bengio_ttest, holm, bayesian_correlated_ttest),
+`survey_v2.stability.nogueira`, `scipy.stats.wilcoxon`, `scipy.stats.friedmanchisquare`; the formula pooling the three cohorts is
+`pooled_nb`. Two runs give byte-identical results: fixed row order, fixed number format, no time stamps.
+A scenario without results has its tables skipped and is listed in `missing_inputs.txt`.
 """
 from __future__ import annotations
 
@@ -40,23 +40,23 @@ FOLD = ["repeat", "fold"]
 MARGIN_LOGLOSS, ROPE_AUROC, MARGIN_NOGUEIRA, ALPHA = 0.02, C.ROPE_AUROC, 0.2, C.ALPHA
 PRIMARY_K = (5, 10)
 BASELINE_ORDER = ("ga", "bpso", "de_rand1", "shade", "qlde", "jde", "jade")
-NEMENYI_Q05 = {6: 2.850, 8: 3.031}             # Demšar (2006), alpha = 0,05
+NEMENYI_Q05 = {6: 2.850, 8: 3.031}             # Demšar (2006), alpha = 0.05
 N_GENES_DEFAULT = 16479
 H5_VARIANTS = ("mpqda_a0_noband", "mpqda_a1_uniform", "mpqda_a2a_bestleader", "mpqda_a2b_randleader", "mpqda_a3_fixedF",
-               "mpqda_a5_A1")                  # TQĐ14: A0 vào họ Holm chính
+               "mpqda_a5_A1")                  # A0 belongs to the main Holm family
 COMPONENT = {"mpqda_a0_noband": "band re-encoding", "mpqda_a1_uniform": "chaotic initialisation", "mpqda_a2a_bestleader": "archive-based leader",
              "mpqda_a2b_randleader": "archive-based leader", "mpqda_a5_A1": "archive-based leader",
              "mpqda_a3_fixedF": "Q-learning control", "A4": "consensus output"}
 FMT = "%.10g"
-PHASE_B_DIRS = {"B-LL": "T5LL", "B-AUC": "T5"}  # pha B -> thư mục kết quả
+PHASE_B_DIRS = {"B-LL": "T5LL", "B-AUC": "T5"}  # phase B -> result folder
 PHASE_A = "phase A"
 B7_K = (5, 10)
 
 
-# ------------------------------------------------------------------------------------------------- thống kê
+# ------------------------------------------------------------------------------------------------- statistics
 def pooled_nb(d_by_cohort, ratio: float = C.NB_TEST_TRAIN_RATIO) -> dict:
-    """d̄ = trung bình (trọng số bằng nhau) của d̄_c; SE² = (1/C²)·Σ_c (1/J_c + ρ)·s_c²; df = min J_c − 1.
-    Trả về khoảng tin cậy hai phía 95 % (ci_high dùng cho biên không kém)."""
+    """d̄ = mean (equal weights) of the d̄_c; SE² = (1/C²)·Σ_c (1/J_c + ρ)·s_c²; df = min J_c − 1.
+    Returns the two-sided 95 % confidence interval (ci_high is used for the non-inferiority bound)."""
     d_by_cohort = [np.asarray(d, dtype=float) for d in d_by_cohort]
     n = len(d_by_cohort)
     mean = float(np.mean([d.mean() for d in d_by_cohort]))
@@ -67,21 +67,21 @@ def pooled_nb(d_by_cohort, ratio: float = C.NB_TEST_TRAIN_RATIO) -> dict:
 
 
 def pooled_p_greater(pool: dict) -> float:
-    """p một phía P(t(df) > d̄/SE)."""
+    """One-sided p P(t(df) > d̄/SE)."""
     if pool["se"] == 0:
         return 0.0 if pool["mean"] > 0 else 1.0
     return float(st.t.sf(pool["mean"] / pool["se"], pool["df"]))
 
 
 def wilcoxon_p(d, alternative: str) -> float:
-    """scipy.stats.wilcoxon(zero_method="wilcox", method="auto"); mọi hiệu bằng 0 thì p = 1 (không có bằng chứng)."""
+    """scipy.stats.wilcoxon(zero_method="wilcox", method="auto"); if every difference is 0 then p = 1 (no evidence)."""
     d = np.asarray(d, dtype=float)
     if not np.any(d != 0):
         return 1.0
     return float(st.wilcoxon(d, zero_method="wilcox", alternative=alternative, method="auto").pvalue)
 
 
-# ------------------------------------------------------------------------------------------------- đọc đầu vào
+# ------------------------------------------------------------------------------------------------- reading the inputs
 class Inputs:
     def __init__(self, root: Path):
         self.root, self.used, self.missing = Path(root), {}, []
@@ -106,7 +106,7 @@ class Inputs:
 
 
 def paired(frame, a, b, value, k, cohort) -> np.ndarray:
-    """Hiệu a − b của cột `value` theo fold (ghép theo lần lặp, fold) trong một cohort và một k."""
+    """Difference a − b of the column `value` per fold (paired by repeat and fold) within one cohort and one k."""
     part = frame[(frame.cohort == cohort) & (frame.k == k)]
     pa = part[part.method == a].set_index(FOLD)[value]
     pb = part[part.method == b].set_index(FOLD)[value]
@@ -120,7 +120,7 @@ def _decision(n_sig: int, n: int, need: int) -> str:
 
 # ------------------------------------------------------------------------------------------------- H1–H5
 def h1(sel_b: pd.DataFrame) -> pd.DataFrame:
-    """Tỉ lệ bão hoà của T1b theo cohort: một lần chạy cho mỗi (phương pháp, k, fold), xét best_fitness."""
+    """Saturation rate of T1b by cohort: one run per (method, k, fold), based on best_fitness."""
     runs = sel_b[~sel_b.method.str.endswith(M.BEST_SUFFIX)]
     sat = runs.best_fitness >= 1 - M.SATURATION_EPS
     rows = [{"cohort": c, "n_runs": int((runs.cohort == c).sum()), "n_saturated": int(sat[runs.cohort == c].sum())} for c in COHORTS]
@@ -135,7 +135,7 @@ def h1(sel_b: pd.DataFrame) -> pd.DataFrame:
 
 
 def h2(sel: pd.DataFrame) -> pd.DataFrame:
-    """best_fitness(MPQDA-DE) − best_fitness(DE/rand/1/bin): Wilcoxon một phía theo cohort và k ∈ {5, 10}; một họ Holm 6."""
+    """best_fitness(QRK-DE) − best_fitness(DE/rand/1/bin): one-sided Wilcoxon by cohort and k ∈ {5, 10}; one Holm family of 6."""
     rows = []
     for k in PRIMARY_K:
         for c in COHORTS:
@@ -151,7 +151,7 @@ def h2(sel: pd.DataFrame) -> pd.DataFrame:
 
 
 def comparator(ev: pd.DataFrame, k: int) -> str:
-    """m*: baseline wrapper có log-loss ngoài trung bình thấp nhất trên 45 fold; hoà theo BASELINE_ORDER."""
+    """m*: the wrapper baseline with the lowest mean outer log-loss over the 45 folds; ties by BASELINE_ORDER."""
     part = ev[(ev.k == k) & ev.cohort.isin(COHORTS)]
     means = {m: float(part[part.method == m].logloss.mean()) for m in BASELINE_ORDER if (part.method == m).any()}
     return min(means, key=lambda m: (means[m], BASELINE_ORDER.index(m)))
@@ -173,8 +173,8 @@ def h3(ev: pd.DataFrame) -> pd.DataFrame:
 
 
 def secondary(ev: pd.DataFrame, ks) -> pd.DataFrame:
-    """Trong mỗi (cohort, k), MPQDA-DE (đồng thuận) so với từng baseline: Nadeau–Bengio và Wilcoxon hai phía, Holm trong các
-    baseline; Bayesian correlated t-test cho AUROC với ROPE 0,01."""
+    """Within each (cohort, k), QRK-DE (consensus) against each baseline: Nadeau–Bengio and two-sided Wilcoxon, Holm over the
+    baselines; Bayesian correlated t-test for AUROC with ROPE 0.01."""
     rows = []
     for c in sorted(ev.cohort.unique()):
         for k in ks:
@@ -196,7 +196,7 @@ def secondary(ev: pd.DataFrame, ks) -> pd.DataFrame:
 
 
 def friedman(ev: pd.DataFrame, ks) -> tuple[pd.DataFrame, dict]:
-    """Friedman trên log-loss ngoài trung bình qua các khối (cohort × k); hạng trung bình và critical difference của Nemenyi."""
+    """Friedman on the mean outer log-loss over the blocks (cohort × k); mean ranks and the Nemenyi critical difference."""
     methods = ["mpqda_de", *[m for m in BASELINE_ORDER if (ev.method == m).any()]]
     part = ev[ev.method.isin(methods) & ev.cohort.isin(COHORTS) & ev.k.isin(ks)]
     table = part.groupby(["cohort", "k", "method"]).logloss.mean().unstack("method")[methods].dropna()
@@ -210,7 +210,7 @@ def friedman(ev: pd.DataFrame, ks) -> tuple[pd.DataFrame, dict]:
 
 
 def seed_stability(inputs: Inputs, n_genes: int = N_GENES_DEFAULT) -> pd.DataFrame | None:
-    """Φ theo fold của GSE37745: Nogueira của năm panel (seed index 0 từ T1, 1–4 từ T3_s1..4) cho từng đầu ra và k ∈ {5, 10}."""
+    """Φ per fold of GSE37745: Nogueira over the five panels (seed index 0 from T1, 1–4 from T3_s1..4) for each output and k ∈ {5, 10}."""
     frames = [inputs.read("T1/gse37745/selected_genes.csv")]
     frames += [inputs.read(f"T3_s{s}/gse37745/selected_genes.csv") for s in (1, 2, 3, 4)]
     if any(f is None for f in frames):
@@ -251,9 +251,9 @@ def h4(phi: pd.DataFrame, h3_table: pd.DataFrame | None) -> pd.DataFrame:
 
 
 def h5(sel1, sel2, ev1, ev2) -> pd.DataFrame:
-    """Mỗi biến thể ghép với lần chạy MPQDA-DE đầy đủ của T1. Q1: best_fitness(đầy đủ) − best_fitness(biến thể), Wilcoxon
-    một phía trên 45 fold; Q2: log-loss(đầu ra chính của biến thể) − log-loss(đồng thuận đầy đủ), Nadeau–Bengio gộp một phía.
-    Một họ Holm 39 phép thử (A0, A1, A2a, A2b, A3, A5_A1 × {Q1, Q2} × 3 k, cộng A4 × Q2 × 3 k; TQĐ14); A5_A30 chỉ mô tả."""
+    """Each variant is paired with the full QRK-DE run of T1. Q1: best_fitness(full) − best_fitness(variant), one-sided Wilcoxon
+    over 45 folds; Q2: log-loss(main output of the variant) − log-loss(full consensus), one-sided pooled Nadeau–Bengio.
+    One Holm family of 39 tests (A0, A1, A2a, A2b, A3, A5_A1 × {Q1, Q2} × 3 k, plus A4 × Q2 × 3 k); A5_A30 descriptive only."""
     sel, ev = pd.concat([sel1, sel2], ignore_index=True), pd.concat([ev1, ev2], ignore_index=True)
     rows = []
     for variant in (*H5_VARIANTS, "A4", "mpqda_a5_A30"):
@@ -279,8 +279,8 @@ def h5(sel1, sel2, ev1, ev2) -> pd.DataFrame:
 
 
 def auprc_per_fold(scores: pd.DataFrame) -> pd.DataFrame:
-    """AUPRC (average precision, lớp 1 là dương) trên test ngoài của từng (cohort, lần lặp, fold, phương pháp, k), từ điểm từng
-    mẫu mà pha B lưu (--save-scores)."""
+    """AUPRC (average precision, class 1 positive) on the outer test of each (cohort, repeat, fold, method, k), from the per-sample
+    scores saved by phase B (--save-scores)."""
     rows = [{"cohort": c, "repeat": int(r), "fold": int(f), "method": m, "k": int(k),
              "auprc": float(average_precision_score(g.label.to_numpy(dtype=int), g.score.to_numpy(dtype=float)))}
             for (c, r, f, m, k), g in scores.groupby(["cohort", "repeat", "fold", "method", "k"], sort=True)]
@@ -288,7 +288,7 @@ def auprc_per_fold(scores: pd.DataFrame) -> pd.DataFrame:
 
 
 def b7_summary(ev: pd.DataFrame, scores: pd.DataFrame | None, methods) -> pd.DataFrame:
-    """Bảng B7 (PREREG Mục 8): log-loss, AUROC và AUPRC ngoài (trung bình, độ lệch chuẩn) theo bộ, k, phương pháp."""
+    """B7 table (PREREG, Section 8): outer log-loss, AUROC and AUPRC (mean, standard deviation) by dataset, k, method."""
     out = summary_table(ev, methods, B7_K)
     if scores is not None and len(scores):
         ap = auprc_per_fold(scores[scores.method.isin(methods) & scores.k.isin(B7_K)])
@@ -299,7 +299,7 @@ def b7_summary(ev: pd.DataFrame, scores: pd.DataFrame | None, methods) -> pd.Dat
 
 
 def c_choice(evs: dict) -> pd.DataFrame:
-    """Tỉ lệ panel nhận từng giá trị C của LR-L2 theo pha B, kịch bản, phương pháp và k (B0, random-k không tính)."""
+    """Share of panels receiving each C value of LR-L2 by phase B variant, scenario, method and k (B0, random-k excluded)."""
     rows = []
     for (phase_b, scenario), ev in sorted(evs.items()):
         part = ev[~ev.method.isin(["b0", "random_k"]) & ev["C"].notna()]
@@ -312,7 +312,7 @@ def c_choice(evs: dict) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["phase_b", "scenario", "method", "k", "C", "n_panels", "n_with_C", "rate"])
 
 
-# ------------------------------------------------------------------------------------------------- ghi tệp
+# ------------------------------------------------------------------------------------------------- writing files
 def write_csv(frame: pd.DataFrame, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="") as f:
@@ -331,7 +331,7 @@ def write_tex(frame: pd.DataFrame, path: Path, caption: str, label: str) -> None
 
 
 def summary_table(ev: pd.DataFrame, methods, ks) -> pd.DataFrame:
-    """Trung bình ± độ lệch chuẩn (kèm số fold) của log-loss và AUROC ngoài theo cohort, k, phương pháp."""
+    """Mean ± standard deviation (with the number of folds) of outer log-loss and AUROC by cohort, k, method."""
     part = ev[ev.method.isin(methods) & ev.k.isin(ks)]
     g = part.groupby(["cohort", "k", "method"])
     out = g.agg(n=("logloss", "size"), logloss_mean=("logloss", "mean"), logloss_sd=("logloss", "std"),
@@ -344,7 +344,7 @@ def _savefig(fig, path: Path) -> None:
 
 
 def fig_anytime(hist: pd.DataFrame, path: Path, methods) -> None:
-    """Fig. 2: fitness tốt nhất theo N_eval, trung vị và IQR qua các lần chạy (cohort × fold) của mỗi k."""
+    """Fig. 2: best fitness against N_eval, median and IQR over the runs (cohort × fold) of each k."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -371,7 +371,7 @@ def fig_anytime(hist: pd.DataFrame, path: Path, methods) -> None:
 
 
 def fig_cd(ranks: pd.DataFrame, info: dict, path: Path) -> None:
-    """Fig. 3: sơ đồ critical difference (Demšar, 2006) trên hạng log-loss ngoài trung bình."""
+    """Fig. 3: critical difference diagram (Demšar, 2006) on the mean ranks of outer log-loss."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -399,7 +399,7 @@ CLAIM_COLUMNS = ["claim_id", "value", "file", "column", "filter", "phase_b"]
 
 
 def claims_rows(tag: str, frame: pd.DataFrame, file: str, columns, keys, phase_b: str) -> list[dict]:
-    """Sổ số liệu: mỗi giá trị một dòng (mã số liệu, giá trị, tệp, cột, bộ lọc, pha B). Bảng có cột phase_b thì lấy theo dòng."""
+    """Register of numbers: one value per row (claim code, value, file, column, filter, phase B). Tables with a phase_b column take it per row."""
     rows = []
     for rec in frame.to_dict("records"):
         flt = ";".join(f"{c}={rec[c]}" for c in keys)
@@ -437,7 +437,7 @@ def build(results: Path, out: Path) -> dict:
         if ev is None:
             continue
         tag_sfx = suffix.upper()
-        caption_sfx = "" if not suffix else " Sensitivity analysis: phase B of the survey (C chosen by the inner AUROC)."
+        caption_sfx = "" if not suffix else " Sensitivity analysis: phase B of the vendored code (C chosen by the inner AUROC)."
         emit(f"table3_main{suffix}", summary_table(ev, methods, (2, 5, 10, 50)),
              "Outer log-loss and AUROC (mean and SD over the outer folds; n = number of folds)." + caption_sfx, f"T3{tag_sfx}",
              ["n", "logloss_mean", "logloss_sd", "auroc_mean", "auroc_sd"], ["cohort", "k", "method"], phase_b)
@@ -453,7 +453,7 @@ def build(results: Path, out: Path) -> dict:
             fig_cd(ranks, info, out / "fig3_critical_difference.pdf")
             done.append("fig3_critical_difference.pdf")
     evs = {("B-LL", "T1"): ev1, ("B-AUC", "T1"): ev1_bauc}
-    for phase_b, sub in PHASE_B_DIRS.items():                 # T4 (selector không wrapper) nếu đã có
+    for phase_b, sub in PHASE_B_DIRS.items():                 # T4 (non-wrapper selectors) if available
         if (results / sub / "T4").is_dir():
             evs[(phase_b, "T4")] = inp.evaluation("T4", phase_b=phase_b)
     evs = {key: frame for key, frame in evs.items() if frame is not None}
@@ -465,10 +465,10 @@ def build(results: Path, out: Path) -> dict:
         done.append("fig2_anytime.pdf")
     if all(x is not None for x in (sel1, sel2, ev1, ev2)):
         t = h5(sel1, sel2, ev1, ev2)
-        emit("table4_ablation", t, "Ablation: paired differences against the full MPQDA-DE run (one Holm family of 39 tests).",
+        emit("table4_ablation", t, "Ablation: paired differences against the full QRK-DE run (one Holm family of 39 tests).",
              "H5", ["mean_diff", "ci_low", "ci_high", "p", "p_holm", "significant"], ["variant", "k", "question"])
     b7 = [d for d in M.B7_INCLUDED if (results / PHASE_B_DIRS["B-LL"] / "T1" / d).is_dir()]
-    if b7:                                                    # B7: bảng riêng, không gộp với GPL570 (PREREG Mục 8)
+    if b7:                                                    # B7: separate table, not pooled with GPL570 (PREREG, Section 8)
         ev_b7 = inp.evaluation("T1", cohorts=b7)
         sc_b7 = inp.scenario(f"{PHASE_B_DIRS['B-LL']}/T1", "e1_scores.csv", b7, encoding="utf-8")
         if ev_b7 is not None:
@@ -499,13 +499,13 @@ def main(argv=None) -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--results", type=Path, required=True, help="thư mục chứa T1, T1b, T2, T3_s1..4, T5LL, T5 (đã giải nén)")
+    ap.add_argument("--results", type=Path, required=True, help="folder holding T1, T1b, T2, T3_s1..4, T5LL, T5 (extracted)")
     ap.add_argument("--out", type=Path, default=Path("tables"))
     args = ap.parse_args(argv)
     res = build(args.results, args.out)
-    print("đã ghi: " + ", ".join(res["written"]))
+    print("written: " + ", ".join(res["written"]))
     if res["missing"]:
-        print(f"thiếu {len(res['missing'])} tệp đầu vào (xem {args.out / 'missing_inputs.txt'}); bảng tương ứng bị bỏ qua")
+        print(f"missing {len(res['missing'])} input files (see {args.out / 'missing_inputs.txt'}); the corresponding tables are skipped")
     return 0
 
 

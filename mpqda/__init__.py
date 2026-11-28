@@ -1,7 +1,7 @@
-"""MPQDA-DE cho panel đúng k gen (bài TAIMMA 2027).
+"""QRK-DE and CIRK-DE for panels of exactly k genes (TAIMMA 2027 study).
 
-Gói này dùng mã survey chép nguyên trạng trong `vendor/` (`survey_v2`, `scripts.provenance`). Khi nạp gói, `ROOT/vendor`
-rồi `ROOT` được đưa vào `sys.path`, để `survey_v2` và `scripts.*` của survey nạp từ `vendor/` còn script mới nạp từ gốc kho.
+This package uses the vendored code, copied unchanged into `vendor/` (`survey_v2`, `scripts.provenance`). On import, `ROOT/vendor`
+then `ROOT` are added to `sys.path`, so that `survey_v2` and the vendored `scripts.*` load from `vendor/` and new scripts load from the repository root.
 """
 from __future__ import annotations
 

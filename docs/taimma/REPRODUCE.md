@@ -1,31 +1,35 @@
 # Reproducing the TAIMMA 2027 experiments
 
-All cited numbers come from a pushed commit of branch `taimma-2027` (tag `taimma-2027-submission`). Every result directory has a
-`config.json` with `traceable = true` and `commit_hash` equal to that commit. Runs made with `KLTN_ALLOW_UNPUSHED`,
-`KLTN_ALLOW_UNTRACKED` or `MPQDA_SMOKE` are smoke tests and are never cited.
+All cited numbers come from pushed commits of branch `taimma-2027`. Every result directory has a `config.json` with
+`traceable = true` and `commit_hash` equal to the commit that produced it. Runs made with `KLTN_ALLOW_UNPUSHED`,
+`KLTN_ALLOW_UNTRACKED` or `MPQDA_SMOKE` are smoke tests and are never cited. The result packages of all sessions are in
+`result_packages/` (see `README.md`).
 
-## 1. Environment
+## 1. Environment and data
 
-The results of the paper come from the Kaggle CPU image (4 vCPU) of session S0, used unchanged in every session (TQĐ16):
-numpy, scipy, pandas and scikit-learn of the image are not overwritten; only skrebate 0.8.4 and abess 0.4.11 are added.
+The results come from the Kaggle CPU image (4 vCPU) of session S0, used unchanged in every session: numpy, scipy, pandas
+and scikit-learn of the image are not overwritten; only skrebate 0.8.4 and abess 0.4.11 are added.
 
 ```bash
 pip install --no-deps skrebate==0.8.4 abess==0.4.11
 ```
 
 ```bash
-export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 KLTN_STRICT_N=1 KLTN_DATA_ROOT=/path/to/data
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 KLTN_STRICT_N=1 KLTN_DATA_ROOT="$(pwd)/data"
 ```
 
-The exact package list is `logs/S0/pip_freeze_session.txt` in `S0_results.zip`; its MD5 is in `T0_report.json`
-(`pip_freeze_md5`) and in PREREG Section 11, together with the packages that differ from `vendor/requirements-kaggle.txt` (the
-environment of the survey). Install that list to reproduce the numbers exactly. S1–S3 stop if their `pip freeze` has another MD5.
-`vendor/requirements-kaggle.txt` is installed only if G-T1 fails because of package versions (`PIN_SURVEY_ENV = True` in the
-notebook, then for every session). Each job also writes `logs/pip_freeze_<job>.txt`.
+The exact package list of session S0 is `docs/taimma/pip_freeze_S0.txt` (`logs/S0/pip_freeze_session.txt` in
+`S0_results.zip`); its MD5 is in `T0_report.json` (`pip_freeze_md5`) and in PREREG Section 11, together with the packages
+that differ from `vendor/requirements-kaggle.txt` (the environment of the vendored code). Install that list to reproduce the
+numbers exactly. S1–S3 stop if their `pip freeze` has another MD5. `vendor/requirements-kaggle.txt` is installed only if
+G-T1 fails because of package versions (`PIN_SURVEY_ENV = True` in the notebook, then for every session). Each job also
+writes `logs/pip_freeze_<job>.txt`.
 
-`$KLTN_DATA_ROOT` holds the survey data layout (`experiment-data-geo-target/<cohort>/{expression.h5, metadata.csv,
-repeated_splits.csv}`, and `experiment-data-perm/tcga_luad_lusc_primary_tumor/` for the gene space). The runner stops if the
-SHA-256 of `repeated_splits.csv` differs from `mpqda.config.EXPECTED_SPLIT_SHA256`.
+`$KLTN_DATA_ROOT` is the `data/` folder of this repository (`experiment-data-geo-target/<cohort>/{expression.h5,
+metadata.csv, repeated_splits.csv}`, `experiment-data-perm/tcga_luad_lusc_primary_tumor/` for the gene space and
+`experiment-data-b7/` for the external task). The large file listed in `README.md` comes from the release
+`taimma-2027-submission`. The runner stops if the SHA-256 of `repeated_splits.csv` differs from
+`mpqda.config.EXPECTED_SPLIT_SHA256`.
 
 ## 2. Tests
 
@@ -41,12 +45,15 @@ python -m pytest vendor/tests -m "not slow" -q
 python scripts/vendor_survey.py --check
 ```
 
-## 3. Sessions
+The last command checks every file of `vendor/` against the SHA-256 listed in `vendor/VENDORED.md`.
 
-Phase A results go to `$KLTN_DATA_ROOT/results/survey_v2/taimma/<scenario>/<cohort>/`. Phase B has two variants (TQĐ11): B-LL
-(`scripts/run_taimma_phase_b.py --criterion logloss`, C chosen by the inner log-loss) in `taimma/T5LL/<scenario>/<cohort>/`, used
-for every result of the paper, and B-AUC (the survey `run_e1_classification.py` unchanged) in `taimma/T5/<scenario>/<cohort>/`, used
-for the sensitivity analysis. Every phase B step runs B-LL first, then B-AUC. S1–S3 open only after every S0 job passes.
+## 3. Sessions of QRK-DE and the baselines
+
+Phase A results go to `$KLTN_DATA_ROOT/results/survey_v2/taimma/<scenario>/<cohort>/`. Phase B has two variants: B-LL
+(`scripts/run_taimma_phase_b.py --criterion logloss`, C chosen by the inner log-loss) in `taimma/T5LL/<scenario>/<cohort>/`,
+used for every result of the paper, and B-AUC (the vendored `run_e1_classification.py`, unchanged) in
+`taimma/T5/<scenario>/<cohort>/`, used for the sensitivity analysis. Every phase B step runs B-LL first, then B-AUC. S1–S3
+open only after every S0 job passes.
 
 | Session | Jobs, in order | What they produce |
 |---|---|---|
@@ -69,67 +76,63 @@ python scripts/taimma_jobs.py verify t1
 
 `show <job>` prints the exact commands of a job. A job that stops can be run again: completed units are skipped.
 
-On Kaggle, use `notebooks/kaggle_taimma_runner.ipynb` (generated by `scripts/make_kaggle_notebook.py`; do not edit it by hand).
-Set `SESSION` and `REPO_COMMIT`; the notebook checks the input layout and that the commit is pushed, records `pip freeze` and its
-MD5, runs both test suites and writes their logs, runs the jobs of the session, and saves `<SESSION>_results.zip` with its SHA-256.
-Sessions S1–S3 refuse to start unless the S0 output shows that T0 and G-T1 passed and the MD5 of `pip freeze` equals that of S0.
-When `mpqda.config.B7_INCLUDED` is not empty, set `INPUT_B7_DATASET` to the Kaggle input holding `experiment-data-b7/`.
+On Kaggle, use `notebooks/kaggle_taimma_runner.ipynb` (generated by `scripts/make_kaggle_notebook.py`; do not edit it by
+hand). Upload `data/` of this repository as a Kaggle dataset and set `INPUT_V3_DATASET` to it. Set `SESSION` and
+`REPO_COMMIT`; the notebook checks the input layout and that the commit is pushed, records `pip freeze` and its MD5, runs
+both test suites and writes their logs, runs the jobs of the session, and saves `<SESSION>_results.zip` with its SHA-256.
+Sessions S1–S3 refuse to start unless the S0 output shows that T0 and G-T1 passed and the MD5 of `pip freeze` equals that
+of S0. When `mpqda.config.B7_INCLUDED` is not empty, set `INPUT_B7_DATASET` to the input holding `experiment-data-b7/`.
 
-## 3b. Development phase of MPQDA-DE v2 (Review-2026-11-16, TQĐ23)
+## 3b. Development phase of CIRK-DE
 
-Session `DEV` of the notebook (no `S0_RESULTS` needed) copies `experiment-data-perm` into a writable root with `cp -rs`, builds
-`tcga_dev_a`, `tcga_dev_b`, `tcga_dev_c` (`python scripts/taimma_jobs.py build-dev`; three patient-disjoint subsets of the TCGA
-LUAD/LUSC cohort, 170 samples each), checks their split SHA-256 against `mpqda.config.EXPECTED_SPLIT_SHA256`, runs the three
-candidates, v1, DE-G, DE/rand/1/bin and GA on them and on GSE42127 (repeats 0 and 1), runs B-LL, and applies the selection
-rule and gate G-DEV (`scripts/dev_select.py`). The build is deterministic in content: the matrix values (`values_sha256`),
-`metadata.csv` and `repeated_splits.csv` are identical between builds, while the bytes of `expression.h5` are not; the card
-is `docs/taimma/dev_datasets_card.json`. No v2 method runs on the three GPL570 cohorts or the two B7 datasets before the tag
-`taimma-2027-prereg-v2` (`mpqda/registration.py`).
+Session `DEV` of the notebook (no `S0_RESULTS` needed) copies `experiment-data-perm` into a writable root with `cp -rs`,
+builds `tcga_dev_a`, `tcga_dev_b`, `tcga_dev_c` (`python scripts/taimma_jobs.py build-dev`; three patient-disjoint subsets
+of the TCGA LUAD/LUSC cohort, 170 samples each), checks their split SHA-256 against `mpqda.config.EXPECTED_SPLIT_SHA256`,
+runs the three candidates, QRK-DE, DE-G, DE/rand/1/bin and GA on them and on GSE42127 (repeats 0 and 1), runs B-LL, and
+applies the selection rule and gate G-DEV (`scripts/dev_select.py`). The build is deterministic in content: the matrix
+values (`values_sha256`), `metadata.csv` and `repeated_splits.csv` are identical between builds, while the bytes of
+`expression.h5` are not; the card is `docs/taimma/dev_datasets_card.json`. No CIRK-DE variant runs on the three GPL570
+cohorts or the two B7 datasets before the tag `taimma-2027-prereg-v2` (`mpqda/registration.py`).
 
-## 3c. Confirmatory phase of MPQDA-DE v2 (PREREG-v2)
+## 3c. Confirmatory phase of CIRK-DE (PREREG-v2)
 
-All sessions check out the tag `taimma-2027-prereg-v2` (`REPO_COMMIT = 'taimma-2027-prereg-v2'`); before that tag the runner
-refuses every v2 method on the GPL570 and B7 data. Session `S0v2` (jobs `t0v2_det`, `t0v2_shuffle`, `gr`) needs
-`V1_RESULTS` set to `S1_results.zip` of v1, whose `taimma/T1` is the reference of gate G-R. Sessions `C1`, `C2`, `C3`
-(jobs `c1`, `c2`, `c3`) need `S0_RESULTS` set to `S0v2_results.zip`; they stop unless `T0v2_report.json` passed, `GR/gate_gr.csv`
-has no row and the `pip freeze` MD5 equals that of S0v2. Each phase B step runs B-LL (`T5LL/`), B-AUC (`T5/`) and B-C1 (`T5C1/`).
-The tables of v2 come from a separate script that leaves the tables of v1 untouched:
+All sessions check out the tag `taimma-2027-prereg-v2` (`REPO_COMMIT = 'taimma-2027-prereg-v2'`); before that tag the
+runner refuses every CIRK-DE variant on the GPL570 and B7 data. Session `S0v2` (jobs `t0v2_det`, `t0v2_shuffle`, `gr`)
+needs `V1_RESULTS` set to `S1_results.zip`, whose `taimma/T1` is the reference of gate G-R. Sessions `C1`, `C2`, `C3`
+(jobs `c1`, `c2`, `c3`) need `S0_RESULTS` set to `S0v2_results.zip`; they stop unless `T0v2_report.json` passed,
+`GR/gate_gr.csv` has no row and the `pip freeze` MD5 equals that of S0v2. Each phase B step runs B-LL (`T5LL/`), B-AUC
+(`T5/`) and B-C1 (`T5C1/`). The results of the confirmatory phase come from a separate script:
 
 ```bash
 python scripts/make_taimma_v2_tables.py --results $KLTN_DATA_ROOT/results/survey_v2/taimma --out tables_v2
 ```
 
-## 4. Tables and figures
+## 4. Analysis of QRK-DE and the baselines
 
 ```bash
 python scripts/make_taimma_tables.py --results $KLTN_DATA_ROOT/results/survey_v2/taimma --out tables
 ```
 
-Every table and figure below reads B-LL (`T5LL/`), except the files ending in `_bauc`, which read B-AUC (`T5/`). Column
-`phase_b` of `claims.csv` gives the phase of each number.
+Every output below reads B-LL (`T5LL/`), except the files ending in `_bauc`, which read B-AUC (`T5/`). Column `phase_b`
+of `claims.csv` gives the phase of each number. Hypotheses H1–H5 are those of `docs/taimma/PREREG.md`.
 
 | Output | Content | Inputs |
 |---|---|---|
 | `stats_h1_saturation.csv` | H1: saturation rate of the AUROC fitness per cohort | `T1b/<cohort>/selection_per_fold.csv` |
-| `stats_h2_inner_fitness.csv` | H2: best inner fitness, MPQDA-DE against DE/rand/1/bin | `T1/<cohort>/selection_per_fold.csv` |
-| `table3_main.{csv,tex}`, `stats_h3_noninferiority.csv`, `stats_secondary_pairwise.csv`, `stats_friedman_ranks.csv`, `fig3_critical_difference.pdf` | Table 3, H3, secondary tests, Fig. 3 | `T5LL/T1/<cohort>/classification_per_fold.csv` |
-| `table3_main_bauc.{csv,tex}`, `stats_h3_noninferiority_bauc.csv`, `stats_secondary_pairwise_bauc.csv` | sensitivity analysis under B-AUC (appendix) | `T5/T1/<cohort>/classification_per_fold.csv` |
-| `table_s_c_choice.{csv,tex}` | share of panels receiving each value of C under B-LL and B-AUC | `T5LL/T1`, `T5/T1`, and `T5LL/T4`, `T5/T4` when present |
-| `fig2_anytime.pdf` | Fig. 2: anytime curves, median and IQR | `T1/<cohort>/history.csv` |
-| `table4_ablation.{csv,tex}` | Table 4, H5 (one Holm family of 39 tests, A0 included) | T1, T2 and their B-LL phase B |
-| `table_b7_main.{csv,tex}`, `stats_b7_secondary.csv` | B7 (separate table, PREREG Section 8): outer log-loss, AUROC, AUPRC; MPQDA-DE against each baseline, Holm within baselines | `T5LL/T1/<B7 dataset>/classification_per_fold.csv`, `e1_scores.csv` |
-| `table5_seed_stability.{csv,tex}`, `stats_h4_stability.csv` | Table 5, H4 | `T1/gse37745/selected_genes.csv`, `T3_s1..4/gse37745/selected_genes.csv` |
-| `claims.csv`, `inputs_sha256.csv` | number register and SHA-256 of every input file | – |
+| `stats_h2_inner_fitness.csv` | H2: best inner fitness, QRK-DE against DE/rand/1/bin | `T1/<cohort>/selection_per_fold.csv` |
+| `table3_main.{csv,tex}`, `stats_h3_noninferiority.csv`, `stats_secondary_pairwise.csv`, `stats_friedman_ranks.csv`, `fig3_critical_difference.pdf` | Outer performance, H3, secondary tests | `T5LL/T1/<cohort>/classification_per_fold.csv` |
+| `table3_main_bauc.{csv,tex}`, `stats_h3_noninferiority_bauc.csv`, `stats_secondary_pairwise_bauc.csv` | Sensitivity analysis under B-AUC | `T5/T1/<cohort>/classification_per_fold.csv` |
+| `table_s_c_choice.{csv,tex}` | Share of panels receiving each value of C under B-LL and B-AUC | `T5LL/T1`, `T5/T1`, and `T5LL/T4`, `T5/T4` when present |
+| `fig2_anytime.pdf` | Anytime curves, median and IQR | `T1/<cohort>/history.csv` |
+| `table4_ablation.{csv,tex}` | Ablation, H5 (one Holm family of 39 tests, A0 included) | T1, T2 and their B-LL phase B |
+| `table_b7_main.{csv,tex}`, `stats_b7_secondary.csv` | B7 (PREREG Section 8): outer log-loss, AUROC, AUPRC; QRK-DE against each baseline, Holm within baselines | `T5LL/T1/<B7 dataset>/classification_per_fold.csv`, `e1_scores.csv` |
+| `table5_seed_stability.{csv,tex}`, `stats_h4_stability.csv` | Seed stability, H4 | `T1/gse37745/selected_genes.csv`, `T3_s1..4/gse37745/selected_genes.csv` |
+| `claims.csv`, `inputs_sha256.csv` | Number register and SHA-256 of every input file | – |
 
 Running the script twice gives byte-identical files.
 
-The count of survey panels that received C = 0.01 under the survey phase B (PREREG Section 4) is reproduced by
+## 5. Vendored code
 
-```bash
-python scripts/count_survey_c_choice.py --survey-results <survey clone at c1828d2>/results/survey_v2/E1_classification
-```
-
-## 5. Vendored survey code
-
-`vendor/` is a byte-identical copy of `datachain-uit/RNA-Seq-FS-Survey` at the commit recorded in `vendor/VENDORED.md`. It is
-never edited by hand; `python scripts/vendor_survey.py --survey <clone> --commit <hash>` refreshes it.
+`vendor/` holds an unchanged copy of the code used for data loading, splits, the GA and BPSO baselines and the B-AUC
+phase B, with its MIT licence (`vendor/LICENSE`). `vendor/VENDORED.md` lists its files and their SHA-256;
+`python scripts/vendor_survey.py --check` and `tests/test_vendor_integrity.py` verify them. The folder is never edited.

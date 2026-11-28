@@ -1,4 +1,4 @@
-"""Cổng đăng ký (Review-2026-11-16, TQĐ24); chép từ taimma_ref/test_registration_ref.py, chỉ đổi import."""
+"""Registration gate of CIRK-DE (PREREG-v2, Section 9)."""
 import subprocess
 import pytest
 
@@ -71,8 +71,8 @@ def test_real_git_commands(tmp_path):
 
 
 def test_amendment_tag_is_a_registration_tag():
-    """Sửa đổi A1 (Review-2026-11-17b, TQĐ33) và A2 (Review-2026-11-20, TQĐ51): HEAD mang tag sửa đổi thì chạy được; tag lạ thì
-    không."""
+    """Amendments A1 and A2: when HEAD carries an amendment tag the run is allowed; an unknown tag is
+    not."""
     assert R.REGISTRATION_TAGS == ("taimma-2027-prereg-v2", "taimma-2027-prereg-v2.1", "taimma-2027-prereg-v2.2")
     for t in ("taimma-2027-prereg-v2.1", "taimma-2027-prereg-v2.2"):
         R.check_run("gse37745", "mpqda_v2", "mpqda_v2_m1", git=fake_git(tags=(t,)))
@@ -85,7 +85,7 @@ def test_amendment_tag_is_a_registration_tag():
 
 
 def test_job_c4_needs_the_a2_tag():
-    """Việc c4 (HV6) mở bằng check-registered --require-tag taimma-2027-prereg-v2.2, chỉ chạy v2 và v2 không khe ở k ∈ {20, 50}."""
+    """Job c4 (HV6) opens with check-registered --require-tag taimma-2027-prereg-v2.2 and runs only v2 and v2 without gap at k ∈ {20, 50}."""
     from scripts import taimma_jobs as J
     job = J.JOBS["c4"]
     assert job.session == "C4" and J.SESSIONS["C4"] == ["c4"]

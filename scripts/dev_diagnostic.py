@@ -1,20 +1,20 @@
-"""Chẩn đoán đảo chiều trên dữ liệu phát triển (Review-2026-11-17, TQĐ31).
+"""Diagnosis of the reversal on the development data.
 
     python scripts/dev_diagnostic.py --taimma <KLTN_DATA_ROOT>/results/survey_v2/taimma --out dev_diagnostic
 
-Chỉ đọc kết quả DEV (pha A ở taimma/DEV, pha B ở taimma/T5LL|T5C1|T5LLW/DEV); không chạm dữ liệu xác nhận. Mọi bảng là
-MÔ TẢ của pha phát triển: p của Wilcoxon hai phía không hiệu chỉnh, chỉ để định hướng, không dùng cho khẳng định của bài.
+Reads only DEV results (phase A in taimma/DEV, phase B in taimma/T5LL|T5C1|T5LLW/DEV); never touches the confirmatory data. Every table is
+DESCRIPTIVE for the development phase: two-sided Wilcoxon p values, uncorrected, for orientation only, not used for any claim of the paper.
 
-  dev_diag_by_dataset.csv   theo bộ, k, đầu ra, tiêu chí pha B: log-loss nội bộ (−output_fitness), log-loss và AUROC ngoài,
-                            optimism = log-loss ngoài − log-loss nội bộ (B-C1 là so sánh khớp: cùng LR-L2, C = 1 như fitness)
-  dev_diag_pairs.csv        cặp (M1, v1), (M1, GA), (M1, DE-G), (M1, DE/rand/1), (v1, GA), (đồng thuận, cá thể tốt nhất):
-                            hiệu a − b theo đơn vị (bộ, lần lặp, fold), theo k và gộp hai k
-  dev_diag_inner_outer.csv  Spearman giữa log-loss nội bộ và ngoài qua bảy đầu ra chính: trong từng đơn vị (rồi tóm tắt),
-                            và trên trung bình theo phương pháp; Spearman giữa Δnội bộ và Δngoài của M1 − v1 qua các đơn vị
-  dev_diag_c_choice.csv     tỉ lệ C ở cận dưới, cận trên của lưới (B-LL, B-LL-wide), trung vị C
-  dev_diag_overlap.csv      Jaccard giữa panel của hai phương pháp trên cùng đơn vị
+  dev_diag_by_dataset.csv   by dataset, k, output, phase B criterion: inner log-loss (−output_fitness), outer log-loss and AUROC,
+                            optimism = outer log-loss − inner log-loss (B-C1 is the matched comparison: same LR-L2, C = 1 as in the fitness)
+  dev_diag_pairs.csv        pairs (M1, v1), (M1, GA), (M1, DE-G), (M1, DE/rand/1), (v1, GA), (consensus, best individual):
+                            difference a − b per unit (dataset, repeat, fold), by k and pooled over the two k
+  dev_diag_inner_outer.csv  Spearman between inner and outer log-loss over the seven main outputs: within each unit (then summarised),
+                            and on the per-method means; Spearman between Δinner and Δouter of M1 − v1 over the units
+  dev_diag_c_choice.csv     share of C at the lower and upper edge of the grid (B-LL, B-LL-wide), median C
+  dev_diag_overlap.csv      Jaccard between the panels of two methods on the same unit
   dev_diag_inputs_sha256.csv
-Chạy hai lần cho tệp trùng từng byte.
+Two runs give byte-identical files.
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ from scripts import make_taimma_tables as T  # noqa: E402
 DATASETS = tuple(M.DEV_DATASETS)
 KS = (5, 10)
 M1, V1, GA, DEG, DER = "mpqda_v2_m1", "mpqda_de", "ga", "de_g", "de_rand1"
-MAIN = ("mpqda_v2_m1", "mpqda_v2_m2", "mpqda_v2_m3", V1, DEG, DER, GA)        # bảy đầu ra chính (đồng thuận cho v1, v2)
+MAIN = ("mpqda_v2_m1", "mpqda_v2_m2", "mpqda_v2_m3", V1, DEG, DER, GA)        # the seven main outputs (consensus for v1, v2)
 PAIRS = ((M1, V1), (M1, GA), (M1, DEG), (M1, DER), (V1, GA), (M1, M1 + M.BEST_SUFFIX), (V1, V1 + M.BEST_SUFFIX))
 PHASE_B = {"B-LL": "T5LL", "B-C1": "T5C1", "B-LL-wide": "T5LLW"}
 GRID_EDGES = {"B-LL": (0.01, 10.0), "B-LL-wide": (1e-4, 1000.0)}
@@ -51,19 +51,19 @@ def load(taimma: Path):
     sel = inp.scenario("DEV", "selection_per_fold.csv", DATASETS)
     genes = inp.scenario("DEV", "selected_genes.csv", DATASETS)
     if sel is None or genes is None:
-        raise SystemExit(f"thiếu pha A của DEV: {sorted(set(inp.missing))}")
+        raise SystemExit(f"missing DEV phase A: {sorted(set(inp.missing))}")
     evs = {}
     for pb, sub in PHASE_B.items():
         ev = inp.scenario(f"{sub}/DEV", "classification_per_fold.csv", DATASETS, encoding="utf-8-sig")
         if ev is not None:
             evs[pb] = ev[ev.model == "lr_l2"].reset_index(drop=True)
     if "B-LL" not in evs:
-        raise SystemExit("thiếu T5LL/DEV (B-LL của DEV)")
+        raise SystemExit("missing T5LL/DEV (B-LL of DEV)")
     return inp, sel, genes, evs
 
 
 def merged(sel: pd.DataFrame, ev: pd.DataFrame) -> pd.DataFrame:
-    """Một dòng cho mỗi (đơn vị, đầu ra, k): fitness nội bộ của đúng panel được đánh giá và chỉ số ngoài của nó."""
+    """One row per (unit, output, k): inner fitness of exactly the evaluated panel and its outer metrics."""
     a = sel[[*UNIT, "method", "k", "output_fitness"]].rename(columns={"output_fitness": "inner_fitness"})
     b = ev[[*UNIT, "method", "k", "logloss", "auroc", "C"]].rename(columns={"logloss": "outer_logloss", "auroc": "outer_auroc"})
     m = a.merge(b, on=[*UNIT, "method", "k"], how="inner", validate="one_to_one")
@@ -185,11 +185,11 @@ def build(taimma: Path, out: Path) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--taimma", type=Path, required=True, help="thư mục results/survey_v2/taimma chứa DEV và T5*/DEV")
+    ap.add_argument("--taimma", type=Path, required=True, help="results/survey_v2/taimma folder holding DEV and T5*/DEV")
     ap.add_argument("--out", type=Path, default=Path("dev_diagnostic"))
     args = ap.parse_args(argv)
     info = build(args.taimma, args.out)
-    print("đã ghi: " + ", ".join(info["written"]) + " | pha B: " + ", ".join(info["phase_b"]))
+    print("written: " + ", ".join(info["written"]) + " | phase B: " + ", ".join(info["phase_b"]))
     return 0
 
 

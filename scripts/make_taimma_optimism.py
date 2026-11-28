@@ -1,19 +1,19 @@
-"""Độ lạc quan của tiêu chí chọn gen trên dữ liệu xác nhận (mô tả, không đăng ký; Review-2026-11-18, TQĐ38).
+"""Optimism of the gene-selection criterion on the confirmatory data (descriptive, not registered).
 
-    python scripts/make_taimma_optimism.py --results <thư mục giải nén chung của S1, S0v2 và C1> --out tables_v2
+    python scripts/make_taimma_optimism.py --results <shared extraction folder of S1, S0v2 and C1> --out tables_v2
 
-Với mỗi (cohort GPL570, lần lặp, fold, phương pháp, k), optimism = log-loss ngoài − log-loss nội bộ của panel đầu ra. Log-loss
-nội bộ là −output_fitness trong selection_per_fold.csv (trung bình ba fold nội bộ, LR-L2, C = 1, trọng số lớp cân bằng). Log-loss
-ngoài lấy từ pha B: B-C1 là so sánh khớp (cùng mô hình, cùng C với fitness, khác ở chỗ huấn luyện trên toàn phần train); B-LL ghi
-kèm để đối chiếu với bảng chính. Đầu vào: T1, T1v2 (selection_per_fold.csv); T5C1/T1 (việc v1b của S0v2), T5C1/T1v2, T5LL/T1,
+For each (GPL570 cohort, repeat, fold, method, k), optimism = outer log-loss − inner log-loss of the output panel. The inner log-loss
+is −output_fitness in selection_per_fold.csv (mean over the three inner folds, LR-L2, C = 1, balanced class weights). The outer log-loss
+comes from phase B: B-C1 is the matched comparison (same model, same C as the fitness, differing only in training on the whole training part); B-LL is
+given alongside for comparison with the main table. Inputs: T1, T1v2 (selection_per_fold.csv); T5C1/T1 (job v1b of S0v2), T5C1/T1v2, T5LL/T1,
 T5LL/T1v2 (classification_per_fold.csv).
 
-  optimism_v2.csv       theo tiêu chí pha B, phương pháp, k: n, log-loss nội bộ, log-loss ngoài, optimism (trung bình, SD)
-  optimism_v2_gain.csv  v2 (panel đồng thuận) so với v1 và GA, k ∈ {5, 10}: hiệu log-loss nội bộ, hiệu log-loss ngoài, hiệu
-                        optimism, cùng nửa độ rộng CI 95 % Nadeau–Bengio gộp của hiệu log-loss ngoài, để đặt lợi ích tìm kiếm
-                        cạnh độ chính xác của phép đo ngoài
-  claims_optimism.csv   số dùng trong bài, cùng định dạng claims_v2.csv; optimism_inputs_sha256.csv
-Không kiểm định, không vào họ Holm nào. Khi viết, ghi nhãn "exploratory, not registered". Chạy hai lần cho tệp trùng từng byte.
+  optimism_v2.csv       by phase B criterion, method, k: n, inner log-loss, outer log-loss, optimism (mean, SD)
+  optimism_v2_gain.csv  v2 (consensus panel) against v1 and GA, k ∈ {5, 10}: difference of inner log-loss, difference of outer log-loss, difference of
+                        optimism, with the half-width of the pooled 95 % Nadeau–Bengio CI of the outer log-loss difference, to set the search gain
+                        next to the precision of the outer measurement
+  claims_optimism.csv   numbers used in the paper, same format as claims_v2.csv; optimism_inputs_sha256.csv
+No tests, in no Holm family. When reported, labelled "exploratory, not registered". Two runs give byte-identical files.
 """
 from __future__ import annotations
 
@@ -42,7 +42,7 @@ GAIN_K = (5, 10)
 
 
 def merged(inp: T.Inputs, phase_b: str) -> pd.DataFrame | None:
-    """Ghép log-loss nội bộ (pha A) với log-loss ngoài (pha B) theo đơn vị; thiếu tệp nào thì trả None."""
+    """Join the inner log-loss (phase A) with the outer log-loss (phase B) per unit; returns None if any file is missing."""
     sel = [inp.scenario(s, "selection_per_fold.csv") for s in ("T1", "T1v2")]
     ev = [inp.scenario(f"{PHASE_B[phase_b]}/{s}", "classification_per_fold.csv", encoding="utf-8-sig") for s in ("T1", "T1v2")]
     if any(f is None for f in (*sel, *ev)):
@@ -68,7 +68,7 @@ def summary(m: pd.DataFrame, phase_b: str) -> pd.DataFrame:
 
 
 def gain(m: pd.DataFrame, phase_b: str) -> pd.DataFrame:
-    """Hiệu v2 − tham chiếu theo fold (ghép lần lặp, fold trong từng cohort); âm ở log-loss nghĩa là v2 tốt hơn."""
+    """Difference v2 − reference per fold (paired by repeat and fold within each cohort); negative log-loss means v2 is better."""
     rows = []
     for k in GAIN_K:
         for ref in GAIN_REF:
@@ -93,7 +93,7 @@ def build(results: Path, out: Path) -> dict:
         summaries.append(summary(m, pb))
         gains.append(gain(m, pb))
     if not summaries:
-        raise SystemExit(f"thiếu đầu vào: {sorted(set(inp.missing))}")
+        raise SystemExit(f"missing inputs: {sorted(set(inp.missing))}")
     s, g = pd.concat(summaries, ignore_index=True), pd.concat(gains, ignore_index=True)
     T.write_csv(s, out / "optimism_v2.csv")
     T.write_csv(g, out / "optimism_v2_gain.csv")
@@ -103,7 +103,7 @@ def build(results: Path, out: Path) -> dict:
     claims = (T.claims_rows("OPT", s, "optimism_v2.csv", ["n", "inner_logloss", "outer_logloss", "optimism"], ["method", "k"], "")
               + T.claims_rows("OPTGAIN", g, "optimism_v2_gain.csv",
                               ["inner_logloss_diff", "outer_logloss_diff", "outer_nb_half_width", "optimism_diff"], ["k", "reference"], ""))
-    for c in claims:                                   # mã số liệu duy nhất: tiêu chí pha B nằm trong cột phase_b và trong mã
+    for c in claims:                                   # unique claim code: the phase B criterion is in the phase_b column and in the code
         c["claim_id"] = c["claim_id"].replace(":", f":phase_b={c['phase_b']};", 1)
     T.write_csv(pd.DataFrame(claims, columns=T.CLAIM_COLUMNS), out / "claims_optimism.csv")
     T.write_csv(pd.DataFrame(sorted(inp.used.items()), columns=["file", "sha256"]), out / "optimism_inputs_sha256.csv")
@@ -119,9 +119,9 @@ def main(argv=None) -> int:
     ap.add_argument("--out", type=Path, default=Path("tables_v2"))
     args = ap.parse_args(argv)
     res = build(args.results, args.out)
-    print("đã ghi optimism_v2, optimism_v2_gain, claims_optimism cho " + ", ".join(res["phase_b"]))
+    print("written optimism_v2, optimism_v2_gain, claims_optimism for " + ", ".join(res["phase_b"]))
     if res["missing"]:
-        print(f"thiếu {len(res['missing'])} tệp, bỏ qua tiêu chí tương ứng: " + ", ".join(res["missing"]))
+        print(f"missing {len(res['missing'])} files, the corresponding criteria are skipped: " + ", ".join(res["missing"]))
     return 0
 
 

@@ -1,11 +1,11 @@
-"""Khám phá, không đăng ký (TQĐ42, Review-2026-11-18b, E1): toán tử đột biến + lai ghép của DE khoá ngẫu nhiên khi KHÔNG
-mã hoá lại khoá (khoá thường), cùng thiết lập với scripts/disruption_sim.py. Dùng hàm sinh quần thể của disruption_sim.py,
-nhưng seed riêng (2) và tệp ra riêng, nên docs/taimma/disruption.csv và luồng số ngẫu nhiên của nó không đổi.
+"""Exploratory, not registered: the mutation + crossover operator of random-key DE WITHOUT
+key re-encoding (plain keys), same setting as scripts/disruption_sim.py. Uses the population generator of disruption_sim.py,
+but its own seed (2) and its own output file, so docs/taimma/disruption.csv and its random stream do not change.
 
     python scripts/disruption_plain.py [--reps 200] [--out docs/taimma/disruption_plain.csv]
 
-Khoá thường của một panel S: k giá trị lớn nhất của một vector đều U(0, 1)^p0 đặt (theo thứ tự ngẫu nhiên) vào các gen của S,
-phần còn lại đặt vào các gen ngoài S; đó là trạng thái của quần thể DE khoá ngẫu nhiên lúc khởi tạo khi không mã hoá lại.
+Plain keys of a panel S: the k largest values of a uniform vector U(0, 1)^p0 are put (in random order) on the genes of S,
+the rest on the genes outside S; this is the state of a random-key DE population at initialisation without re-encoding.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import mpqda  # noqa: E402,F401  (đặt vendor/ và gốc kho vào sys.path)
+import mpqda  # noqa: E402,F401  (puts vendor/ and the repository root on sys.path)
 from mpqda.encoding import decode_topk, repair_midpoint  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -25,7 +25,7 @@ from disruption_sim import population  # noqa: E402
 
 
 def plain_keys(rng, S, p0, k):
-    """Khoá đều có k giá trị lớn nhất nằm trên các gen của S."""
+    """Uniform keys whose k largest values lie on the genes of S."""
     u = np.sort(rng.random(p0))
     x = np.empty(p0)
     others = np.setdiff1d(np.arange(p0), S)

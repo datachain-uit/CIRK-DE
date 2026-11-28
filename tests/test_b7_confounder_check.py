@@ -1,4 +1,4 @@
-"""Test của scripts/b7_confounder_check.py (Review-2026-11-16, TQĐ27) trên dữ liệu giả."""
+"""Tests of scripts/b7_confounder_check.py on synthetic data."""
 
 from pathlib import Path
 
@@ -27,7 +27,7 @@ def test_counts_sex_genes_and_egfr(tmp_path):
         ("ga", 5, 0, 1): ["XIST", "A", "B", "C", "D"],
         ("ga", 10, 0, 0): [f"G{i}" for i in range(10)],
         ("mpqda_de", 5, 0, 0): ["EGFR", "RPS4Y1", "B", "C", "D"],
-        ("mpqda_de", 2, 0, 0): ["XIST", "EGFR"],                  # k = 2 không kiểm
+        ("mpqda_de", 2, 0, 0): ["XIST", "EGFR"],                  # k = 2 is not checked
     })
     write_genes(res / "T1" / "gse31210_egfr" / "selected_genes.csv", "gse31210_egfr", {
         ("ga", 5, 0, 0): ["A", "B", "C", "D", "E"]})
@@ -57,8 +57,8 @@ def test_dataset_checks_on_fake_metadata(tmp_path):
     write_genes(res / "T1" / "tcga_luad_egfr" / "selected_genes.csv", "tcga_luad_egfr", {("ga", 5, 0, 0): list("ABCDE")})
     _, info = B.run(res, ["T1"], tmp_path)
     assert info["n"] == n and info["n_positive"] == int(y.sum())
-    assert 0.6 < info["sex_only_auroc"] < 0.8                      # tín hiệu giới tính cài sẵn
-    assert info["tss_folds"] == 25 and 0.3 < info["tss_only_auroc_mean"] < 0.7     # TSS ngẫu nhiên
+    assert 0.6 < info["sex_only_auroc"] < 0.8                      # built-in sex signal
+    assert info["tss_folds"] == 25 and 0.3 < info["tss_only_auroc_mean"] < 0.7     # random TSS
 
 
 def test_dataset_checks_also_on_gse31210(tmp_path):
@@ -73,9 +73,9 @@ def test_dataset_checks_also_on_gse31210(tmp_path):
     res = tmp_path / "taimma"
     write_genes(res / "T1v2" / "gse31210_egfr" / "selected_genes.csv", "gse31210_egfr", {("mpqda_v2", 5, 0, 0): list("ABCDE")})
     table, info = B.run(res, ["T1v2"], tmp_path)
-    assert set(table.scenario) == {"T1v2"} and "n" not in info              # không có metadata của tcga_luad_egfr
+    assert set(table.scenario) == {"T1v2"} and "n" not in info              # no metadata of tcga_luad_egfr
     g = info["gse31210_egfr"]
-    assert g["n"] == n and 0.6 < g["sex_only_auroc"] < 0.85 and "tss_folds" not in g   # mã GSM không có TSS
+    assert g["n"] == n and 0.6 < g["sex_only_auroc"] < 0.85 and "tss_folds" not in g   # GSM codes have no TSS
 
 
 def test_missing_results_raise(tmp_path):

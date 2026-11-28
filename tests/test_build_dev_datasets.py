@@ -1,4 +1,4 @@
-"""scripts/build_dev_datasets.py (Review-2026-11-16, TQĐ23) trên dữ liệu giả; chép từ taimma_ref, chỉ đổi import."""
+"""scripts/build_dev_datasets.py on synthetic data."""
 from pathlib import Path
 
 import numpy as np
@@ -14,12 +14,12 @@ from scripts import build_dev_datasets as B  # noqa: E402
 
 @pytest.fixture(autouse=True)
 def _not_strict(monkeypatch):
-    """Thêm khi tích hợp: bộ nguồn giả không có số mẫu của TCGA thật, nên tắt KLTN_STRICT_N mà notebook Kaggle đặt."""
+    """Added at integration: the synthetic source has not the sample counts of the real TCGA, so KLTN_STRICT_N set by the Kaggle notebook is turned off."""
     monkeypatch.delenv("KLTN_STRICT_N", raising=False)
 
 
 def fake_source(root: Path, n0=304, n1=296, p=40, n_dup=4, seed=0) -> pd.DataFrame:
-    """Bộ nguồn giả: n0 + n1 bệnh nhân, n_dup bệnh nhân có thêm một mẫu thứ hai."""
+    """Synthetic source: n0 + n1 patients, n_dup patients have a second sample."""
     rng = np.random.default_rng(seed)
     pats = [f"P{i:04d}" for i in range(n0 + n1)]
     labels = [0] * n0 + [1] * n1
@@ -52,8 +52,8 @@ def test_sizes_classes_and_disjoint_patients(built):
         assert (int((ds.y == 0).sum()), int((ds.y == 1).sum())) == expected
         assert card["subsets"][name]["n_per_class"] == list(expected)
         pats = set(ds.groups.tolist())
-        assert len(pats) == len(ds.y)                      # một mẫu mỗi bệnh nhân
-        assert not (pats & seen)                           # ba tập rời nhau theo bệnh nhân
+        assert len(pats) == len(ds.y)                      # one sample per patient
+        assert not (pats & seen)                           # the three subsets are disjoint by patient
         seen |= pats
     assert len(card["dropped_duplicate_patient_samples"]) == 4
 
@@ -73,7 +73,7 @@ def test_manifests_are_valid_one_repeat_and_have_distinct_seeds(built):
         assert validate_repeated_split_manifest(man, n_folds=C.N_FOLDS) == []
         assert set(man["repeat"]) == {0} and set(man["seed"]) == {seed}
         seeds.add(seed)
-        assert C.cohort_id(name) == C.UNREGISTERED_COHORT_ID     # vì vậy seed chia phải khác nhau
+        assert C.cohort_id(name) == C.UNREGISTERED_COHORT_ID     # hence the split seeds must differ
     assert len(seeds) == len(B.SUBSETS)
 
 
@@ -102,7 +102,7 @@ def test_card_records_split_sha(built):
 
 
 def test_csv_files_use_lf_line_endings(built):
-    """Thêm khi tích hợp: SHA-256 bản chia phải giống nhau trên Windows và Kaggle."""
+    """Added at integration: the split SHA-256 must be the same on Windows and on Kaggle."""
     root, _, _ = built
     for name in B.SUBSETS:
         for f in ("metadata.csv", "repeated_splits.csv"):

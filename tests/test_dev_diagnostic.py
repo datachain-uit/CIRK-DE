@@ -1,5 +1,5 @@
-"""Test của scripts/dev_diagnostic.py (Review-2026-11-17, TQĐ31) trên kết quả DEV GIẢ có cài sẵn đảo chiều: M1 có log-loss
-nội bộ thấp hơn v1 nhưng log-loss ngoài cao hơn."""
+"""Tests of scripts/dev_diagnostic.py on SYNTHETIC DEV results with a built-in reversal: M1 has a lower inner
+log-loss than v1 but a higher outer log-loss."""
 
 from pathlib import Path
 
@@ -61,7 +61,7 @@ def test_diagnostic_finds_the_planted_inversion_and_is_reproducible(tmp_path):
     pairs = pd.read_csv(a / "dev_diag_pairs.csv")
     row = lambda q, pb="B-LL", pair=("mpqda_v2_m1", "mpqda_de"): pairs[(pairs.phase_b == pb) & (pairs.a == pair[0]) & (pairs.b == pair[1]) & (pairs.k == "5+10") & (pairs.quantity == q)].iloc[0]  # noqa: E731,E501
     assert row("inner_fitness").n == 50 and row("inner_fitness").mean_diff > 0 and row("inner_fitness").share_a_better == 1.0
-    assert row("outer_logloss").mean_diff > 0 and row("outer_logloss").share_a_better < 0.5        # M1 kém hơn ở ngoài
+    assert row("outer_logloss").mean_diff > 0 and row("outer_logloss").share_a_better < 0.5        # M1 worse outside
     assert row("optimism", "B-C1").mean_diff > 0 and row("optimism", "B-C1").p_two_sided_exploratory < 0.05
     io = pd.read_csv(a / "dev_diag_inner_outer.csv")
     within = io[(io.phase_b == "B-LL") & (io.analysis == "within_unit_across_methods") & (io.cohort == "all")].iloc[0]

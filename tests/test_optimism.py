@@ -1,5 +1,5 @@
-"""scripts/make_taimma_optimism.py trên kết quả GIẢ: optimism = log-loss ngoài − (−output_fitness) theo từng đơn vị, đủ phương
-pháp, hiệu so với v1 và GA đúng dấu, chạy lại trùng byte, thiếu T5C1/T1 (chưa có việc v1b) thì chỉ còn B-LL."""
+"""scripts/make_taimma_optimism.py on SYNTHETIC results: optimism = outer log-loss − (−output_fitness) per unit, every
+method, differences against v1 and GA with the right sign, byte-identical rerun, without T5C1/T1 (job v1b not run) only B-LL remains."""
 import shutil
 
 import numpy as np
@@ -16,7 +16,7 @@ def results(tmp_path):
     root = tmp_path / "results"
     fake_results(root)
     write_v2(root)
-    for c in COHORTS:                                  # việc v1b: B-C1 cho panel T1 của v1 và bảy baseline
+    for c in COHORTS:                                  # job v1b: B-C1 for the T1 panels of v1 and the seven baselines
         dst = root / "T5C1" / "T1" / c
         dst.mkdir(parents=True, exist_ok=True)
         ev = pd.read_csv(root / "T5LL" / "T1" / c / "classification_per_fold.csv", encoding="utf-8-sig")
